@@ -8,6 +8,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.5.0",
     "@tensorflow/tfjs-node": "^3.1.0",
+    "async": "^2.6.3",
     "clean-css": "^4.1.11",
     "constantinople": "^3.1.1",
     "cookie-parser": "~1.4.5",
