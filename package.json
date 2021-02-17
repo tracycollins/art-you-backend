@@ -6,18 +6,18 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "constantinople": "^3.1.1",
     "cookie-parser": "~1.4.5",
     "cookie-session": "^1.4.0",
     "debug": "~4.3.1",
     "express": "~4.17.1",
     "express-session": "^1.17.1",
     "http-errors": "~1.8.0",
-    "jade": "~1.11.0",
+    "jade": "^1.11.0",
     "morgan": "~1.10.0"
   },
   "description": "art-you backend in node.js",
   "main": "app.js",
-  "devDependencies": {},
   "author": "Tracy Collins",
   "license": "ISC"
 }
