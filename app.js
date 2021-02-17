@@ -1,6 +1,6 @@
 var createError = require('http-errors');
 var express = require('express');
-var session = require('express-session');
+// var session = require('express-session');
 var cookieSession = require('cookie-session');
 var path = require('path');
 var cookieParser = require('cookie-parser');
@@ -10,6 +10,7 @@ var indexRouter = require('./routes/index');
 var artworksRouter = require('./routes/artworks');
 var artistsRouter = require('./routes/artists');
 var usersRouter = require('./routes/users');
+var neuralnetworksRouter = require('./routes/neuralnetworks');
 
 var app = express();
 
@@ -46,6 +47,7 @@ app.use('/', indexRouter);
 app.use('/artists', artistsRouter);
 app.use('/artworks', artworksRouter);
 app.use('/users', usersRouter);
+app.use('/neuralnetworks', neuralnetworksRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
