@@ -12,6 +12,8 @@ const artistsRouter = require('./routes/artists');
 const usersRouter = require('./routes/users');
 const neuralnetworksRouter = require('./routes/neuralnetworks');
 
+const NeuralNetworkTools = require("./lib/nnTools.js");
+const nnt = new NeuralNetworkTools("NNT");
 
 const app = express();
 
@@ -65,5 +67,9 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+setTimeout(async () => {
+  await nnt.runNetworkTest();
+}, 1000);
 
 module.exports = app;
