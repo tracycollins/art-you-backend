@@ -1,18 +1,19 @@
-var createError = require('http-errors');
-var express = require('express');
-// var session = require('express-session');
-var cookieSession = require('cookie-session');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const createError = require('http-errors');
+const express = require('express');
+// const session = require('express-session');
+const cookieSession = require('cookie-session');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 
-var indexRouter = require('./routes/index');
-var artworksRouter = require('./routes/artworks');
-var artistsRouter = require('./routes/artists');
-var usersRouter = require('./routes/users');
-var neuralnetworksRouter = require('./routes/neuralnetworks');
+const indexRouter = require('./routes/index');
+const artworksRouter = require('./routes/artworks');
+const artistsRouter = require('./routes/artists');
+const usersRouter = require('./routes/users');
+const neuralnetworksRouter = require('./routes/neuralnetworks');
 
-var app = express();
+
+const app = express();
 
 // app.use(session({
 //   resave: false, // don't save session if unmodified
