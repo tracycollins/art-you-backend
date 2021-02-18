@@ -15,6 +15,16 @@ const neuralnetworksRouter = require('./routes/neuralnetworks');
 const NeuralNetworkTools = require("./lib/nnTools.js");
 const nnt = new NeuralNetworkTools("NNT");
 
+nnt.on("ready", (appName) => {
+  console.log(`NNT READY | APP NAME: ${appName}`)
+})
+
+nnt.on("connect", async (appName) => {
+  console.log(`NNT | DB CONNECTED | APP NAME: ${appName}`)
+  console.log(`NNT | >>> START NETWORK TEST`)
+  await nnt.runNetworkTest();
+})
+
 const app = express();
 
 // app.use(session({
@@ -68,8 +78,8 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-setTimeout(async () => {
-  await nnt.runNetworkTest();
-}, 1000);
+// setTimeout(async () => {
+//   await nnt.runNetworkTest();
+// }, 1000);
 
 module.exports = app;

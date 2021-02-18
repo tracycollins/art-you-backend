@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "@auth0/auth0-spa-js": "^1.13.6",
     "@aws-sdk/client-s3": "^3.5.0",
     "@tensorflow/tfjs-node": "^3.1.0",
     "@threeceelabs/mongoose-artyou": "^1.0.8",
