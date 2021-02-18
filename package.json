@@ -28,6 +28,7 @@
     "mongoose": "^5.11.17",
     "morgan": "~1.10.0",
     "object.defaults": "^1.1.0",
+    "pug": "^3.0.0",
     "text-table": "^0.2.0"
   },
   "description": "art-you backend in node.js",
