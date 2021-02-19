@@ -38,23 +38,23 @@ nnt.on("connect", async (appName) => {
 const app = express();
 app.use(cors())
 
-// const jwtCheck = jwt({
-//   secret: jwks.expressJwtSecret({
-//     cache: true,
-//     rateLimit: true,
-//     jwksRequestsPerMinute: 5,
-//     jwksUri: 'https://wild-disk-7982.us.auth0.com/.well-known/jwks.json'
-//   }),
-//   audience: 'https://artyou/api',
-//   issuer: 'https://wild-disk-7982.us.auth0.com/',
-//   algorithms: ['RS256']
-// });
+const jwtCheck = jwt({
+  secret: jwks.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: 'https://wild-disk-7982.us.auth0.com/.well-known/jwks.json'
+  }),
+  audience: 'https://artyou/api',
+  issuer: 'https://wild-disk-7982.us.auth0.com/',
+  algorithms: ['RS256']
+});
 
-// app.use(jwtCheck);
+app.use(jwtCheck);
 
-// app.get('/authorized', function (req, res) {
-//     res.send('Secured Resource');
-// });
+app.get('/authorized', function (req, res) {
+    res.send('Secured Resource');
+});
 
 
 // app.use(session({

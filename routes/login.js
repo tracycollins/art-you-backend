@@ -33,10 +33,8 @@ router.get("/", cors(corsOptionsDelegate), (req, res) => {
 });
 
 router.post("/", cors(corsOptionsDelegate), (req, res) => {
-  console.info("POST /");
-  res.json({
-    text: "Simple CORS requests are working. [POST]"
-  });
+  console.info(`LOGIN | POST | BODY: ${req.body}`);
+  res.json(req.body);
 });
 
 // router.get('/', function(req, res) {
