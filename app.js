@@ -2,6 +2,8 @@ const { join } = require("path");
 const createError = require('http-errors');
 const express = require('express');
 const cors = require('cors');
+const jwt = require('express-jwt');
+const jwks = require('jwks-rsa');
 
 // const session = require('express-session');
 const cookieSession = require('cookie-session');
@@ -29,8 +31,31 @@ nnt.on("connect", async (appName) => {
   await nnt.runNetworkTest();
 })
 
+//==================================================================================
+//==================================================================================
+//==================================================================================
+
 const app = express();
 app.use(cors())
+
+// const jwtCheck = jwt({
+//   secret: jwks.expressJwtSecret({
+//     cache: true,
+//     rateLimit: true,
+//     jwksRequestsPerMinute: 5,
+//     jwksUri: 'https://wild-disk-7982.us.auth0.com/.well-known/jwks.json'
+//   }),
+//   audience: 'https://artyou/api',
+//   issuer: 'https://wild-disk-7982.us.auth0.com/',
+//   algorithms: ['RS256']
+// });
+
+// app.use(jwtCheck);
+
+// app.get('/authorized', function (req, res) {
+//     res.send('Secured Resource');
+// });
+
 
 // app.use(session({
 //   resave: false, // don't save session if unmodified
@@ -70,7 +95,25 @@ app.use('/neuralnetworks', neuralnetworksRouter);
 
 // Endpoint to serve the configuration file
 app.get("/auth_config.json", (req, res) => {
+  console.info(`GET /auth_config.json: ${join(__dirname, "auth_config.json")}`);
   res.sendFile(join(__dirname, "auth_config.json"));
+});
+
+app.head("/simple-cors", cors(), (req, res) => {
+  console.info("HEAD /simple-cors");
+  res.sendStatus(204);
+});
+app.get("/simple-cors", cors(), (req, res) => {
+  console.info("GET /simple-cors");
+  res.json({
+    text: "Simple CORS requests are working. [GET]"
+  });
+});
+app.post("/simple-cors", cors(), (req, res) => {
+  console.info("POST /simple-cors");
+  res.json({
+    text: "Simple CORS requests are working. [POST]"
+  });
 });
 
 // catch 404 and forward to error handler
