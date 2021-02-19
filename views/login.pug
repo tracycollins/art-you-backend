@@ -1,7 +1,14 @@
-extends layout
+html
+  head
+    script(src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js')
+    script(src='https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js')
 
-block content
-  h3= title
-  p #{title}
-  p #{visits} visits
-sd 
+    link(rel='stylesheet', href='stylesheets/style.css')
+
+    block content
+      h3= title
+      p Welcome to #{title}
+      input(type="text")
+      p
+      input(type="text")
+      p #{visits} visits

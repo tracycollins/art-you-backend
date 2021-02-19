@@ -14,11 +14,11 @@ nnt.on("ready", async () => {
 
 /* GET users listing. */
 router.get('/', function(req, res) {
-  res.render('neuralnetworks', { title: 'Neural Networks', visits: req.session.count});
+  res.render('neuralnetworks', { title: 'neural networks', visits: req.session.count});
 });
 
 router.get('/test', async function(req, res) {
-  res.render('networkTest', { title: 'Neural Networks Test', visits: req.session.count});
+  res.render('networkTest', { title: 'neural networks test', visits: req.session.count});
   await nnt.runNetworkTest();
 });
 
