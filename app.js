@@ -1,7 +1,8 @@
-const { createAuth0Client } = ('@auth0/auth0-spa-js');
 const { join } = require("path");
 const createError = require('http-errors');
 const express = require('express');
+const cors = require('cors');
+
 // const session = require('express-session');
 const cookieSession = require('cookie-session');
 const path = require('path');
@@ -15,14 +16,11 @@ const artistsRouter = require('./routes/artists');
 const usersRouter = require('./routes/users');
 const neuralnetworksRouter = require('./routes/neuralnetworks');
 
-const fetchAuthConfig = require("./auth_config.json");
-
 const NeuralNetworkTools = require("./lib/nnTools.js");
 const nnt = new NeuralNetworkTools("NNT");
 
 nnt.on("ready", async (appName) => {
   console.log(`NNT READY | APP NAME: ${appName}`)
-  await configureClient();
 })
 
 nnt.on("connect", async (appName) => {
@@ -31,9 +29,8 @@ nnt.on("connect", async (appName) => {
   await nnt.runNetworkTest();
 })
 
-let auth0 = null;
-
 const app = express();
+app.use(cors())
 
 // app.use(session({
 //   resave: false, // don't save session if unmodified
@@ -91,22 +88,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
-// setTimeout(async () => {
-//   await nnt.runNetworkTest();
-// }, 1000);
-
-
-// ..
-
-const configureClient = async () => {
-  // const response = await fetchAuthConfig();
-  // const config = await response.json();
-
-  auth0 = await createAuth0Client({
-    domain: fetchAuthConfig.domain,
-    client_id: fetchAuthConfig.clientId
-  });
-};
 
 module.exports = app;
