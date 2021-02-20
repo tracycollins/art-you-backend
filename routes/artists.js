@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const cors = require('cors');
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
@@ -20,7 +21,7 @@ main()
 })
 .catch((err) => console.error(err))
 
-router.get('/:nodeId', async (req, res) => {
+router.get('/:nodeId', cors(), async (req, res) => {
   const query = {}
   if (req.params.nodeId){
     console.log(`GET ARTIST | ID: ${req.params.nodeId}`)

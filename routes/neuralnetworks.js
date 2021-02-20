@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const cors = require('cors');
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
@@ -20,7 +21,7 @@ main()
 })
 .catch((err) => console.error(err))
 
-router.param('networkId', async (req, res, next, networkId) => {
+router.param('networkId', cors(), async (req, res, next, networkId) => {
   console.log(`NN | REQ | METHOD: ${req.method} | NN ID: ${networkId}`)
   try{
     const networkDoc = await global.artyouDb.NeuralNetwork.findOne({networkId: networkId});
@@ -41,7 +42,7 @@ router.param('networkId', async (req, res, next, networkId) => {
   // next()
 })
 
-router.get('/:networkId', async (req, res, next) => {
+router.get('/:networkId', cors(), async (req, res, next) => {
   if (req.networkDoc){
     res.json(req.networkDoc)
   }
@@ -50,7 +51,7 @@ router.get('/:networkId', async (req, res, next) => {
   }
 });
 
-router.post('/:networkId', async (req, res, next) => {
+router.post('/:networkId', cors(), async (req, res, next) => {
   console.log(`NN | POST | ${req.body.networkId}`)
   try{
     const newNnDoc = new global.artyouDb.NeuralNetwork(req.body)
@@ -63,7 +64,7 @@ router.post('/:networkId', async (req, res, next) => {
   }
 });
 
-router.patch('/:networkId', async (req, res, next) => {
+router.patch('/:networkId', cors(), async (req, res, next) => {
 
   try{
     console.log(`NN | PATCH | ${req.body.networkId}`)
@@ -91,7 +92,7 @@ router.patch('/:networkId', async (req, res, next) => {
     
 });
 
-router.get('/', async (req, res, next) => {
+router.get('/', cors(), async (req, res, next) => {
   try{
     console.log(`req.networkId: ${req.networkId}`)
     const nnArray = await global.artyouDb.NeuralNetwork.find({}).lean();

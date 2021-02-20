@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const cors = require('cors');
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
@@ -20,7 +21,7 @@ main()
 })
 .catch((err) => console.error(err))
 
-router.get('/', async (req, res) => {
+router.get('/', cors(), async (req, res) => {
   const artworkArray = await global.artyouDb.Artwork.find({}).lean();
   console.log(`FOUND ${artworkArray.length} ARTWORKS`)
   res.json(artworkArray)
