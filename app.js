@@ -110,18 +110,18 @@ app.get('/', cors(), (req, res) => {
   res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
 });
 
-app.use('/login', loginRouter);
-app.use('/artists', artistsRouter);
-app.use('/artworks', artworksRouter);
-app.use('/users', usersRouter);
-app.use('/neuralnetworks', neuralnetworksRouter);
+app.use('/login', cors(), loginRouter);
+app.use('/artists', cors(), artistsRouter);
+app.use('/artworks', cors(), artworksRouter);
+app.use('/users', cors(), usersRouter);
+app.use('/neuralnetworks', cors(), neuralnetworksRouter);
 
-app.get("/callback", (req, res) => {
+app.get("/callback", cors(), (req, res) => {
   console.info(`GET /callback`);
   res.send(200);
 });
 
-app.get("/logout", (req, res) => {
+app.get("/logout", cors(), (req, res) => {
   console.info(`GET /logout`);
   res.send(200);
 });
