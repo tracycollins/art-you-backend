@@ -5,6 +5,8 @@ const cors = require('cors');
 const jwt = require('express-jwt');
 const jwks = require('jwks-rsa');
 
+const { auth } = require('express-openid-connect');
+
 // const session = require('express-session');
 const cookieSession = require('cookie-session');
 const path = require('path');
@@ -34,9 +36,19 @@ nnt.on("connect", async (appName) => {
 //==================================================================================
 //==================================================================================
 //==================================================================================
+const config = {
+  authRequired: false,
+  auth0Logout: true,
+  secret: 'a long, randomly-generated string stored in env',
+  baseURL: 'http://localhost:3000',
+  clientID: 'Utmgokd22lCluIMbM2WzmAVgyjCsHPxB',
+  issuerBaseURL: 'https://wild-disk-7982.us.auth0.com'
+};
 
 const app = express();
 app.use(cors())
+
+app.use(auth(config));
 
 const jwtCheck = jwt({
   secret: jwks.expressJwtSecret({
@@ -86,15 +98,36 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(count);
 
-app.use('/', indexRouter);
+app.get("/authorize", (req, res) => {
+  console.info(`GET /authorize`);
+  res.send(200);
+});
+
+// app.use('/', indexRouter);
+
+app.get('/', cors(), (req, res) => {
+  console.log(`req.oidc.isAuthenticated: ${req.oidc.isAuthenticated()}`)
+  res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
+});
+
 app.use('/login', loginRouter);
 app.use('/artists', artistsRouter);
 app.use('/artworks', artworksRouter);
 app.use('/users', usersRouter);
 app.use('/neuralnetworks', neuralnetworksRouter);
 
+app.get("/callback", (req, res) => {
+  console.info(`GET /callback`);
+  res.send(200);
+});
+
+app.get("/logout", (req, res) => {
+  console.info(`GET /logout`);
+  res.send(200);
+});
+
 // Endpoint to serve the configuration file
-app.get("/auth_config.json", (req, res) => {
+app.get("/auth_config.json", cors(), (req, res) => {
   console.info(`GET /auth_config.json: ${join(__dirname, "auth_config.json")}`);
   res.sendFile(join(__dirname, "auth_config.json"));
 });
