@@ -2,8 +2,8 @@ const { join } = require("path");
 const createError = require('http-errors');
 const express = require('express');
 const cors = require('cors');
-const jwt = require('express-jwt');
-const jwks = require('jwks-rsa');
+// const jwt = require('express-jwt');
+// const jwks = require('jwks-rsa');
 
 const { auth } = require('express-openid-connect');
 
@@ -46,23 +46,47 @@ const config = {
 };
 
 const app = express();
-app.use(cors())
-
 app.use(auth(config));
 
-const jwtCheck = jwt({
-  secret: jwks.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: 'https://wild-disk-7982.us.auth0.com/.well-known/jwks.json'
-  }),
-  audience: 'https://artyou/api',
-  issuer: 'https://wild-disk-7982.us.auth0.com/',
-  algorithms: ['RS256']
-});
+var allowedOrigins = [
+  'http://localhost:3000',
+  'https://threecee-art-you-frontend.herokuapp.com'
+];
 
-app.use(jwtCheck);
+console.log({allowedOrigins})
+
+app.use(cors({
+  // credentials: true,
+  origin: function(origin, callback){
+    console.log({origin})
+    // allow requests with no origin 
+    // (like mobile apps or curl requests)
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      var msg = 'The CORS policy for this site does not ' +
+                'allow access from the specified Origin.';
+      console.log(`CORS FAIL`)
+      return callback(new Error(msg), false);
+    }
+    console.log(`CORS OK`)
+    return callback(null, true);
+  }
+}));
+
+
+// const jwtCheck = jwt({
+//   secret: jwks.expressJwtSecret({
+//     cache: true,
+//     rateLimit: true,
+//     jwksRequestsPerMinute: 5,
+//     jwksUri: 'https://wild-disk-7982.us.auth0.com/.well-known/jwks.json'
+//   }),
+//   audience: 'https://artyou/api',
+//   issuer: 'https://wild-disk-7982.us.auth0.com/',
+//   algorithms: ['RS256']
+// });
+
+// app.use(jwtCheck);
 
 app.get('/authorized', function (req, res) {
     res.send('Secured Resource');
