@@ -129,44 +129,44 @@ app.get("/authorize", (req, res) => {
 
 // app.use('/', indexRouter);
 
-app.get('/', cors(), (req, res) => {
+app.get('/', (req, res) => {
   console.log(`req.oidc.isAuthenticated: ${req.oidc.isAuthenticated()}`)
   res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
 });
 
-app.use('/login', cors(), loginRouter);
-app.use('/artists', cors(), artistsRouter);
-app.use('/artworks', cors(), artworksRouter);
-app.use('/users', cors(), usersRouter);
-app.use('/neuralnetworks', cors(), neuralnetworksRouter);
+app.use('/login', loginRouter);
+app.use('/artists', artistsRouter);
+app.use('/artworks', artworksRouter);
+app.use('/users', usersRouter);
+app.use('/neuralnetworks', neuralnetworksRouter);
 
-app.get("/callback", cors(), (req, res) => {
+app.get("/callback", (req, res) => {
   console.info(`GET /callback`);
   res.send(200);
 });
 
-app.get("/logout", cors(), (req, res) => {
+app.get("/logout", (req, res) => {
   console.info(`GET /logout`);
   res.send(200);
 });
 
 // Endpoint to serve the configuration file
-app.get("/auth_config.json", cors(), (req, res) => {
+app.get("/auth_config.json", (req, res) => {
   console.info(`GET /auth_config.json: ${join(__dirname, "auth_config.json")}`);
   res.sendFile(join(__dirname, "auth_config.json"));
 });
 
-app.head("/simple-cors", cors(), (req, res) => {
+app.head("/simple-cors", (req, res) => {
   console.info("HEAD /simple-cors");
   res.sendStatus(204);
 });
-app.get("/simple-cors", cors(), (req, res) => {
+app.get("/simple-cors", (req, res) => {
   console.info("GET /simple-cors");
   res.json({
     text: "Simple CORS requests are working. [GET]"
   });
 });
-app.post("/simple-cors", cors(), (req, res) => {
+app.post("/simple-cors", (req, res) => {
   console.info("POST /simple-cors");
   res.json({
     text: "Simple CORS requests are working. [POST]"
