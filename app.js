@@ -1,3 +1,12 @@
+const dotenv = require("dotenv");
+const envConfig = dotenv.config({ path: process.env.ARTYOU_ENV_VARS_FILE })
+
+if (envConfig.error) {
+  throw envConfig.error
+}
+ 
+console.log("AYBE | +++ ENV CONFIG LOADED")
+
 const { join } = require("path");
 const createError = require('http-errors');
 const express = require('express');
@@ -42,7 +51,8 @@ nnt.on("connect", async (appName) => {
 const config = {
   authRequired: false,
   auth0Logout: true,
-  secret: 'a long, randomly-generated string stored in env',
+  // secret: 'a long, randomly-generated string stored in env',
+  secret: process.env.AUTH0_SECRET,
   baseURL: 'http://localhost:3000',
   clientID: 'Utmgokd22lCluIMbM2WzmAVgyjCsHPxB',
   issuerBaseURL: 'https://wild-disk-7982.us.auth0.com'
