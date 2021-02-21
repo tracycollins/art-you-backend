@@ -1,11 +1,17 @@
-const dotenv = require("dotenv");
-const envConfig = dotenv.config({ path: process.env.ARTYOU_ENV_VARS_FILE })
 
-if (envConfig.error) {
-  throw envConfig.error
+const dotenv = require("dotenv");
+
+if (process.env.ARTYOU_ENV_VARS_FILE){
+  const envConfig = dotenv.config({ path: process.env.ARTYOU_ENV_VARS_FILE })
+  if (envConfig.error) {
+    throw envConfig.error
+  }
+  console.log("AYBE | +++ ENV CONFIG LOADED")
 }
- 
-console.log("AYBE | +++ ENV CONFIG LOADED")
+else{
+  console.log(`AYBE | !!! ENV CONFIG NOT SET: ARTYOU_ENV_VARS_FILE`)
+  console.log(`AYBE | !!! ENV CONFIG NOT LOADED`)
+}
 
 const { join } = require("path");
 const createError = require('http-errors');
