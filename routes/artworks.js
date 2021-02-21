@@ -30,13 +30,13 @@ router.get('/:id', async (req, res) => {
   query.id = req.params.id
 
   const doc = await global.artyouDb[model].findOne(query).populate({path: 'artist', populate: { path: 'image'}}).populate('tags').lean();
-  console.log(`FOUND ${model} | ${doc.id}`)
+  console.log(`FOUND ${model} | ${doc.id} | ${doc.artist.fullName} | ${doc.image.url}`)
 
   res.json(doc)
 
 });
 
-router.get('/', async (req, res, next) => {
+router.get('/', async (req, res) => {
   try{
     console.log(`${model} | GET`)
     const docs = await global.artyouDb[model].find({}).populate({path: 'artist', populate: { path: 'image'}}).populate('tags').lean();

@@ -55,7 +55,7 @@ router.get('/:id', async (req, res) => {
 
 });
 
-router.post('/:id', async (req, res, next) => {
+router.post('/:id', async (req, res) => {
   console.log(`NN | POST | ${req.body.id}`)
   try{
     const newNnDoc = new global.artyouDb.NeuralNetwork(req.body)
@@ -68,7 +68,7 @@ router.post('/:id', async (req, res, next) => {
   }
 });
 
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', async (req, res) => {
 
   try{
     console.log(`NN | PATCH | ${req.body.id}`)
