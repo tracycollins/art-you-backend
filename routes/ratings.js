@@ -30,7 +30,7 @@ router.get('/:id', cors(), async (req, res) => {
     query.id = req.params.id
   }
 
-  const docs = await global.artyouDb.Artist.find(query).lean();
+  const docs = await global.artyouDb.Rating.find(query).populate('artwork').populate('user').lean();
   console.log(`FOUND ${docs.length} RATINGS`)
 
   res.json(docs)

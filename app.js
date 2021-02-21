@@ -13,10 +13,11 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
-const indexRouter = require('./routes/index');
+// const indexRouter = require('./routes/index');
 const loginRouter = require('./routes/login');
 const artworksRouter = require('./routes/artworks');
-const artistsRouter = require('./routes/artists');
+// const artistsRouter = require('./routes/artists');
+const ModelsRouter = require('./routes/models');
 const usersRouter = require('./routes/users');
 const neuralnetworksRouter = require('./routes/neuralnetworks');
 
@@ -122,6 +123,14 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(count);
 
+const artistsRouter = new ModelsRouter({model: 'Artist'})
+
+app.use('/login', loginRouter);
+app.use('/artists', artistsRouter);
+app.use('/artworks', artworksRouter);
+app.use('/users', usersRouter);
+app.use('/neuralnetworks', neuralnetworksRouter);
+
 app.get("/authorize", (req, res) => {
   console.info(`GET /authorize`);
   res.send(200);
@@ -134,11 +143,11 @@ app.get('/', (req, res) => {
   res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
 });
 
-app.use('/login', loginRouter);
-app.use('/artists', artistsRouter);
-app.use('/artworks', artworksRouter);
-app.use('/users', usersRouter);
-app.use('/neuralnetworks', neuralnetworksRouter);
+// app.get('/login', loginRouter);
+// app.get('/artists', artistsRouter);
+// app.get('/artworks', artworksRouter);
+// app.get('/users', usersRouter);
+// app.get('/neuralnetworks', neuralnetworksRouter);
 
 app.get("/callback", (req, res) => {
   console.info(`GET /callback`);
