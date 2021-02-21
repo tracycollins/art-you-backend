@@ -1,6 +1,7 @@
 const express = require('express');
-const cors = require('cors');
 const router = express.Router();
+
+const model = 'Rating';
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
@@ -10,31 +11,42 @@ const main = async () => {
     global.dbConnection = await global.artyouDb.connect();
   }
   catch(err){
-    console.error(`AYBE | ROUTE: RATINGS | *** DB CONNECT ERROR: ${err}`)
+    console.error(`AYBE | ROUTE: ${model} | *** DB CONNECT ERROR: ${err}`)
     throw err;
   }
 }
 
 main()
 .then(() => {
-  console.log(`AYBE | ROUTE: RATINGS | MAIN OK`)
+  console.log(`AYBE | ROUTE: ${model} | MAIN OK`)
 })
 .catch((err) => console.error(err))
 
-router.get('/:id', cors(), async (req, res) => {
+router.get('/:id', async (req, res) => {
 
   const query = {}
 
-  if (req.params.id){
-    console.log(`GET RATING | ID: ${req.params.id}`)
-    query.id = req.params.id
-  }
+  console.log(`GET ${model} | ID: ${req.params.id}`)
+  query.id = req.params.id
 
-  const docs = await global.artyouDb.Rating.find(query).populate('artwork').populate('user').lean();
-  console.log(`FOUND ${docs.length} RATINGS`)
+  const docs = await global.artyouDb[model].find(query).populate('artwork').populate('user').lean();
+  console.log(`FOUND ${docs.length} ${model}s`)
 
   res.json(docs)
 
 });
 
+router.get('/', async (req, res, next) => {
+  try{
+    console.log(`${model} | GET`)
+    const docs = await global.artyouDb[model].find({}).populate('artwork').populate('user').lean();
+    console.log(`FOUND ${docs.length} ${model}s`)
+    res.json(docs)
+  }
+  catch(err){
+    console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`)
+    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`)
+  }
+});
+  
 module.exports = router;

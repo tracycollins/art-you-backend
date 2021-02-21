@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const model = 'Artwork';
+const model = 'NetworkInput';
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
@@ -36,7 +36,7 @@ router.get('/:id', async (req, res) => {
 
 });
 
-router.get('/', async (req, res, next) => {
+router.get('/', async (req, res) => {
   try{
     console.log(`${model} | GET`)
     const docs = await global.artyouDb[model].find({}).lean();

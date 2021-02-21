@@ -96,7 +96,7 @@ router.patch('/:id', async (req, res, next) => {
     
 });
 
-router.get('/', async (req, res, next) => {
+router.get('/', async (req, res) => {
   try{
     const nnArray = await global.artyouDb.NeuralNetwork.find({}).lean();
     console.log(`FOUND ${nnArray.length} NNs`)

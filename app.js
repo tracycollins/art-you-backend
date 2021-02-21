@@ -16,9 +16,11 @@ const logger = require('morgan');
 // const indexRouter = require('./routes/index');
 const loginRouter = require('./routes/login');
 const artworksRouter = require('./routes/artworks');
-// const artistsRouter = require('./routes/artists');
-const ModelsRouter = require('./routes/models');
+const artistsRouter = require('./routes/artists');
+const ratingsRouter = require('./routes/ratings');
+const recommendationsRouter = require('./routes/recommendations');
 const usersRouter = require('./routes/users');
+const networkinputsRouter = require('./routes/networkinputs');
 const neuralnetworksRouter = require('./routes/neuralnetworks');
 
 const NeuralNetworkTools = require("./lib/nnTools.js");
@@ -123,12 +125,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(count);
 
-const artistsRouter = new ModelsRouter({model: 'Artist'})
-
 app.use('/login', loginRouter);
-app.use('/artists', artistsRouter);
+app.use('/artists/', artistsRouter);
 app.use('/artworks', artworksRouter);
 app.use('/users', usersRouter);
+app.use('/ratings', ratingsRouter);
+app.use('/recommendations', recommendationsRouter);
+app.use('/networkinputs', networkinputsRouter);
 app.use('/neuralnetworks', neuralnetworksRouter);
 
 app.get("/authorize", (req, res) => {

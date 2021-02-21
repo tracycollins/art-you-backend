@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const model = 'Artwork';
+const model = 'Recommendation';
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
@@ -29,7 +29,7 @@ router.get('/:id', async (req, res) => {
   console.log(`GET ${model} | ID: ${req.params.id}`)
   query.id = req.params.id
 
-  const docs = await global.artyouDb[model].find(query).lean();
+  const docs = await global.artyouDb[model].find(query).populate('artwork').populate('user').lean();
   console.log(`FOUND ${docs.length} ${model}s`)
 
   res.json(docs)
@@ -39,7 +39,7 @@ router.get('/:id', async (req, res) => {
 router.get('/', async (req, res, next) => {
   try{
     console.log(`${model} | GET`)
-    const docs = await global.artyouDb[model].find({}).lean();
+    const docs = await global.artyouDb[model].find({}).populate('artwork').populate('user').lean();
     console.log(`FOUND ${docs.length} ${model}s`)
     res.json(docs)
   }
