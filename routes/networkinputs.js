@@ -29,10 +29,10 @@ router.get('/:id', async (req, res) => {
   console.log(`GET ${model} | ID: ${req.params.id}`)
   query.id = req.params.id
 
-  const docs = await global.artyouDb[model].find(query).lean();
-  console.log(`FOUND ${docs.length} ${model}s`)
+  const doc = await global.artyouDb[model].findOne(query).lean();
+  console.log(`FOUND | ${model} | ID: ${doc.id}`)
 
-  res.json(docs)
+  res.json(doc)
 
 });
 

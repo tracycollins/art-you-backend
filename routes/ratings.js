@@ -29,10 +29,10 @@ router.get('/:id', async (req, res) => {
   console.log(`GET ${model} | ID: ${req.params.id}`)
   query.id = req.params.id
 
-  const docs = await global.artyouDb[model].find(query).populate('artwork').populate('user').lean();
-  console.log(`FOUND ${docs.length} ${model}s`)
+  const doc = await global.artyouDb[model].findOne(query).populate({path: 'artwork', populate: { path: 'artist'}}).populate('user').lean();
+  console.log(`FOUND ${model} | ${doc.id}`)
 
-  res.json(docs)
+  res.json(doc)
 
 });
 

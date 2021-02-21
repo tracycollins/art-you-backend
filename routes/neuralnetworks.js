@@ -48,10 +48,10 @@ router.get('/:id', async (req, res) => {
   console.log(`GET NN | ID: ${req.params.id}`)
   query.id = req.params.id
 
-  const docs = await global.artyouDb.NeuralNetwork.find(query).lean();
-  console.log(`FOUND ${docs.length} NNs`)
+  const doc = await global.artyouDb.NeuralNetwork.findOne(query).lean();
+  console.log(`FOUND NN: ${doc.id}`)
 
-  res.json(docs)
+  res.json(doc)
 
 });
 
