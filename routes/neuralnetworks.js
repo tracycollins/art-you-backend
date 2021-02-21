@@ -21,56 +21,56 @@ main()
 })
 .catch((err) => console.error(err))
 
-router.param('networkId', cors(), async (req, res, next, networkId) => {
-  console.log(`NN | REQ | METHOD: ${req.method} | NN ID: ${networkId}`)
+router.param('id', cors(), async (req, res, next, id) => {
+  console.log(`NN | REQ | METHOD: ${req.method} | NN ID: ${id}`)
   try{
-    const networkDoc = await global.artyouDb.NeuralNetwork.findOne({networkId: networkId});
+    const networkDoc = await global.artyouDb.NeuralNetwork.findOne({id: id});
     if (networkDoc){
-      console.log(`NN | FOUND ${networkDoc.networkId}`)
-      req.networkId = networkId;
+      console.log(`NN | FOUND ${networkDoc.id}`)
+      req.id = id;
       req.networkDoc = networkDoc;
       next();
     }
     else{
-      next(new Error(`NN | NN ${networkId} NOT FOUND`))
+      next(new Error(`NN | NN ${id} NOT FOUND`))
     }
   }
   catch(err){
-    console.error(`NN | ${req.method} | NN ID: ${networkId} | ERROR: ${err}`)
+    console.error(`NN | ${req.method} | NN ID: ${id} | ERROR: ${err}`)
     next(err)
   }
   // next()
 })
 
-router.get('/:networkId', cors(), async (req, res, next) => {
+router.get('/:id', cors(), async (req, res, next) => {
   if (req.networkDoc){
     res.json(req.networkDoc)
   }
   else{
-    res.status(404).send(`GET | NN ${req.networkId} NOT FOUND`)
+    res.status(404).send(`GET | NN ${req.id} NOT FOUND`)
   }
 });
 
-router.post('/:networkId', cors(), async (req, res, next) => {
-  console.log(`NN | POST | ${req.body.networkId}`)
+router.post('/:id', cors(), async (req, res, next) => {
+  console.log(`NN | POST | ${req.body.id}`)
   try{
     const newNnDoc = new global.artyouDb.NeuralNetwork(req.body)
     await newNnDoc.save()
     res.json(newNnDoc)
   }
   catch(err){
-    console.error(`NN | POST | ${req.body.networkId} ERROR: ${err}`)
-    res.status(400).send(`POST ERROR | NN ID: ${req.body.networkId} | ERROR: ${err}`)
+    console.error(`NN | POST | ${req.body.id} ERROR: ${err}`)
+    res.status(400).send(`POST ERROR | NN ID: ${req.body.id} | ERROR: ${err}`)
   }
 });
 
-router.patch('/:networkId', cors(), async (req, res, next) => {
+router.patch('/:id', cors(), async (req, res, next) => {
 
   try{
-    console.log(`NN | PATCH | ${req.body.networkId}`)
+    console.log(`NN | PATCH | ${req.body.id}`)
 
     if (req.networkDoc){
-      console.log(`NN | PATCH | UPDATING ${req.body.networkId} ...`)
+      console.log(`NN | PATCH | UPDATING ${req.body.id} ...`)
       for (const key of Object.keys(req.body)){
         req.networkDoc[key] = req.body[key]
         req.networkDoc.markModified(key)
@@ -79,29 +79,29 @@ router.patch('/:networkId', cors(), async (req, res, next) => {
       res.json(req.networkDoc)
     }
     else{
-      console.log(`NN | PATCH | CREATING ${req.body.networkId} ...`)
+      console.log(`NN | PATCH | CREATING ${req.body.id} ...`)
       const newNnDoc = new global.artyouDb.NeuralNetwork(req.body)
       await newNnDoc.save()
       res.json(newNnDoc)
     }
   }
   catch(err){
-    console.error(`NN | PATCH | ${req.body.networkId} ERROR: ${err}`)
-    res.status(400).send(`PATCH ERROR | NN ID: ${req.body.networkId} | ERROR: ${err}`)
+    console.error(`NN | PATCH | ${req.body.id} ERROR: ${err}`)
+    res.status(400).send(`PATCH ERROR | NN ID: ${req.body.id} | ERROR: ${err}`)
   }
     
 });
 
 router.get('/', cors(), async (req, res, next) => {
   try{
-    console.log(`req.networkId: ${req.networkId}`)
+    console.log(`req.id: ${req.id}`)
     const nnArray = await global.artyouDb.NeuralNetwork.find({}).lean();
     console.log(`FOUND ${nnArray.length} NNs`)
     res.json(nnArray)
   }
   catch(err){
     console.error(`NN | GET | ERROR: ${err}`)
-    res.status(400).send(`PATCH ERROR | NN ID: ${req.body.networkId} | ERROR: ${err}`)
+    res.status(400).send(`PATCH ERROR | NN ID: ${req.body.id} | ERROR: ${err}`)
   }
 });
 
@@ -115,7 +115,7 @@ router.get('/', cors(), async (req, res, next) => {
 // })
 // .get(async (req, res, next) => {
 
-//   if (req.networkId !== undefined && req.networkDoc !== undefined){
+//   if (req.id !== undefined && req.networkDoc !== undefined){
 //     res.json(req.networkDoc.toObject())
 //   }
 
@@ -128,14 +128,14 @@ router.get('/', cors(), async (req, res, next) => {
 // .put(async (req, res, next) => {
 // // just an example of maybe updating the user
 
-//   if (req.networkId === undefined){
+//   if (req.id === undefined){
 //     res.status(400).send(`PUT | NN ID UNDEFINED`)
 //   }
 
 //   console.log(`NN | PUT PARAMS:`, req.params)
 
 //   if (req.networkDoc === undefined){
-//     res.status(404).send(`PUT | NN ${req.networkId} NOT FOUND`)
+//     res.status(404).send(`PUT | NN ${req.id} NOT FOUND`)
 //   }
 
 //   next();

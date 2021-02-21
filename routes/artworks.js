@@ -21,10 +21,20 @@ main()
 })
 .catch((err) => console.error(err))
 
-router.get('/', cors(), async (req, res) => {
-  const artworkArray = await global.artyouDb.Artwork.find({}).lean();
-  console.log(`FOUND ${artworkArray.length} ARTWORKS`)
-  res.json(artworkArray)
+router.get('/:id', cors(), async (req, res) => {
+
+  const query = {}
+
+  if (req.params.id){
+    console.log(`GET ARTWORK | ID: ${req.params.id}`)
+    query.id = req.params.id
+  }
+
+  const docs = await global.artyouDb.Artist.find(query).lean();
+  console.log(`FOUND ${docs.length} ARTWORK`)
+
+  res.json(docs)
+  
 });
 
 module.exports = router;

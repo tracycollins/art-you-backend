@@ -1,6 +1,6 @@
 const express = require('express');
-const router = express.Router();
 const cors = require('cors');
+const router = express.Router();
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
@@ -10,14 +10,14 @@ const main = async () => {
     global.dbConnection = await global.artyouDb.connect();
   }
   catch(err){
-    console.error(`AYBE | ROUTE: ARTISTS | *** DB CONNECT ERROR: ${err}`)
+    console.error(`AYBE | ROUTE: RECOMMENDATIONS | *** DB CONNECT ERROR: ${err}`)
     throw err;
   }
 }
 
 main()
 .then(() => {
-  console.log(`AYBE | ROUTE: ARTISTS | MAIN OK`)
+  console.log(`AYBE | ROUTE: RECOMMENDATIONS | MAIN OK`)
 })
 .catch((err) => console.error(err))
 
@@ -26,12 +26,12 @@ router.get('/:id', cors(), async (req, res) => {
   const query = {}
 
   if (req.params.id){
-    console.log(`GET ARTIST | ID: ${req.params.id}`)
+    console.log(`GET RECOMMENDATION | ID: ${req.params.id}`)
     query.id = req.params.id
   }
 
   const docs = await global.artyouDb.Artist.find(query).lean();
-  console.log(`FOUND ${docs.length} ARTISTS`)
+  console.log(`FOUND ${docs.length} RECOMMENDATIONS`)
 
   res.json(docs)
 
