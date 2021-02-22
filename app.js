@@ -17,6 +17,12 @@ const { join } = require("path");
 const createError = require('http-errors');
 const express = require('express');
 const cors = require('cors');
+
+const bodyParser = require('body-parser')
+// const multer = require('multer') // v1.0.5
+// const upload = multer() // for parsing multipart/form-data
+
+
 // const jwt = require('express-jwt');
 // const jwks = require('jwks-rsa');
 
@@ -64,6 +70,12 @@ const config = {
 };
 
 const app = express();
+
+app.use(bodyParser.json()) // for parsing application/json
+app.use(bodyParser.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
+
 app.use(auth(config));
 
 var allowedOrigins = [
@@ -134,8 +146,8 @@ function count(req, res, next) {
 }
 
 app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(count);
