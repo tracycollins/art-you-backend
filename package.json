@@ -13,9 +13,9 @@
     "@auth0/auth0-spa-js": "^1.13.6",
     "@aws-sdk/client-s3": "^3.6.0",
     "@aws-sdk/node-http-handler": "^3.5.0",
-    "@aws-sdk/types": "^3.3.0",
+    "@aws-sdk/types": "^3.4.1",
     "@tensorflow/tfjs-node": "^3.1.0",
-    "@threeceelabs/mongoose-artyou": "^1.1.8",
+    "@threeceelabs/mongoose-artyou": "^1.1.10",
     "async": "^3.2.0",
     "aws-sdk": "^2.849.0",
     "body-parser": "^1.19.0",
@@ -49,13 +49,13 @@
     "pug": "^3.0.0",
     "s3": "^4.4.0",
     "text-table": "^0.2.0",
-    "ts-node": "^9.0.0"
+    "ts-node": "^9.1.1"
   },
   "devDependencies": {
-    "@types/node": "^14.0.23",
+    "@types/node": "^14.14.31",
     "faker": "^5.4.0",
     "should": "^13.2.3",
-    "typescript": "^4.0.2"
+    "typescript": "^4.1.5"
   },
   "description": "art-you backend in node.js",
   "main": "app.js",
