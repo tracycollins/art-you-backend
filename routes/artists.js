@@ -6,21 +6,21 @@ const model = 'Artist';
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
 
-const main = async () => {
-  try{
-    global.dbConnection = await global.artyouDb.connect();
-  }
-  catch(err){
-    console.error(`AYBE | ROUTE: ${model} | *** DB CONNECT ERROR: ${err}`)
-    throw err;
-  }
-}
+// const main = async () => {
+//   try{
+//     global.dbConnection = await global.artyouDb.connect();
+//   }
+//   catch(err){
+//     console.error(`AYBE | ROUTE: ${model} | *** DB CONNECT ERROR: ${err}`)
+//     throw err;
+//   }
+// }
 
-main()
-.then(() => {
-  console.log(`AYBE | ROUTE: ${model} | MAIN OK`)
-})
-.catch((err) => console.error(err))
+// main()
+// .then(() => {
+//   console.log(`AYBE | ROUTE: ${model} | MAIN OK`)
+// })
+// .catch((err) => console.error(err))
 
 router.get('/:id', async (req, res) => {
 

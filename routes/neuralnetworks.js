@@ -1,24 +1,24 @@
 const express = require('express');
 const router = express.Router();
 
-global.artyouDb = require("@threeceelabs/mongoose-artyou");
-global.dbConnection = false;
+// global.artyouDb = require("@threeceelabs/mongoose-artyou");
+// global.dbConnection = false;
 
-const main = async () => {
-  try{
-    global.dbConnection = await global.artyouDb.connect();
-  }
-  catch(err){
-    console.error(`AYBE | ROUTE: NNs | *** DB CONNECT ERROR: ${err}`)
-    throw err;
-  }
-}
+// const main = async () => {
+//   try{
+//     global.dbConnection = await global.artyouDb.connect();
+//   }
+//   catch(err){
+//     console.error(`AYBE | ROUTE: NNs | *** DB CONNECT ERROR: ${err}`)
+//     throw err;
+//   }
+// }
 
-main()
-.then(() => {
-  console.log(`AYBE | ROUTE: NNs | MAIN OK`)
-})
-.catch((err) => console.error(err))
+// main()
+// .then(() => {
+//   console.log(`AYBE | ROUTE: NNs | MAIN OK`)
+// })
+// .catch((err) => console.error(err))
 
 router.param('id', async (req, res, next, id) => {
   console.log(`NN | REQ | METHOD: ${req.method} | NN ID: ${id}`)

@@ -18,21 +18,27 @@ const createError = require('http-errors');
 const express = require('express');
 const cors = require('cors');
 
-const bodyParser = require('body-parser')
-// const multer = require('multer') // v1.0.5
-// const upload = multer() // for parsing multipart/form-data
-
-
 // const jwt = require('express-jwt');
 // const jwks = require('jwks-rsa');
 
-const { auth } = require('express-openid-connect');
+const { auth, requiresAuth } = require('express-openid-connect');
 
 // const session = require('express-session');
 const cookieSession = require('cookie-session');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+
+global.artyouDb = require("@threeceelabs/mongoose-artyou");
+global.dbConnection = false;
+
+global.artyouDb.connect()
+.then((db) => {
+  global.dbConnection = db;
+})
+.catch((err) => {
+  console.err(`APP | *** MONGOOSE ERROR: ${err}`);
+})
 
 // const indexRouter = require('./routes/index');
 const loginRouter = require('./routes/login');
@@ -71,10 +77,8 @@ const config = {
 
 const app = express();
 
-app.use(bodyParser.json()) // for parsing application/json
-app.use(bodyParser.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.use(auth(config));
 
@@ -122,13 +126,6 @@ app.get('/authorized', function (req, res) {
     res.send('Secured Resource');
 });
 
-
-// app.use(session({
-//   resave: false, // don't save session if unmodified
-//   saveUninitialized: false, // don't create session until something stored
-//   secret: 'keyboard cat'
-// }));
-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -146,8 +143,6 @@ function count(req, res, next) {
 }
 
 app.use(logger('dev'));
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(count);
