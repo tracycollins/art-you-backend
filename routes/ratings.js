@@ -110,7 +110,16 @@ router.post('/create', async (req, res) => {
     const doc = new global.artyouDb[model](ratingObj);
 
     await doc.save();
+
+    // add new rating to artwork.ratings array
+    const updateRatingsSet = {
+      $addToSet: { ratings: doc }
+    }
+    
+    await global.artyouDb.Artwork.findOneAndUpdate({id: doc.artwork.id}, {updateRatingsSet}, findOneAndUpdateOptions)
+
     const populatedDoc = await doc.populate('user').populate('artwork').execPopulate();
+
     console.log(`CREATED | ${model} | ID: ${populatedDoc.id} | USER: ${populatedDoc.user.id} | ARTWORK: ${populatedDoc.artwork.id}`)
     console.log({populatedDoc})
 
