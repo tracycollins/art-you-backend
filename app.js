@@ -17,13 +17,13 @@ const { join } = require("path");
 const createError = require('http-errors');
 const express = require('express');
 const cors = require('cors');
+const chalk = require("chalk");
 
 // const jwt = require('express-jwt');
 // const jwks = require('jwks-rsa');
 
 const { auth, requiresAuth } = require('express-openid-connect');
 
-// const session = require('express-session');
 const cookieSession = require('cookie-session');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -32,13 +32,9 @@ const logger = require('morgan');
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
 
-global.artyouDb.connect()
-.then((db) => {
-  global.dbConnection = db;
-})
-.catch((err) => {
-  console.err(`APP | *** MONGOOSE ERROR: ${err}`);
-})
+(async () => {
+  global.dbConnection = await global.artyouDb.connect()
+})();
 
 // const indexRouter = require('./routes/index');
 const loginRouter = require('./routes/login');
@@ -50,11 +46,39 @@ const usersRouter = require('./routes/users');
 const networkinputsRouter = require('./routes/networkinputs');
 const neuralnetworksRouter = require('./routes/neuralnetworks');
 
+const S3Client = require("./lib/awsS3Client.js");
+const s3c = new S3Client("S3C");
+
+s3c.on("ready", async (appName) => {
+  console.log(`S3C | READY | APP NAME: ${appName}`)
+})
+
+s3c.on("connect", async (appName) => {
+  console.log(`S3C | DB CONNECTED | APP NAME: ${appName}`)
+
+  const bucketName = "art-you";
+  const keyName = "hello_world.txt";
+  const body = "Hello World!"
+
+  const putParams = { Bucket: bucketName, Key: keyName, Body: body };
+  const getParams = { Bucket: bucketName, Key: keyName };
+
+  await s3c.putObject(putParams)
+  const data = await s3c.getObject(getParams)
+
+  if (data === body){
+    console.log(chalk.green(`${appName} | PUT/GET TEST | DATA: ${data}`))
+  }
+  else{
+    console.log(chalk.red.bold(`${appName} | *** PUT/GET TEST ERROR | DATA: ${data} | EXPECTED: ${body}`))
+  }
+})
+
 const NeuralNetworkTools = require("./lib/nnTools.js");
 const nnt = new NeuralNetworkTools("NNT");
 
 nnt.on("ready", async (appName) => {
-  console.log(`NNT READY | APP NAME: ${appName}`)
+  console.log(`NNT | READY | APP NAME: ${appName}`)
 })
 
 nnt.on("connect", async (appName) => {
@@ -126,20 +150,14 @@ app.get('/authorized', function (req, res) {
     res.send('Secured Resource');
 });
 
-// view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
-// add req.session cookie support
 app.use(cookieSession({ secret: 'manny is cool' }));
 
-// do something with the session
-
-// custom middleware
 function count(req, res, next) {
   req.session.count = (req.session.count || 0) + 1
   next();
-  // res.send('viewed ' + req.session.count + ' times\n')
 }
 
 app.use(logger('dev'));
@@ -161,18 +179,10 @@ app.get("/authorize", (req, res) => {
   res.send(200);
 });
 
-// app.use('/', indexRouter);
-
 app.get('/', (req, res) => {
   console.log(`req.oidc.isAuthenticated: ${req.oidc.isAuthenticated()}`)
   res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
 });
-
-// app.get('/login', loginRouter);
-// app.get('/artists', artistsRouter);
-// app.get('/artworks', artworksRouter);
-// app.get('/users', usersRouter);
-// app.get('/neuralnetworks', neuralnetworksRouter);
 
 app.get("/callback", (req, res) => {
   console.info(`GET /callback`);
@@ -190,22 +200,22 @@ app.get("/auth_config.json", (req, res) => {
   res.sendFile(join(__dirname, "auth_config.json"));
 });
 
-app.head("/simple-cors", (req, res) => {
-  console.info("HEAD /simple-cors");
-  res.sendStatus(204);
-});
-app.get("/simple-cors", (req, res) => {
-  console.info("GET /simple-cors");
-  res.json({
-    text: "Simple CORS requests are working. [GET]"
-  });
-});
-app.post("/simple-cors", (req, res) => {
-  console.info("POST /simple-cors");
-  res.json({
-    text: "Simple CORS requests are working. [POST]"
-  });
-});
+// app.head("/simple-cors", (req, res) => {
+//   console.info("HEAD /simple-cors");
+//   res.sendStatus(204);
+// });
+// app.get("/simple-cors", (req, res) => {
+//   console.info("GET /simple-cors");
+//   res.json({
+//     text: "Simple CORS requests are working. [GET]"
+//   });
+// });
+// app.post("/simple-cors", (req, res) => {
+//   console.info("POST /simple-cors");
+//   res.json({
+//     text: "Simple CORS requests are working. [POST]"
+//   });
+// });
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

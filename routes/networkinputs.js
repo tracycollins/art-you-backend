@@ -3,39 +3,6 @@ const router = express.Router();
 
 const model = 'NetworkInput';
 
-global.artyouDb = require("@threeceelabs/mongoose-artyou");
-global.dbConnection = false;
-
-const main = async () => {
-  try{
-    global.dbConnection = await global.artyouDb.connect();
-  }
-  catch(err){
-    console.error(`AYBE | ROUTE: ${model} | *** DB CONNECT ERROR: ${err}`)
-    throw err;
-  }
-}
-
-main()
-.then(() => {
-  console.log(`AYBE | ROUTE: ${model} | MAIN OK`)
-})
-.catch((err) => console.error(err))
-
-router.get('/:id', async (req, res) => {
-
-  const query = {}
-
-  console.log(`GET ${model} | ID: ${req.params.id}`)
-  query.id = req.params.id
-
-  const doc = await global.artyouDb[model].findOne(query).lean();
-  console.log(`FOUND | ${model} | ID: ${doc.id}`)
-
-  res.json(doc)
-
-});
-
 router.get('/', async (req, res) => {
   try{
     console.log(`${model} | GET`)
