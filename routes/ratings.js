@@ -110,11 +110,11 @@ router.post('/create', async (req, res) => {
     const doc = new global.artyouDb[model](ratingObj);
 
     await doc.save();
+    const populatedDoc = await doc.populate('user').populate('artwork').execPopulate();
+    console.log(`CREATED | ${model} | ID: ${populatedDoc.id} | USER: ${populatedDoc.user.id} | ARTWORK: ${populatedDoc.artwork.id}`)
+    console.log({populatedDoc})
 
-    console.log(`CREATED | ${model} | ID: ${doc.id}`)
-    console.log({doc})
-
-    res.json(doc)
+    res.json(populatedDoc)
   }
   catch(err){
     console.error(`POST | CREATE | ${model} | USER: ${req.body.user.sub} | ARTWORK: ${req.body.artwork.id} | ERROR: ${err}`)
