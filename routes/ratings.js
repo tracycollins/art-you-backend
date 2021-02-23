@@ -1,46 +1,11 @@
+const model = 'Rating';
 const express = require('express');
 const router = express.Router();
-
-const model = 'Rating';
-
-// global.artyouDb = require("@threeceelabs/mongoose-artyou");
-// global.dbConnection = false;
-
-// const main = async () => {
-//   try{
-//     global.dbConnection = await global.artyouDb.connect();
-//   }
-//   catch(err){
-//     console.error(`AYBE | ROUTE: ${model} | *** DB CONNECT ERROR: ${err}`)
-//     throw err;
-//   }
-// }
-
-// main()
-// .then(() => {
-//   console.log(`AYBE | ROUTE: ${model} | MAIN OK`)
-// })
-// .catch((err) => console.error(err))
 
 const findOneAndUpdateOptions = {
   new: true,
   upsert: true,
 }
-
-
-  // user: {
-  //   given_name: 'Tracy',
-  //   family_name: 'Collins',
-  //   nickname: 'tc',
-  //   name: 'Tracy Collins',
-  //   picture: 'https://lh3.googleusercontent.com/a-/AOh14GgE1lvIvIzwjIQY-Gkfy71-srtHYdQV684BEe7lQw=s96-c',
-  //   gender: 'male',
-  //   locale: 'en',
-  //   updated_at: '2021-02-22T04:41:08.685Z',
-  //   email: 'tc@threeceemedia.com',
-  //   email_verified: true,
-  //   sub: 'google-oauth2|113998308617095832491'
-  // },
 
 const convertOathUser = async (oathUser) => {
 
@@ -61,7 +26,6 @@ const convertOathUser = async (oathUser) => {
     break;
 
     default:
-
   }
 
   return user;
