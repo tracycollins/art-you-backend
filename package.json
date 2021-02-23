@@ -15,7 +15,7 @@
     "@aws-sdk/node-http-handler": "^3.6.1",
     "@aws-sdk/types": "^3.6.1",
     "@tensorflow/tfjs-node": "^3.1.0",
-    "@threeceelabs/mongoose-artyou": "^1.1.11",
+    "@threeceelabs/mongoose-artyou": "^1.1.14",
     "async": "^3.2.0",
     "aws-sdk": "^2.849.0",
     "body-parser": "^1.19.0",
