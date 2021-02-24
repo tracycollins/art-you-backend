@@ -74,7 +74,7 @@ router.post('/create', async (req, res) => {
 
     const userObj = await convertOathUser(req.body.user)
 
-    console.log(userObj)
+    console.log({userObj})
 
     const dbUser = await global.artyouDb.User.findOneAndUpdate({id: userObj.id}, userObj, findOneAndUpdateOptions)
     let dbArtwork = await global.artyouDb.Artwork.findOne({id: req.body.artwork.id})
@@ -86,8 +86,19 @@ router.post('/create', async (req, res) => {
       rate: parseFloat(req.body.rate)
     }
 
-    const ratingDoc = await global.artyouDb.Rating.findOneAndUpdate({user: dbUser, artwork: dbArtwork}, ratingObj, findOneAndUpdateOptions);
+    // const ratingDoc = await global.artyouDb.Rating.findOneAndUpdate({user: dbUser, artwork: dbArtwork}, ratingObj, findOneAndUpdateOptions);
+    let ratingDoc = await global.artyouDb.Rating.findOne({user: dbUser, artwork: dbArtwork});
 
+    if (!ratingDoc){
+      ratingDoc = new global.artyouDb.Rating(ratingObj)
+      console.log(`NEW | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`)
+    }
+    else{
+      ratingDoc.rate = ratingObj.rate;
+      console.log(`UPDATE | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`)
+    }
+
+    ratingDoc = await ratingDoc.save();
     // ratingDoc = await ratingDoc.save();
     console.log({ratingDoc})
 
@@ -96,16 +107,25 @@ router.post('/create', async (req, res) => {
       $addToSet: { ratings: ratingDoc }
     }
     
-    dbArtwork = await dbArtwork.update({updateRatingsSet})
+    await dbArtwork.update({updateRatingsSet})
+    dbArtwork = await global.artyouDb.Artwork.findOne({id: dbArtwork.id})
+      .populate('image')
+      .populate({path: 'artist', populate: { path: 'image'}})
+      .populate('recommendations')
+      .populate('ratings')
+      .populate('tags')
+      .lean();
+    // const populatedRatingDoc = await ratingDoc.populate('user').populate('artwork').execPopulate();
+    // console.log({populatedRatingDoc})
+
+    // console.log(`CREATED | Rating | ID: ${populatedRatingDoc.id} | USER: ${populatedRatingDoc.user.id} | ARTWORK: ${populatedRatingDoc.artwork.id}`)
+    // console.log({populatedRatingDoc})
+
+    dbArtwork.ratingUser = ratingDoc
     console.log({dbArtwork})
 
-    const populatedRatingDoc = await ratingDoc.populate('user').populate('artwork').execPopulate();
-    console.log({populatedRatingDoc})
-
-    console.log(`CREATED | Rating | ID: ${populatedRatingDoc.id} | USER: ${populatedRatingDoc.user.id} | ARTWORK: ${populatedRatingDoc.artwork.id}`)
-    console.log({populatedRatingDoc})
-
-    res.json(populatedRatingDoc)
+    /// ***** RETURN THE ARTWORK *NOT* THE RATING
+    res.json(dbArtwork)
   }
   catch(err){
     console.error(`POST | CREATE | ${model} | USER: ${req.body.user.sub} | ARTWORK: ${req.body.artwork.id} | ERROR: ${err}`)

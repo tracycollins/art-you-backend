@@ -22,7 +22,7 @@ router.get('/:artworkid/user/:userid', async (req, res) => {
     const ratingDoc = await global.artyouDb.Rating.findOne({user: userDoc, artwork: artworkDoc}).lean()
     const recommendationDoc = await global.artyouDb.Recommendation.findOne({user: userDoc, artwork: artworkDoc}).lean()
 
-    if (userDoc && artworkDoc) {
+    if (artworkDoc) {
 
       if (ratingDoc) {
         artworkDoc.ratingUser = ratingDoc;
