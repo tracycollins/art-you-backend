@@ -9,11 +9,25 @@ const findOneAndUpdateOptions = {
 
 const convertOathUser = async (oathUser) => {
 
+  console.log({oathUser})
+
   const oathType = oathUser.sub.split("|")[0];
   const user = Object.assign({}, oathUser)
 
   switch (oathType) {
     case "google-oauth2":
+      user.id = oathUser.sub
+      user.oauthID = oathUser.sub
+      user.firstName = oathUser.given_name
+      user.lastName = oathUser.family_name
+      user.image = new global.artyouDb.Image({
+        id: oathUser.sub,
+        url: oathUser.picture,
+        title: oathUser.name
+      })
+    break;
+
+    case "twitter":
       user.id = oathUser.sub
       user.oauthID = oathUser.sub
       user.firstName = oathUser.given_name
@@ -56,38 +70,42 @@ router.post('/create', async (req, res) => {
   try{
 
     console.log(req.body)
-    console.log(`${model} | POST | CREATE ${model} | USER: ${req.body.user.sub} | ARTWORK: ${req.body.artwork.id} | RATE: ${req.body.rate}`)
+    console.log(`${model} | POST | CREATE ${model} | USER: ${req.body.user.id || req.body.user.sub} | ARTWORK: ${req.body.artwork.id} | RATE: ${req.body.rate}`)
 
     const userObj = await convertOathUser(req.body.user)
 
     console.log(userObj)
 
     const dbUser = await global.artyouDb.User.findOneAndUpdate({id: userObj.id}, userObj, findOneAndUpdateOptions)
+    let dbArtwork = await global.artyouDb.Artwork.findOne({id: req.body.artwork.id})
 
     const ratingObj = {
-      id: `rating_${Date.now()}`,
+      // id: `rating_${Date.now()}`,
       user: dbUser,
-      artwork: req.body.artwork,
-      rate: req.body.rate
+      artwork: dbArtwork,
+      rate: parseFloat(req.body.rate)
     }
 
-    const doc = new global.artyouDb[model](ratingObj);
+    const ratingDoc = await global.artyouDb.Rating.findOneAndUpdate({user: dbUser, artwork: dbArtwork}, ratingObj, findOneAndUpdateOptions);
 
-    await doc.save();
+    // ratingDoc = await ratingDoc.save();
+    console.log({ratingDoc})
 
     // add new rating to artwork.ratings array
     const updateRatingsSet = {
-      $addToSet: { ratings: doc }
+      $addToSet: { ratings: ratingDoc }
     }
     
-    await global.artyouDb.Artwork.findOneAndUpdate({id: doc.artwork.id}, {updateRatingsSet}, findOneAndUpdateOptions)
+    dbArtwork = await dbArtwork.update({updateRatingsSet})
+    console.log({dbArtwork})
 
-    const populatedDoc = await doc.populate('user').populate('artwork').execPopulate();
+    const populatedRatingDoc = await ratingDoc.populate('user').populate('artwork').execPopulate();
+    console.log({populatedRatingDoc})
 
-    console.log(`CREATED | ${model} | ID: ${populatedDoc.id} | USER: ${populatedDoc.user.id} | ARTWORK: ${populatedDoc.artwork.id}`)
-    console.log({populatedDoc})
+    console.log(`CREATED | Rating | ID: ${populatedRatingDoc.id} | USER: ${populatedRatingDoc.user.id} | ARTWORK: ${populatedRatingDoc.artwork.id}`)
+    console.log({populatedRatingDoc})
 
-    res.json(populatedDoc)
+    res.json(populatedRatingDoc)
   }
   catch(err){
     console.error(`POST | CREATE | ${model} | USER: ${req.body.user.sub} | ARTWORK: ${req.body.artwork.id} | ERROR: ${err}`)
