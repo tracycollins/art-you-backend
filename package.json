@@ -48,6 +48,7 @@
     "multer-s3": "^2.9.0",
     "object.defaults": "^1.1.0",
     "pug": "^3.0.0",
+    "random-int": "^2.0.1",
     "s3": "^4.4.0",
     "text-table": "^0.2.0",
     "ts-node": "^9.1.1"
