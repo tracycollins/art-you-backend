@@ -17,7 +17,7 @@
     "@tensorflow/tfjs-node": "^3.1.0",
     "@threeceelabs/mongoose-artyou": "^1.1.16",
     "async": "^3.2.0",
-    "aws-sdk": "^2.850.0",
+    "aws-sdk": "^2.851.0",
     "body-parser": "^1.19.0",
     "chalk": "^4.1.0",
     "clean-css": "^5.1.0",
