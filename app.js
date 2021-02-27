@@ -118,7 +118,7 @@ app.use(
   cors({
     // credentials: true,
     origin: function (origin, callback) {
-      console.log({ origin });
+      // console.log({ origin });
       // allow requests with no origin
       // (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
@@ -129,7 +129,7 @@ app.use(
         console.log(`CORS FAIL`);
         return callback(new Error(msg), false);
       }
-      console.log(`CORS OK`);
+      // console.log(`CORS OK`);
       return callback(null, true);
     },
   })

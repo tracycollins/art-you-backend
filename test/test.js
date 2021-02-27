@@ -5,6 +5,7 @@ const faker = require("faker");
 const moment = require("moment");
 const Client = require("../lib/awsS3Client.js");
 
+const ImageTools = require("../lib/imageTools.js");
 const NeuralNetworkTools = require("../lib/nnTools.js");
 let nnt;
 
@@ -19,19 +20,10 @@ let nnt;
 //   //   await nnt.runNetworkTest();
 // });
 
-let client;
-
 describe("s3", function () {
+  let client;
   before(async function () {
     client = new Client();
-    nnt = new NeuralNetworkTools("NNT");
-
-    nnt.on("ready", async (appName) => {
-      console.log(`NNT | READY | APP NAME: ${appName}`);
-      await nnt.createInputSet();
-      console.log(`NNT | >>> START NETWORK TEST`);
-      //   await nnt.runNetworkTest();
-    });
   });
 
   after(async function () {});
@@ -61,4 +53,55 @@ describe("s3", function () {
       data.should.equal(body);
     });
   });
+});
+
+const imageDetectTypes = ["face", "label", "text"];
+
+describe("image", function () {
+  before(async function () {
+    imt = new ImageTools("IMT");
+    imt.on("ready", async (appName) => {
+      console.log(`IMT | READY | APP NAME: ${appName}`);
+    });
+    return;
+  });
+
+  after(async function () {
+    return;
+  });
+
+  describe("analyzeImage", async function () {
+    it("label detect", async function () {
+      this.timeout(15000);
+      const results = await imt.analyzeImage({
+        artist: "threecee",
+        imageFile: "tracyCollins_noWar.jpg",
+      });
+      console.log({ results });
+      // const results = await imt.analyzeImage({
+      //   artist: "threecee",
+      //   imageFile: "tracyCollins_noWar.jpg",
+      // });
+
+      // console.log({ results });
+
+      // for (detectType of imageDetectTypes) {
+      //   const detectTypeParam = `${detectType}Detection`;
+      //   const results = await imt.analyzeImage({
+      //     detectType: detectTypeParam,
+      //     imageUrl: "/Volumes/RAID1/projects/art-you-backend/test/test.jpg",
+      //   });
+      //   console.log(results);
+      //   const annotationsKey = `${detectType}Annotations`;
+      //   results.analysis[annotationsKey].length.should.greaterThan(0);
+      //   for (annotation of results.analysis[annotationsKey]) {
+      //     console.log({ annotation });
+      //   }
+      // }
+      return;
+    });
+    return;
+  });
+
+  return;
 });
