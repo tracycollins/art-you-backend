@@ -7,7 +7,7 @@ const router = express.Router();
 router.get("/:artworkid/user/:userid", async (req, res) => {
   try {
     console.log(
-      `${model} | GET ARWORK BY ID ${req.params.artworkid} | POP RATING/REC BY USER ID: ${req.params.userid}`
+      `${model} | GET ARTWORK BY ID ${req.params.artworkid} | POP RATING/REC BY USER ID: ${req.params.userid}`
     );
 
     const userDoc = await global.artyouDb.User.findOne({
@@ -18,9 +18,9 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
     })
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
-      .populate("recommendations")
-      .populate("ratings")
-      .populate("tags")
+      .populate({ path: "ratings", populate: { path: "user" } })
+      .populate({ path: "recommendations", populate: { path: "user" } })
+      .populate({ path: "tags", populate: { path: "user" } })
       .lean();
 
     const ratingDoc = await global.artyouDb.Rating.findOne({
@@ -67,9 +67,9 @@ router.get("/user/:userid", async (req, res) => {
     const artworkDocs = await global.artyouDb.Artwork.find({})
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
-      .populate("recommendations")
-      .populate("ratings")
-      .populate("tags")
+      .populate({ path: "ratings", populate: { path: "user" } })
+      .populate({ path: "recommendations", populate: { path: "user" } })
+      .populate({ path: "tags", populate: { path: "user" } })
       .lean();
 
     // const ratingDocs = await global.artyouDb.Rating.find({user: userDoc}).lean()
@@ -114,9 +114,9 @@ router.get("/:id", async (req, res) => {
     .findOne(query)
     .populate("image")
     .populate({ path: "artist", populate: { path: "image" } })
-    .populate("recommendations")
-    .populate("ratings")
-    .populate("tags")
+    .populate({ path: "ratings", populate: { path: "user" } })
+    .populate({ path: "recommendations", populate: { path: "user" } })
+    .populate({ path: "tags", populate: { path: "user" } })
     .lean();
 
   console.log(
@@ -129,20 +129,21 @@ router.get("/:id", async (req, res) => {
 // get artworks by artist
 router.get("/artist/:artistid", async (req, res) => {
   try {
-    console.log(`${model} | GET ARWORK BY ARTIST ${req.params.artistid}`);
+    console.log(`${model} | GET ARTWORK BY ARTIST ${req.params.artistid}`);
 
     const artistDoc = await global.artyouDb[model].findOne({
       id: req.params.artistid,
     });
 
     if (artistDoc) {
-      const docs = await global.artyouDb[model]
-        .find({ artist: req.params.artistid })
+      const docs = await global.artyouDb.Artwork.find({
+        artist: req.params.artistid,
+      })
         .populate("image")
         .populate({ path: "artist", populate: { path: "image" } })
-        .populate("recommendations")
-        .populate("ratings")
-        .populate("tags")
+        .populate({ path: "ratings", populate: { path: "user" } })
+        .populate({ path: "recommendations", populate: { path: "user" } })
+        .populate({ path: "tags", populate: { path: "user" } })
         .lean();
 
       console.log(`FOUND ${docs.length} ${model}s`);
@@ -165,9 +166,9 @@ router.get("/", async (req, res) => {
       .find({})
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
-      .populate("recommendations")
-      .populate("ratings")
-      .populate("tags")
+      .populate({ path: "ratings", populate: { path: "user" } })
+      .populate({ path: "recommendations", populate: { path: "user" } })
+      .populate({ path: "tags", populate: { path: "user" } })
       .lean();
 
     console.log(`FOUND ${docs.length} ${model}s`);
