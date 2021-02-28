@@ -57,7 +57,7 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
 router.get("/user/:userid", async (req, res) => {
   try {
     console.log(
-      `${model} | GET ARWORKS | POP RATING/REC BY USER ID: ${req.params.userid}`
+      `${model} | GET ARTWORKS | POP RATING/REC BY USER ID: ${req.params.userid}`
     );
 
     const userDoc = await global.artyouDb.User.findOne({
@@ -80,15 +80,17 @@ router.get("/user/:userid", async (req, res) => {
     for (const artworkDoc of artworkDocs) {
       // console.log({artworkDoc})
 
-      for (const rating of artworkDoc.ratings) {
-        if (rating.user.id === userDoc.id) {
-          artworkDoc.ratingUser = rating;
+      if (userDoc) {
+        for (const rating of artworkDoc.ratings) {
+          if (rating.user.id === userDoc.id) {
+            artworkDoc.ratingUser = rating;
+          }
         }
-      }
 
-      for (const rec of artworkDoc.recommendations) {
-        if (rec.user.id === userDoc.id) {
-          artworkDoc.recommendationUser = rec;
+        for (const rec of artworkDoc.recommendations) {
+          if (rec.user.id === userDoc.id) {
+            artworkDoc.recommendationUser = rec;
+          }
         }
       }
 
