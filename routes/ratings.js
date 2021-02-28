@@ -140,8 +140,6 @@ router.post("/create", async (req, res) => {
       .populate("ratings")
       .populate("tags");
 
-    dbArtwork.ratingUser = ratingDoc;
-
     dbArtwork.ratingAverage = 0;
     for (const rating of dbArtwork.ratings) {
       dbArtwork.ratingAverage += rating.rate;
@@ -160,7 +158,10 @@ router.post("/create", async (req, res) => {
         ` | RECS: ${dbArtwork.recommendations.length}`
     );
 
-    res.json(dbArtwork.toObject());
+    const dbArtworkObj = dbArtwork.toObject();
+    dbArtworkObj.ratingUser = ratingDoc;
+
+    res.json(dbArtworkObj);
     /// ***** RETURN THE ARTWORK *NOT* THE RATING
   } catch (err) {
     console.error(
