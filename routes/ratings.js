@@ -19,6 +19,19 @@ const convertOathUser = async (oathUser) => {
       user.id = oathUser.sub;
       user.oauthID = oathUser.sub;
       user.name = oathUser.name;
+      user.email = oathUser.email;
+      user.image = new global.artyouDb.Image({
+        id: oathUser.sub,
+        url: oathUser.picture,
+        title: oathUser.name,
+      });
+      break;
+
+    case "github":
+      user.id = oathUser.sub;
+      user.oauthID = oathUser.sub;
+      user.name = oathUser.name;
+      user.email = oathUser.email;
       user.image = new global.artyouDb.Image({
         id: oathUser.sub,
         url: oathUser.picture,
@@ -31,6 +44,7 @@ const convertOathUser = async (oathUser) => {
       user.oauthID = oathUser.sub;
       user.firstName = oathUser.given_name;
       user.lastName = oathUser.family_name;
+      user.email = oathUser.email;
       user.image = new global.artyouDb.Image({
         id: oathUser.sub,
         url: oathUser.picture,
@@ -43,6 +57,7 @@ const convertOathUser = async (oathUser) => {
       user.oauthID = oathUser.sub;
       user.firstName = oathUser.given_name;
       user.lastName = oathUser.family_name;
+      user.email = oathUser.email;
       user.image = new global.artyouDb.Image({
         id: oathUser.sub,
         url: oathUser.picture,
