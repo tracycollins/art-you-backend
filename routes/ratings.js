@@ -84,7 +84,7 @@ router.post("/create", async (req, res) => {
       findOneAndUpdateOptions
     );
 
-    let dbArtwork = await global.artyouDb.Artwork.findOne({
+    const dbArtwork = await global.artyouDb.Artwork.findOne({
       id: req.body.artwork.id,
     })
       .populate("image")
@@ -116,13 +116,11 @@ router.post("/create", async (req, res) => {
       );
     }
 
-    ratingDoc = await ratingDoc.save();
+    await ratingDoc.save();
 
     console.log(
       `SAVED | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
     );
-
-    dbArtwork.ratings.push(ratingDoc);
 
     const ratingsHash = {};
 
@@ -130,35 +128,42 @@ router.post("/create", async (req, res) => {
       ratingsHash[rating.id] = rating;
     }
 
+    ratingsHash[ratingDoc.id] = ratingDoc;
+
     dbArtwork.ratings = Object.values(ratingsHash);
 
     await dbArtwork.save();
-    dbArtwork = await global.artyouDb.Artwork.findOne({ id: dbArtwork.id })
-      .populate("image")
-      .populate({ path: "artist", populate: { path: "image" } })
-      .populate("recommendations")
-      .populate("ratings")
-      .populate("tags");
+    // const dbArtworkObj = await global.artyouDb.Artwork.findOne({
+    //   id: dbArtwork.id,
+    // })
+    //   .populate("image")
+    //   .populate({ path: "artist", populate: { path: "image" } })
+    //   .populate("recommendations")
+    //   .populate("ratings")
+    //   .populate("tags")
+    //   .lean();
 
-    dbArtwork.ratingAverage = 0;
-    for (const rating of dbArtwork.ratings) {
-      dbArtwork.ratingAverage += rating.rate;
-    }
+    // dbArtwork.ratingAverage = 0;
+    // for (const rating of dbArtwork.ratings) {
+    //   dbArtwork.ratingAverage += rating.rate;
+    // }
 
-    await dbArtwork.save();
+    // await dbArtwork.save();
+
+    const dbArtworkObj = dbArtwork.toObject();
 
     console.log(
       `UPDATED | Artwork` +
-        ` | ID: ${dbArtwork.id}` +
-        ` | TITLE: ${dbArtwork.title}` +
-        ` | ARTIST: ${dbArtwork.artist.id}` +
-        ` | TAGS: ${dbArtwork.tags.length}` +
-        ` | RATINGS: ${dbArtwork.ratings.length}` +
-        ` | AVE RATING: ${dbArtwork.ratingAverage}` +
-        ` | RECS: ${dbArtwork.recommendations.length}`
+        ` | ID: ${dbArtworkObj.id}` +
+        ` | TITLE: ${dbArtworkObj.title}` +
+        ` | ARTIST: ${dbArtworkObj.artist.id}` +
+        ` | TAGS: ${dbArtworkObj.tags.length}` +
+        ` | RATINGS: ${dbArtworkObj.ratings.length}` +
+        ` | AVE RATING: ${dbArtworkObj.ratingAverage}` +
+        ` | RECS: ${dbArtworkObj.recommendations.length}`
     );
 
-    const dbArtworkObj = dbArtwork.toObject();
+    // const dbArtworkObj = dbArtwork.toObject();
     dbArtworkObj.ratingUser = ratingDoc;
 
     res.json(dbArtworkObj);
