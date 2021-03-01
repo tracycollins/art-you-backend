@@ -69,7 +69,6 @@ router.post("/create", async (req, res) => {
   //
 
   try {
-    // console.log(req.body);
     console.log(
       `${model} | POST | CREATE ${model} | USER: ${
         req.body.user.id || req.body.user.sub
@@ -86,12 +85,12 @@ router.post("/create", async (req, res) => {
 
     const dbArtwork = await global.artyouDb.Artwork.findOne({
       id: req.body.artwork.id,
-    })
-      .populate("image")
-      .populate({ path: "artist", populate: { path: "image" } })
-      .populate("recommendations")
-      .populate("ratings")
-      .populate("tags");
+    });
+    // .populate("image")
+    // .populate({ path: "artist", populate: { path: "image" } });
+    // .populate("recommendations")
+    // .populate("ratings")
+    // .populate("tags");
 
     const ratingObj = {
       user: dbUser,
@@ -118,56 +117,42 @@ router.post("/create", async (req, res) => {
 
     await ratingDoc.save();
 
+    // const ratings = await global.artyouDb.Rating.find({
+    //   artwork: dbArtwork,
+    // });
+
+    // dbArtwork.ratingAverage =
+    //   ratings.length > 0
+    //     ? ratings.reduce((sum, rating) => sum + rating.rate, 0) / ratings.length
+    //     : 0;
+
+    // await global.artyouDb.Artwork.updateOne(
+    //   { id: dbArtwork.id },
+    //   { $addToSet: { ratings: ratingDoc } }
+    // );
+    dbArtwork.ratings.addToSet(ratingDoc._id);
+    await dbArtwork.save();
+
+    // console.log(
+    //   `FOUND | ${ratings.length} RATINGS AVE: ${dbArtwork.ratingAverage} | ARTWORK: ${dbArtwork.id}`
+    // );
+
     console.log(
       `SAVED | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
     );
 
-    const ratingsHash = {};
+    // console.log(
+    //   `UPDATED | Artwork` +
+    //     ` | ID: ${dbArtwork.id}` +
+    //     ` | TITLE: ${dbArtwork.title}` +
+    //     ` | ARTIST: ${dbArtwork.artist.id}` +
+    //     ` | TAGS: ${dbArtwork.tags.length}` +
+    //     ` | RATINGS: ${dbArtwork.ratings.length}` +
+    //     ` | AVE RATING: ${dbArtwork.ratingAverage}` +
+    //     ` | RECS: ${dbArtwork.recommendations.length}`
+    // );
 
-    for (const rating of dbArtwork.ratings) {
-      ratingsHash[rating.id] = rating;
-    }
-
-    ratingsHash[ratingDoc.id] = ratingDoc;
-
-    dbArtwork.ratings = Object.values(ratingsHash);
-
-    await dbArtwork.save();
-    // const dbArtworkObj = await global.artyouDb.Artwork.findOne({
-    //   id: dbArtwork.id,
-    // })
-    //   .populate("image")
-    //   .populate({ path: "artist", populate: { path: "image" } })
-    //   .populate("recommendations")
-    //   .populate("ratings")
-    //   .populate("tags")
-    //   .lean();
-
-    // dbArtwork.ratingAverage = 0;
-    // for (const rating of dbArtwork.ratings) {
-    //   dbArtwork.ratingAverage += rating.rate;
-    // }
-
-    // await dbArtwork.save();
-
-    const dbArtworkObj = dbArtwork.toObject();
-
-    console.log(
-      `UPDATED | Artwork` +
-        ` | ID: ${dbArtworkObj.id}` +
-        ` | TITLE: ${dbArtworkObj.title}` +
-        ` | ARTIST: ${dbArtworkObj.artist.id}` +
-        ` | TAGS: ${dbArtworkObj.tags.length}` +
-        ` | RATINGS: ${dbArtworkObj.ratings.length}` +
-        ` | AVE RATING: ${dbArtworkObj.ratingAverage}` +
-        ` | RECS: ${dbArtworkObj.recommendations.length}`
-    );
-
-    // const dbArtworkObj = dbArtwork.toObject();
-    dbArtworkObj.ratingUser = ratingDoc;
-
-    res.json(dbArtworkObj);
-    /// ***** RETURN THE ARTWORK *NOT* THE RATING
+    res.json(ratingDoc.toObject());
   } catch (err) {
     console.error(
       `POST | CREATE | ${model} | USER: ${req.body.user.sub} | ARTWORK: ${req.body.artwork.id} | ERROR: ${err}`
