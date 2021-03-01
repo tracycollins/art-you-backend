@@ -183,6 +183,11 @@ app.get("/authorize", (req, res) => {
   res.send(200);
 });
 
+app.get("/auth", (req, res) => {
+  console.info(`GET /auth`);
+  res.send(200);
+});
+
 app.get("/", (req, res) => {
   console.log(`req.oidc.isAuthenticated: ${req.oidc.isAuthenticated()}`);
   console.log(req.oidc);

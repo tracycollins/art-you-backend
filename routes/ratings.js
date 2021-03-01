@@ -51,6 +51,8 @@ const convertOathUser = async (oathUser) => {
       break;
 
     default:
+      console.log(`*** UNKNOWN oathType: ${oathType}`);
+      throw new Error(`*** UNKNOWN oathType: ${oathType} | ${oathUser.sub}`);
   }
 
   return user;
