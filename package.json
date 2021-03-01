@@ -17,7 +17,7 @@
     "@google-cloud/storage": "^5.8.0",
     "@google-cloud/vision": "^2.3.1",
     "@tensorflow/tfjs-node": "^3.2.0",
-    "@threeceelabs/mongoose-artyou": "^1.1.26",
+    "@threeceelabs/mongoose-artyou": "^1.1.27",
     "async": "^3.2.0",
     "aws-sdk": "^2.853.0",
     "body-parser": "^1.19.0",
@@ -55,6 +55,7 @@
     "random-int": "^2.0.1",
     "s3": "^4.4.0",
     "text-table": "^0.2.0",
+    "treeify": "^1.1.0",
     "ts-node": "^9.1.1"
   },
   "devDependencies": {

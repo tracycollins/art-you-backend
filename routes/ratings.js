@@ -11,7 +11,21 @@ const convertOathUser = async (oathUser) => {
   const oathType = oathUser.sub.split("|")[0];
   const user = Object.assign({}, oathUser);
 
+  console.log(`RATING | convertOathUser | oathType: ${oathType}`);
+  console.log({ user });
   switch (oathType) {
+    // email + password
+    case "auth0":
+      user.id = oathUser.sub;
+      user.oauthID = oathUser.sub;
+      user.name = oathUser.name;
+      user.image = new global.artyouDb.Image({
+        id: oathUser.sub,
+        url: oathUser.picture,
+        title: oathUser.name,
+      });
+      break;
+
     case "google-oauth2":
       user.id = oathUser.sub;
       user.oauthID = oathUser.sub;
@@ -74,6 +88,7 @@ router.post("/create", async (req, res) => {
         req.body.user.id || req.body.user.sub
       } | ARTWORK: ${req.body.artwork.id} | RATE: ${req.body.rate}`
     );
+    console.log(req.body.user);
 
     const userObj = await convertOathUser(req.body.user);
 
@@ -83,14 +98,24 @@ router.post("/create", async (req, res) => {
       findOneAndUpdateOptions
     );
 
+    if (!dbUser) {
+      console.log(`*** CREATE ERROR | Rating | USER ID ${dbUser.id} NOT FOUND`);
+      throw new Error(
+        `*** CREATE ERROR | Rating | USER ID ${dbUser.id} NOT FOUND`
+      );
+    }
     const dbArtwork = await global.artyouDb.Artwork.findOne({
       id: req.body.artwork.id,
     });
-    // .populate("image")
-    // .populate({ path: "artist", populate: { path: "image" } });
-    // .populate("recommendations")
-    // .populate("ratings")
-    // .populate("tags");
+
+    if (!dbArtwork) {
+      console.log(
+        `*** CREATE ERROR | Rating | ARTWORK ID ${req.body.artwork.id} NOT FOUND`
+      );
+      throw new Error(
+        `*** CREATE ERROR | Rating | ARTWORK ID ${req.body.artwork.id} NOT FOUND`
+      );
+    }
 
     const ratingObj = {
       user: dbUser,
@@ -117,40 +142,13 @@ router.post("/create", async (req, res) => {
 
     await ratingDoc.save();
 
-    // const ratings = await global.artyouDb.Rating.find({
-    //   artwork: dbArtwork,
-    // });
-
-    // dbArtwork.ratingAverage =
-    //   ratings.length > 0
-    //     ? ratings.reduce((sum, rating) => sum + rating.rate, 0) / ratings.length
-    //     : 0;
-
-    // await global.artyouDb.Artwork.updateOne(
-    //   { id: dbArtwork.id },
-    //   { $addToSet: { ratings: ratingDoc } }
-    // );
+    // eslint-disable-next-line no-underscore-dangle
     dbArtwork.ratings.addToSet(ratingDoc._id);
     await dbArtwork.save();
-
-    // console.log(
-    //   `FOUND | ${ratings.length} RATINGS AVE: ${dbArtwork.ratingAverage} | ARTWORK: ${dbArtwork.id}`
-    // );
 
     console.log(
       `SAVED | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
     );
-
-    // console.log(
-    //   `UPDATED | Artwork` +
-    //     ` | ID: ${dbArtwork.id}` +
-    //     ` | TITLE: ${dbArtwork.title}` +
-    //     ` | ARTIST: ${dbArtwork.artist.id}` +
-    //     ` | TAGS: ${dbArtwork.tags.length}` +
-    //     ` | RATINGS: ${dbArtwork.ratings.length}` +
-    //     ` | AVE RATING: ${dbArtwork.ratingAverage}` +
-    //     ` | RECS: ${dbArtwork.recommendations.length}`
-    // );
 
     res.json(ratingDoc.toObject());
   } catch (err) {

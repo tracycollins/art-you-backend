@@ -20,7 +20,8 @@ const chalk = require("chalk");
 // const jwt = require('express-jwt');
 // const jwks = require('jwks-rsa');
 
-const { auth, requiresAuth } = require("express-openid-connect");
+// const { auth, requiresAuth } = require("express-openid-connect");
+const { auth } = require("express-openid-connect");
 
 const cookieSession = require("cookie-session");
 const path = require("path");
@@ -84,8 +85,8 @@ nnt.on("ready", async (appName) => {
 
 nnt.on("connect", async (appName) => {
   console.log(`NNT | DB CONNECTED | APP NAME: ${appName}`);
-  console.log(`NNT | >>> START NETWORK TEST`);
-  await nnt.runNetworkTest();
+  // console.log(`NNT | >>> START NETWORK TEST`);
+  // await nnt.runNetworkTest();
 });
 
 //==================================================================================
@@ -156,7 +157,7 @@ app.get("/authorized", function (req, res) {
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
 
-app.use(cookieSession({ secret: "manny is cool" }));
+app.use(cookieSession({ secret: process.env.ARTYOU_COOKIE_SESSION_SECRET }));
 
 function count(req, res, next) {
   req.session.count = (req.session.count || 0) + 1;
@@ -184,6 +185,7 @@ app.get("/authorize", (req, res) => {
 
 app.get("/", (req, res) => {
   console.log(`req.oidc.isAuthenticated: ${req.oidc.isAuthenticated()}`);
+  console.log(req.oidc);
   res.send(req.oidc.isAuthenticated() ? "Logged in" : "Logged out");
 });
 

@@ -13,6 +13,8 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
     const userDoc = await global.artyouDb.User.findOne({
       id: req.params.userid,
     }).lean();
+
+    console.log(`${model} | GET ARTWORK BY ID | USER ID: ${userDoc.name}`);
     const artworkDoc = await global.artyouDb.Artwork.findOne({
       id: req.params.artworkid,
     })
@@ -63,6 +65,7 @@ router.get("/user/:userid", async (req, res) => {
     const userDoc = await global.artyouDb.User.findOne({
       id: req.params.userid,
     }).lean();
+    // console.log({ userDoc });
 
     const artworkDocs = await global.artyouDb.Artwork.find({})
       .populate("image")
@@ -82,13 +85,15 @@ router.get("/user/:userid", async (req, res) => {
 
       if (userDoc) {
         for (const rating of artworkDoc.ratings) {
-          if (rating.user.id === userDoc.id) {
+          // console.log({ rating });
+          if (rating.user && rating.user.id === userDoc.id) {
             artworkDoc.ratingUser = rating;
           }
         }
 
         for (const rec of artworkDoc.recommendations) {
-          if (rec.user.id === userDoc.id) {
+          // console.log({ rec });
+          if (rec.user && rec.user.id === userDoc.id) {
             artworkDoc.recommendationUser = rec;
           }
         }
