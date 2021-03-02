@@ -103,5 +103,40 @@ describe("image", function () {
     return;
   });
 
+  describe("transformImage", async function () {
+    it("transform", async function () {
+      this.timeout(15000);
+      const results = await imt.transformImage({
+        imageUrl:
+          "/Volumes/RAID1/projects/art-you-frontend/public/artwork/images/artists/threecee/maskedThreeCee.jpg",
+        imageOutputFile:
+          "/Volumes/RAID1/projects/art-you-frontend/public/artwork/images/artists/threecee/maskedThreeCee-small.jpg",
+      });
+      console.log({ results });
+      // const results = await imt.analyzeImage({
+      //   artist: "threecee",
+      //   imageFile: "tracyCollins_noWar.jpg",
+      // });
+
+      // console.log({ results });
+
+      // for (detectType of imageDetectTypes) {
+      //   const detectTypeParam = `${detectType}Detection`;
+      //   const results = await imt.analyzeImage({
+      //     detectType: detectTypeParam,
+      //     imageUrl: "/Volumes/RAID1/projects/art-you-backend/test/test.jpg",
+      //   });
+      //   console.log(results);
+      //   const annotationsKey = `${detectType}Annotations`;
+      //   results.analysis[annotationsKey].length.should.greaterThan(0);
+      //   for (annotation of results.analysis[annotationsKey]) {
+      //     console.log({ annotation });
+      //   }
+      // }
+      return;
+    });
+    return;
+  });
+
   return;
 });
