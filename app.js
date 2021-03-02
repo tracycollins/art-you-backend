@@ -169,6 +169,12 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(count);
 
+app.post("/authenticated", (req, res) => {
+  console.info(`POST /authenticated`);
+  console.log(req.body);
+  res.send(req.body);
+});
+
 app.use("/login", loginRouter);
 app.use("/artists/", artistsRouter);
 app.use("/artworks", artworksRouter);
@@ -180,12 +186,12 @@ app.use("/neuralnetworks", neuralnetworksRouter);
 
 app.get("/authorize", (req, res) => {
   console.info(`GET /authorize`);
-  res.send(200);
+  res.sendStatus(200);
 });
 
 app.get("/auth", (req, res) => {
   console.info(`GET /auth`);
-  res.send(200);
+  res.sendStatus(200);
 });
 
 app.get("/", (req, res) => {
@@ -196,12 +202,12 @@ app.get("/", (req, res) => {
 
 app.get("/callback", (req, res) => {
   console.info(`GET /callback`);
-  res.send(200);
+  res.sendStatus(200);
 });
 
 app.get("/logout", (req, res) => {
   console.info(`GET /logout`);
-  res.send(200);
+  res.sendStatus(200);
 });
 
 // Endpoint to serve the configuration file
