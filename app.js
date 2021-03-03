@@ -11,6 +11,8 @@ if (process.env.ARTYOU_ENV_VARS_FILE) {
   console.log(`AYBE | !!! ENV CONFIG NOT LOADED`);
 }
 
+const { fork } = require("child_process");
+
 const { join } = require("path");
 const createError = require("http-errors");
 const express = require("express");
@@ -169,10 +171,52 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(count);
 
-app.post("/authenticated", (req, res) => {
-  console.info(`POST /authenticated`);
-  console.log(req.body);
-  res.send(req.body);
+app.post("/authenticated", async (req, res) => {
+  console.info(`POST /authenticated`, req.body);
+  if (req.body && req.body.sub) {
+    let userDoc = await global.artyouDb.User.findOne({
+      oauthID: req.body.sub,
+    });
+
+    if (!userDoc) {
+      console.log(
+        `APP | authenticated | ??? USER NOT FOUND | oauthID: ${req.body.sub}`
+      );
+      userDoc = new global.artyouDb.User({
+        id: req.body.sub,
+        oauthID: req.body.sub,
+        email: req.body.email,
+        name: req.body.name,
+      });
+
+      userDoc.image = new global.artyouDb.Image({
+        url: req.body.picture,
+      });
+
+      await userDoc.save();
+    } else {
+      console.log(
+        `APP | authenticated | USER FOUND | oauthID: ${userDoc.oauthID} | NAME: ${userDoc.name}`
+      );
+    }
+    console.log(`APP | CREATING NN CHILD PROCESS: childNeuralNetwork`);
+
+    const childProcess = fork("./lib/childNeuralNetwork.js");
+    childProcess.send({ op: "UPDATE_RECS", userOauthID: userDoc.oauthID });
+    childProcess.on("message", (message) => {
+      console.log({ message });
+      res.json({
+        status: "OK",
+      });
+    });
+  } else {
+    console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
+    res.json({
+      status: "ERROR",
+      err: "USER AUTHENTICATION SUB UNDEFINED",
+      req: req.body,
+    });
+  }
 });
 
 app.use("/login", loginRouter);
