@@ -17,7 +17,7 @@
     "@google-cloud/storage": "^5.8.0",
     "@google-cloud/vision": "^2.3.1",
     "@tensorflow/tfjs-node": "^3.2.0",
-    "@threeceelabs/mongoose-artyou": "^1.1.28",
+    "@threeceelabs/mongoose-artyou": "^1.1.29",
     "async": "^3.2.0",
     "aws-sdk": "^2.855.0",
     "body-parser": "^1.19.0",
