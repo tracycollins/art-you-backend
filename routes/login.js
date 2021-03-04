@@ -3,6 +3,7 @@ const router = express.Router();
 const cors = require("cors");
 
 const allowlist = [
+  "https://www.art47.org",
   "https://art47.org",
   "http://localhost:3000",
   "http://localhost:3001",
