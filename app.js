@@ -111,6 +111,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(auth(config));
 
 var allowedOrigins = [
+  "https://art47.org",
   "http://localhost:3000",
   "https://threecee-art-you-frontend.herokuapp.com",
 ];

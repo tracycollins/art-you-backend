@@ -1,23 +1,26 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const cors = require('cors');
+const cors = require("cors");
 
-const allowlist = ['http://localhost:3000', 'http://localhost:3001']
+const allowlist = [
+  "https://art47.org",
+  "http://localhost:3000",
+  "http://localhost:3001",
+];
 
 const corsOptionsDelegate = function (req, callback) {
-
   let corsOptions;
 
-  if (allowlist.indexOf(req.header('Origin')) !== -1) {
-    corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
+  if (allowlist.indexOf(req.header("Origin")) !== -1) {
+    corsOptions = { origin: true }; // reflect (enable) the requested origin in the CORS response
   } else {
-    corsOptions = { origin: false } // disable CORS for this request
+    corsOptions = { origin: false }; // disable CORS for this request
   }
 
-  console.log({corsOptions});
+  console.log({ corsOptions });
 
-  callback(null, corsOptions) // callback expects two parameters: error and options
-}
+  callback(null, corsOptions); // callback expects two parameters: error and options
+};
 
 router.head("/", cors(corsOptionsDelegate), (req, res) => {
   console.info("HEAD /");
@@ -28,7 +31,7 @@ router.get("/", cors(corsOptionsDelegate), (req, res) => {
   console.info("GET /");
   // res.render('login', { title: 'art:you | login', visits: req.session.count});
   res.json({
-    text: "Simple CORS requests are working. [GET]"
+    text: "Simple CORS requests are working. [GET]",
   });
 });
 
