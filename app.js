@@ -113,6 +113,7 @@ app.use(auth(config));
 var allowedOrigins = [
   "https://www.art47.org",
   "https://art47.org",
+  "http://localhost:5000",
   "http://localhost:3000",
   "https://threecee-art-you-frontend.herokuapp.com",
 ];
