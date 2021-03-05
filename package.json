@@ -34,6 +34,7 @@
     "express": "~4.17.1",
     "express-jwt": "^6.0.0",
     "express-openid-connect": "^2.2.1",
+    "express-rate-limit": "^5.2.6",
     "express-session": "^1.17.1",
     "fetch": "^1.1.0",
     "graceful-fs": "^4.2.6",
