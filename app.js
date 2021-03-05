@@ -230,6 +230,8 @@ app.post("/authenticated", async (req, res) => {
         epochs: 5000,
       });
 
+      console({ jobUpdateRecs });
+
       // await nnt.updateRecommendationsChild({ user: userDoc, epochs: 5000 });
       // const childProcess = fork("./lib/childNeuralNetwork.js");
       // childProcess.send({ op: "UPDATE_RECS", userOauthID: userDoc.oauthID });
