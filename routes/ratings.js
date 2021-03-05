@@ -2,9 +2,55 @@ const model = "Rating";
 const express = require("express");
 const router = express.Router();
 
+const NeuralNetworkTools = require("../lib/nnTools.js");
+const nnt = new NeuralNetworkTools("NTR");
+
+nnt.on("ready", async (appName) => {
+  console.log(`NTR | RATINGS | READY | APP NAME: ${appName}`);
+});
+
+nnt.on("connect", async (appName) => {
+  console.log(`NTR | RATINGS | DB CONNECTED | APP NAME: ${appName}`);
+  // console.log(`NNT | >>> START NETWORK TEST`);
+  // await nnt.runNetworkTest();
+});
+
+const triggerNetworkFitRatingsUpdateNumber = 10;
 const findOneAndUpdateOptions = {
   new: true,
   upsert: true,
+};
+
+const userRatingUpdateCounterHashmap = {};
+let nntUpdateRecommendationsReady = true;
+const updateUserRatingCount = async (user) => {
+  userRatingUpdateCounterHashmap[user.id] = userRatingUpdateCounterHashmap[
+    user.id
+  ]
+    ? (userRatingUpdateCounterHashmap[user.id] += 1)
+    : (userRatingUpdateCounterHashmap[user.id] = 1);
+
+  if (
+    nntUpdateRecommendationsReady &&
+    userRatingUpdateCounterHashmap[user.id] >=
+      triggerNetworkFitRatingsUpdateNumber
+  ) {
+    try {
+      nntUpdateRecommendationsReady = false;
+      console.log(
+        `NTR | RATINGS | >>> START updateRecommendationsChild | USER ID: ${user.id}`
+      );
+      await nnt.updateRecommendationsChild({ user: user, epochs: 5000 });
+      userRatingUpdateCounterHashmap[user.id] = 0;
+      nntUpdateRecommendationsReady = true;
+    } catch (err) {
+      nntUpdateRecommendationsReady = true;
+      console.log(
+        `NTR | RATINGS | *** updateRecommendationsChild ERROR: ${err}`
+      );
+    }
+  }
+  return userRatingUpdateCounterHashmap[user.id];
 };
 
 const convertOathUser = async (oathUser) => {
@@ -95,10 +141,6 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/create", async (req, res) => {
-  //
-  // KLUDGE: definitely a better way to update/create ratings wrt updating the artwork in db
-  //
-
   try {
     console.log(
       `${model} | POST | CREATE ${model} | USER: ${
@@ -163,8 +205,21 @@ router.post("/create", async (req, res) => {
     dbArtwork.ratings.addToSet(ratingDoc._id);
     await dbArtwork.save();
 
+    // userRatingUpdateCounterHashmap[dbUser.id] = userRatingUpdateCounterHashmap[
+    //   dbUser.id
+    // ]
+    //   ? (userRatingUpdateCounterHashmap[dbUser.id] += 1)
+    //   : (userRatingUpdateCounterHashmap[dbUser.id] = 1);
+
+    updateUserRatingCount(dbUser);
+
     console.log(
-      `SAVED | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
+      `SAVED | Rating` +
+        ` | ID: ${ratingDoc.id}` +
+        ` | NUM RATING UPDATES: ${userRatingUpdateCounterHashmap[dbUser.id]}` +
+        ` | RATE: ${ratingDoc.rate}` +
+        ` | USER: ${dbUser.id}` +
+        ` | ARTWORK: ${dbArtwork.id}`
     );
 
     res.json(ratingDoc.toObject());
@@ -183,21 +238,37 @@ router.post("/create", async (req, res) => {
 router.post("/update", async (req, res) => {
   try {
     console.log(
-      `${model} | POST | UPDATE ${model} | ID: ${req.body.id} | USER: ${req.user.email} | ARTWORK: ${req.artwork.id} | RATE: ${req.body.rate}`
+      `${model}` +
+        ` | POST` +
+        ` | UPDATE ${model}` +
+        ` | ID: ${req.body.id}` +
+        ` | USER: ${req.user.email}` +
+        ` | ARTWORK: ${req.artwork.id}` +
+        ` | RATE: ${req.body.rate}`
     );
     console.log(req.body);
 
-    const doc = await global.artyouDb[model]
+    const ratingDoc = await global.artyouDb[model]
       .findOne({ id: req.body.id })
       .populate({ path: "artwork", populate: { path: "artist" } })
       .populate("user");
-    doc.rate = req.body.rate;
-    await doc.save();
+    ratingDoc.rate = req.body.rate;
+    await ratingDoc.save();
 
-    console.log(`UPDATED | ${model} | ID: ${doc.id}`);
-    console.log({ doc });
+    updateUserRatingCount(ratingDoc.user);
 
-    res.json(doc);
+    console.log(
+      `UPDATED | Rating` +
+        ` | ID: ${ratingDoc.id}` +
+        ` | NUM RATING UPDATES: ${
+          userRatingUpdateCounterHashmap[ratingDoc.user.id]
+        }` +
+        ` | RATE: ${ratingDoc.rate}` +
+        ` | USER: ${ratingDoc.user.id}` +
+        ` | ARTIST: ${ratingDoc.artist.name}` +
+        ` | ARTWORK: ${ratingDoc.artwork.id}`
+    );
+    res.json(ratingDoc);
   } catch (err) {
     console.error(
       `POST | UPDATE | ${model} | ID: ${req.body.id} ERROR: ${err}`
