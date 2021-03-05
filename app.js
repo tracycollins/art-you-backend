@@ -178,11 +178,11 @@ app.use(count);
 var RateLimit = require("express-rate-limit");
 var limiter = new RateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 5,
+  max: 10,
 });
 
 // apply rate limiter to all requests
-// app.use(limiter);
+app.use(limiter);
 
 app.post("/authenticated", async (req, res) => {
   try {
