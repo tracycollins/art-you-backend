@@ -11,8 +11,18 @@ if (process.env.ARTYOU_ENV_VARS_FILE) {
   console.log(`AYBE | !!! ENV CONFIG NOT LOADED`);
 }
 
-// const { fork } = require("child_process");
+const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
+// const { fork } = require("child_process");
+const Queue = require("bull");
+const workUpdateRecommendationsQueue = new Queue(
+  "updateRecommendations",
+  REDIS_URL
+);
+workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
+  console.log(`Job completed with result ${result}`);
+});
+//
 const { join } = require("path");
 const createError = require("http-errors");
 const express = require("express");
@@ -215,7 +225,12 @@ app.post("/authenticated", async (req, res) => {
       }
       console.log(`APP | CREATING NN CHILD PROCESS: childNeuralNetwork`);
 
-      await nnt.updateRecommendationsChild({ user: userDoc, epochs: 5000 });
+      const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
+        user: userDoc,
+        epochs: 5000,
+      });
+
+      // await nnt.updateRecommendationsChild({ user: userDoc, epochs: 5000 });
       // const childProcess = fork("./lib/childNeuralNetwork.js");
       // childProcess.send({ op: "UPDATE_RECS", userOauthID: userDoc.oauthID });
       // childProcess.on("message", (message) => {
