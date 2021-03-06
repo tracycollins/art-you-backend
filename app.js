@@ -6,12 +6,14 @@ if (process.env.ARTYOU_ENV_VARS_FILE) {
     throw envConfig.error;
   }
   console.log("AYBE | +++ ENV CONFIG LOADED");
+  console.log({ envConfig });
 } else {
   console.log(`AYBE | !!! ENV CONFIG NOT SET: ARTYOU_ENV_VARS_FILE`);
   console.log(`AYBE | !!! ENV CONFIG NOT LOADED`);
 }
 
-const EPOCHS = process.env.ART47_NN_FIT_EPOCHS || 5000;
+const EPOCHS = parseInt(process.env.ART47_NN_FIT_EPOCHS) || 5000;
+console.log({ EPOCHS });
 const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
 // const { fork } = require("child_process");
