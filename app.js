@@ -11,6 +11,7 @@ if (process.env.ARTYOU_ENV_VARS_FILE) {
   console.log(`AYBE | !!! ENV CONFIG NOT LOADED`);
 }
 
+const EPOCHS = process.env.ART47_NN_FIT_EPOCHS || 5000;
 const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
 // const { fork } = require("child_process");
@@ -228,7 +229,7 @@ app.post("/authenticated", async (req, res) => {
       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
         op: "UPDATE_RECS",
         user: userDoc,
-        epochs: 5000,
+        epochs: EPOCHS,
       });
 
       console(`JOB ADDED: ${jobUpdateRecs}`);

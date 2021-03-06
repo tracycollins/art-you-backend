@@ -83,11 +83,11 @@ function start() {
         `->- WORKER | PID: ${process.pid} | updateUserRecommendations ERROR:`,
         err
       );
-      process.send({
+      return {
         op: job.op,
         stats: statsObj,
         err: err,
-      });
+      };
     }
 
     // // throw an error 5% of the time
