@@ -59,7 +59,7 @@ const updateUserRecommendations = async (p) => {
   try {
     console.log(`${PF} | updateUserRecommendations`, p);
     await waitFor(statsObj.nnt.ready);
-    const results = await nnt.updateRecommendations(p);
+    const results = await nnt.updateRecommendations(p.data);
     console.log(`${PF} | END updateUserRecommendations`, results);
     return { results: results, timestamp: nnt.getTimeStamp() };
   } catch (err) {

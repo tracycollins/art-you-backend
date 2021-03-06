@@ -230,7 +230,7 @@ app.post("/authenticated", async (req, res) => {
 
       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
         op: "UPDATE_RECS",
-        user: userDoc,
+        oauthID: userDoc.oauthID,
         epochs: EPOCHS,
       });
 
