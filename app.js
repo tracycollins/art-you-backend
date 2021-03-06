@@ -20,7 +20,7 @@ const workUpdateRecommendationsQueue = new Queue(
   REDIS_URL
 );
 workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
-  console.log(`Job completed with result ${result}`);
+  console.log(`JOB ${jobId} | COMPLETE | RESULT: ${result}`);
 });
 //
 const { join } = require("path");
@@ -223,14 +223,15 @@ app.post("/authenticated", async (req, res) => {
           `APP | authenticated | USER FOUND | oauthID: ${userDoc.oauthID} | NAME: ${userDoc.name}`
         );
       }
-      console.log(`APP | CREATING NN CHILD PROCESS: childNeuralNetwork`);
+      console.log(`APP | ADDING JOB TO WORKER QUEUE | UPDATE_RECS`);
 
       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
+        op: "UPDATE_RECS",
         user: userDoc,
         epochs: 5000,
       });
 
-      console({ jobUpdateRecs });
+      console(`JOB ADDED: ${jobUpdateRecs}`);
 
       // await nnt.updateRecommendationsChild({ user: userDoc, epochs: 5000 });
       // const childProcess = fork("./lib/childNeuralNetwork.js");
