@@ -197,6 +197,7 @@ var limiter = new RateLimit({
 // apply rate limiter to all requests
 app.use(limiter);
 
+// apply rate limiter to all requests
 app.post("/authenticated", async (req, res) => {
   try {
     console.info(`POST /authenticated`, req.body);
@@ -271,12 +272,23 @@ app.use("/neuralnetworks", neuralnetworksRouter);
 
 app.get("/authorize", (req, res) => {
   console.info(`GET /authorize`);
-  res.sendStatus(200);
+  console.log(`req.oidc.isAuthenticated: ${req.oidc.isAuthenticated()}`);
+  console.log(req.oidc);
+  res.send(req.oidc.isAuthenticated() ? "Logged in" : "Logged out");
+});
+
+app.get("/authenticated", (req, res) => {
+  console.info(`GET /authenticated`);
+  console.log(`req.oidc.isAuthenticated: ${req.oidc.isAuthenticated()}`);
+  console.log(req.oidc);
+  res.send(req.oidc.isAuthenticated() ? "Logged in" : "Logged out");
 });
 
 app.get("/auth", (req, res) => {
   console.info(`GET /auth`);
-  res.sendStatus(200);
+  console.log(`req.oidc.isAuthenticated: ${req.oidc.isAuthenticated()}`);
+  console.log(req.oidc);
+  res.send(req.oidc.isAuthenticated() ? "Logged in" : "Logged out");
 });
 
 app.get("/", (req, res) => {
