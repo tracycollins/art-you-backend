@@ -14,16 +14,23 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
       id: req.params.userid,
     }).lean();
 
-    console.log(`${model} | GET ARTWORK BY ID | USER ID: ${userDoc.name}`);
-    const artworkDoc = await global.artyouDb.Artwork.findOne({
-      id: req.params.artworkid,
-    })
+    console.log(
+      `${model} | GET ARTWORK BY ID | USER ID: ${userDoc.name} | ARTWORK ID: ${req.params.artworkid}`
+    );
+
+    const query = {};
+    query.id = parseInt(req.params.artworkid);
+
+    console.log({ query });
+
+    const artworkDoc = await global.artyouDb.Artwork.findOne(query)
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
       .populate({ path: "ratings", populate: { path: "user" } })
       .populate({ path: "recommendations", populate: { path: "user" } })
       .populate({ path: "tags", populate: { path: "user" } })
-      .lean();
+      .lean()
+      .exec();
 
     const ratingDoc = await global.artyouDb.Rating.findOne({
       user: userDoc,
@@ -113,10 +120,11 @@ router.get("/:id", async (req, res) => {
   const query = {};
 
   console.log(`GET ${model} | ID: ${req.params.id}`);
-  query.id = req.params.id;
+  query.id = parseInt(req.params.id);
 
-  const doc = await global.artyouDb[model]
-    .findOne(query)
+  console.log({ query });
+
+  const doc = await global.artyouDb.Artwork.findOne(query)
     .populate("image")
     .populate({ path: "artist", populate: { path: "image" } })
     .populate({ path: "ratings", populate: { path: "user" } })
