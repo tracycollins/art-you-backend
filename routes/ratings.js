@@ -37,10 +37,14 @@ const updateUserRatingCount = async (user) => {
   ) {
     try {
       nntUpdateRecommendationsReady = false;
+      const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
       console.log(
         `NTR | RATINGS | >>> START updateRecommendationsChild | USER ID: ${user.id}`
       );
-      await nnt.updateRecommendationsChild({ user: user, epochs: 5000 });
+      await nnt.updateRecommendationsChild({
+        user: user,
+        epochs: epochs,
+      });
       userRatingUpdateCounterHashmap[user.id] = 0;
       nntUpdateRecommendationsReady = true;
     } catch (err) {

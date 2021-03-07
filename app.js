@@ -236,16 +236,6 @@ app.post("/authenticated", async (req, res) => {
 
       console(`JOB ADDED: ${jobUpdateRecs}`);
 
-      // await nnt.updateRecommendationsChild({ user: userDoc, epochs: 5000 });
-      // const childProcess = fork("./lib/childNeuralNetwork.js");
-      // childProcess.send({ op: "UPDATE_RECS", userOauthID: userDoc.oauthID });
-      // childProcess.on("message", (message) => {
-      //   console.log({ message });
-      //   res.json({
-      //     status: "OK",
-      //   });
-      // });
-
       res.sendStatus(200);
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
