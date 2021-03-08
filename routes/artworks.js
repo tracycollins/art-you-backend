@@ -140,17 +140,17 @@ router.get("/:id", async (req, res) => {
 });
 
 // get artworks by artist
-router.get("/artist/:artistid", async (req, res) => {
+router.get("/artist/:id", async (req, res) => {
   try {
-    console.log(`${model} | GET ARTWORK BY ARTIST ${req.params.artistid}`);
+    console.log(`${model} | GET ARTWORK BY ARTIST ${req.params.id}`);
 
     const artistDoc = await global.artyouDb[model].findOne({
-      id: req.params.artistid,
+      id: req.params.id,
     });
 
     if (artistDoc) {
       const docs = await global.artyouDb.Artwork.find({
-        artist: req.params.artistid,
+        artist: artistDoc,
       })
         .populate("image")
         .populate({ path: "artist", populate: { path: "image" } })
@@ -162,7 +162,7 @@ router.get("/artist/:artistid", async (req, res) => {
       console.log(`FOUND ${docs.length} ${model}s`);
       res.json(docs);
     } else {
-      console.log(`ARTIST NOT FOUND | ARTIST ID: ${req.params.artistid}`);
+      console.log(`ARTIST NOT FOUND | ARTIST ID: ${req.params.id}`);
       res.json([]);
     }
   } catch (err) {
