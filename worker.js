@@ -76,13 +76,12 @@ function start() {
   workQueue.process(maxJobsPerWorker, async (job) => {
     try {
       console.log(
-        `${PF} | ->- WORKER | PID: ${process.pid} PROCESS | JOB: ${job}`
+        `${PF} | ->- WORKER | PID: ${process.pid} PROCESS | JOB: OP: ${job.op} ${job.data}`
       );
       const results = await updateUserRecommendations(job);
       console.log(
-        `${PF} | +++ WORKER | PID: ${process.pid} PROCESS | JOB COMPLETE: ${job}`
+        `${PF} | +++ WORKER | PID: ${process.pid} PROCESS | JOB COMPLETE: OP: ${job.op} ${job.data}`
       );
-      console.log({ job });
       return { op: job.op, results: results, stats: statsObj };
     } catch (err) {
       console.log(
