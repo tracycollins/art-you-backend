@@ -33,10 +33,10 @@ nnt.on("ready", async (appName) => {
   );
 });
 
-function sleep(ms) {
-  console.log(`WORKER SLEEP: ${ms}`);
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+// function sleep(ms) {
+//   console.log(`WORKER SLEEP: ${ms}`);
+//   return new Promise((resolve) => setTimeout(resolve, ms));
+// }
 function waitFor() {
   return new Promise(function (resolve) {
     console.log(`${PF} | WAIT | statsObj.nnt.ready: ${statsObj.nnt.ready}`);
@@ -63,24 +63,30 @@ const updateUserRecommendations = async (p) => {
     console.log(`${PF} | END updateUserRecommendations`, results);
     return { results: results, timestamp: nnt.getTimeStamp() };
   } catch (err) {
-    console.log({ err });
+    console.log(`${PF} | ERROR updateUserRecommendations`, err);
     throw err;
   }
 };
 
 function start() {
-  console.log(`+++ WORKER | PID: ${process.pid} START`);
+  console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
   // Connect to the named work queue
   const workQueue = new Queue("updateRecommendations", REDIS_URL);
 
   workQueue.process(maxJobsPerWorker, async (job) => {
     try {
-      console.log(`->- WORKER | PID: ${process.pid} PROCESS | JOB: ${job}`);
+      console.log(
+        `${PF} | ->- WORKER | PID: ${process.pid} PROCESS | JOB: ${job}`
+      );
       const results = await updateUserRecommendations(job);
+      console.log(
+        `${PF} | +++ WORKER | PID: ${process.pid} PROCESS | JOB COMPLETE: ${job}`
+      );
+      console.log({ job });
       return { op: job.op, results: results, stats: statsObj };
     } catch (err) {
       console.log(
-        `->- WORKER | PID: ${process.pid} | updateUserRecommendations ERROR:`,
+        `${PF} | *** WORKER | PID: ${process.pid} | updateUserRecommendations ERROR:`,
         err
       );
       return {
