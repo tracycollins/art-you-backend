@@ -57,7 +57,7 @@ function waitFor() {
 
 const updateUserRecommendations = async (p) => {
   try {
-    console.log(`${PF} | updateUserRecommendations`, p);
+    console.log(`${PF} | updateUserRecommendations`, p.data);
     await waitFor(statsObj.nnt.ready);
     const results = await nnt.updateRecommendations(p.data);
     console.log(`${PF} | END updateUserRecommendations`, results);

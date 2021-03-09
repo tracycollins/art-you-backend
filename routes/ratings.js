@@ -1,6 +1,9 @@
+const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+
 const model = "Rating";
 const express = require("express");
 const router = express.Router();
+const Queue = require("bull");
 
 const NeuralNetworkTools = require("../lib/nnTools.js");
 const nnt = new NeuralNetworkTools("NTR");
@@ -14,6 +17,11 @@ nnt.on("connect", async (appName) => {
   // console.log(`NNT | >>> START NETWORK TEST`);
   // await nnt.runNetworkTest();
 });
+
+const workUpdateRecommendationsQueue = new Queue(
+  "updateRecommendations",
+  REDIS_URL
+);
 
 const triggerNetworkFitRatingsUpdateNumber = 10;
 const findOneAndUpdateOptions = {
@@ -38,13 +46,24 @@ const updateUserRatingCount = async (user) => {
     try {
       nntUpdateRecommendationsReady = false;
       const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
-      console.log(
-        `NTR | RATINGS | >>> START updateRecommendationsChild | USER ID: ${user.id}`
-      );
-      await nnt.updateRecommendationsChild({
-        user: user,
+      // console.log(
+      //   `NTR | RATINGS | >>> START updateRecommendationsChild | USER ID: ${user.id}`
+      // );
+      // await nnt.updateRecommendationsChild({
+      //   user: user,
+      //   epochs: epochs,
+      // });
+
+      console.log(`NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS`);
+
+      const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
+        op: "UPDATE_RECS",
+        oauthID: user.id,
         epochs: epochs,
       });
+
+      console(`JOB ADDED: ${jobUpdateRecs}`);
+
       userRatingUpdateCounterHashmap[user.id] = 0;
       nntUpdateRecommendationsReady = true;
     } catch (err) {
