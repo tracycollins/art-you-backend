@@ -5,27 +5,39 @@ if (process.env.ARTYOU_ENV_VARS_FILE) {
   if (envConfig.error) {
     throw envConfig.error;
   }
-  console.log("AYBE | +++ ENV CONFIG LOADED");
+  console.log("A47BE | +++ ENV CONFIG LOADED");
   console.log({ envConfig });
 } else {
-  console.log(`AYBE | !!! ENV CONFIG NOT SET: ARTYOU_ENV_VARS_FILE`);
-  console.log(`AYBE | !!! ENV CONFIG NOT LOADED`);
+  console.log(`A47BE | !!! ENV CONFIG NOT SET: ARTYOU_ENV_VARS_FILE`);
+  console.log(`A47BE | !!! ENV CONFIG NOT LOADED`);
 }
 
-const EPOCHS = parseInt(process.env.ART47_NN_FIT_EPOCHS) || 5000;
-console.log({ EPOCHS });
-const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const ONE_SECOND = 1000;
+const ONE_MINUTE = 60 * ONE_SECOND;
+const ONE_HOUR = 60 * ONE_MINUTE;
 
-// const { fork } = require("child_process");
+const EPOCHS = parseInt(process.env.ART47_NN_FIT_EPOCHS) || 5000;
+console.log(`A47BE | NN FIT EPOCHS: ${EPOCHS}`);
+
+const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+console.log(`A47BE | REDIS_URL: ${REDIS_URL}`);
+
+console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
 const Queue = require("bull");
 const workUpdateRecommendationsQueue = new Queue(
   "updateRecommendations",
+  {
+    limiter: {
+      max: 2,
+      duration: ONE_HOUR,
+    },
+  },
   REDIS_URL
 );
 workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
-  console.log(`JOB ${jobId} | COMPLETE | RESULT: ${result}`);
+  console.log(`A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`, result);
 });
-//
+
 const { join } = require("path");
 const createError = require("http-errors");
 const express = require("express");
