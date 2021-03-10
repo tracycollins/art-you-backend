@@ -1,4 +1,4 @@
-const PF = "CNN";
+const PF = `WKR_${process.pid}`;
 
 const configuration = {};
 configuration.verbose = false;
