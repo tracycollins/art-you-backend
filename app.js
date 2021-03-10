@@ -260,7 +260,7 @@ app.post("/authenticated", async (req, res) => {
     }
   } catch (err) {
     console.log(`APP | *** POST AUTH ERROR: ${err}`);
-    res.sendStatus(503);
+    // res.sendStatus(503);
   }
 });
 
