@@ -83,47 +83,15 @@ const convertOathUser = async (oathUser) => {
   console.log(`RATING | convertOathUser | oathType: ${oathType}`);
   console.log({ user });
   switch (oathType) {
-    // email + password
     case "auth0":
-      user.id = oathUser.sub;
-      user.oauthID = oathUser.sub;
-      user.name = oathUser.name;
-      user.email = oathUser.email;
-      user.image = new global.artyouDb.Image({
-        id: oathUser.sub,
-        url: oathUser.picture,
-        title: oathUser.name,
-      });
-      break;
-
     case "github":
+    case "google-oauth2":
+    case "twitter":
+    case "facebook":
       user.id = oathUser.sub;
       user.oauthID = oathUser.sub;
       user.name = oathUser.name;
-      user.email = oathUser.email;
-      user.image = new global.artyouDb.Image({
-        id: oathUser.sub,
-        url: oathUser.picture,
-        title: oathUser.name,
-      });
-      break;
-
-    case "google-oauth2":
-      user.id = oathUser.sub;
-      user.oauthID = oathUser.sub;
-      user.firstName = oathUser.given_name;
-      user.lastName = oathUser.family_name;
-      user.email = oathUser.email;
-      user.image = new global.artyouDb.Image({
-        id: oathUser.sub,
-        url: oathUser.picture,
-        title: oathUser.name,
-      });
-      break;
-
-    case "twitter":
-      user.id = oathUser.sub;
-      user.oauthID = oathUser.sub;
+      user.nickname = oathUser.nickname;
       user.firstName = oathUser.given_name;
       user.lastName = oathUser.family_name;
       user.email = oathUser.email;
