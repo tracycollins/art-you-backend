@@ -237,7 +237,7 @@ app.post("/authenticated", async (req, res) => {
         epochs: EPOCHS,
       });
 
-      console(`JOB ADDED: ${jobUpdateRecs}`);
+      console.log(`JOB ADDED`, jobUpdateRecs.data);
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
       res.json({
