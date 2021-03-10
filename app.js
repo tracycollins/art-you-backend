@@ -228,6 +228,9 @@ app.post("/authenticated", async (req, res) => {
       }
       console.log(`APP | ADDING JOB TO WORKER QUEUE | UPDATE_RECS`);
 
+      const userObj = userDoc.toObject();
+      res.json({ user: userObj });
+
       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
         op: "UPDATE_RECS",
         oauthID: userDoc.oauthID,
@@ -235,8 +238,6 @@ app.post("/authenticated", async (req, res) => {
       });
 
       console(`JOB ADDED: ${jobUpdateRecs}`);
-
-      res.sendStatus(200);
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
       res.json({
@@ -246,6 +247,7 @@ app.post("/authenticated", async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(`APP | *** POST AUTH ERROR: ${err}`);
     res.sendStatus(503);
   }
 });
