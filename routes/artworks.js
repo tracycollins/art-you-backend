@@ -4,6 +4,36 @@ const express = require("express");
 const router = express.Router();
 
 // get artworks by id, pop with rating and rec by user id
+
+router.get("/cursor/:cursor", async (req, res) => {
+  try {
+    console.log(`URL: ${req.url} | PARAMS:`, req.params);
+    const cursor = req.params.cursor || 0;
+    const limit = 20;
+    console.log(`ARTWORKS | GET CURSOR: ${cursor} | LIMIT: ${limit}`);
+
+    const docs = await global.artyouDb.Artwork.find({ id: { $gt: cursor } })
+      .sort()
+      .limit(limit)
+      .populate("image")
+      .populate({ path: "artist", populate: { path: "image" } })
+      .populate({ path: "ratings", populate: { path: "user" } })
+      .populate({ path: "recommendations", populate: { path: "user" } })
+      .populate({ path: "tags", populate: { path: "user" } })
+      .lean();
+
+    // const nextCursor = docs.length < limit ? 0 : docs[limit - 1].id;
+
+    console.log(`ARTWORKS | GET | ${docs.length} | LIMIT: ${limit}`);
+
+    res.json(docs);
+  } catch (err) {
+    const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
+    console.error(message);
+    res.status(400).send(message);
+  }
+});
+
 router.get("/:artworkid/user/:userid", async (req, res) => {
   try {
     console.log(
