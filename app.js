@@ -65,11 +65,13 @@ let workUpdateRecommendationsQueue;
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
 
-const Redis = require("ioredis");
+// const Redis = require("ioredis");
+const redis = require("redis");
 
 function redisReady() {
   return new Promise(function (resolve) {
-    const redisClient = new Redis(process.env.REDIS_URL);
+    // const redisClient = new Redis(process.env.REDIS_URL);
+    const redisClient = redis.createClient(process.env.REDIS_URL);
     console.log(
       `A47BE | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_URL: ${process.env.REDIS_URL}`
     );
