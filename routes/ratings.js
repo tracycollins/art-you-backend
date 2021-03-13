@@ -83,8 +83,10 @@ const convertOathUser = async (oathUser) => {
   const oathType = oathUser.sub.split("|")[0];
   const user = Object.assign({}, oathUser);
 
-  console.log(`RATING | convertOathUser | oathType: ${oathType}`);
-  console.log({ user });
+  console.log(
+    `RATING | convertOathUser | oathType: ${oathType}| USER SUB: ${oathUser.sub}`
+  );
+
   switch (oathType) {
     case "auth0":
     case "github":
@@ -141,7 +143,6 @@ router.post("/create", async (req, res) => {
         req.body.user.id || req.body.user.sub
       } | ARTWORK: ${req.body.artwork.id} | RATE: ${req.body.rate}`
     );
-    console.log(req.body.user);
 
     const userObj = await convertOathUser(req.body.user);
 
