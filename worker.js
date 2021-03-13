@@ -4,6 +4,21 @@ const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 const workers = process.env.WEB_CONCURRENCY || 2;
 const maxJobsPerWorker = process.env.WORKER_MAX_JOBS || 1;
 
+console.log(
+  `${PF}` +
+    ` | INIT` +
+    ` | process.env.REDIS_URL: ${process.env.REDIS_URL}` +
+    ` | process.env.WEB_CONCURRENCY: ${process.env.WEB_CONCURRENCY}` +
+    ` | process.env.WORKER_MAX_JOBS: ${process.env.WORKER_MAX_JOBS}`
+);
+console.log(
+  `${PF}` +
+    ` | INIT` +
+    ` | REDIS_URL: ${REDIS_URL}` +
+    ` | workers: ${workers}` +
+    ` | maxJobsPerWorker: ${maxJobsPerWorker}`
+);
+
 const configuration = {};
 configuration.verbose = false;
 
