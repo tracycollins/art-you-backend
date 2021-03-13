@@ -69,28 +69,72 @@ const Redis = require("ioredis");
 
 function redisReady() {
   return new Promise(function (resolve) {
-    console.log(`WAIT REDIS | process.env.REDIS_URL: ${process.env.REDIS_URL}`);
+    const redisClient = new Redis(process.env.REDIS_URL);
+    console.log(
+      `A47BE | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_URL: ${process.env.REDIS_URL}`
+    );
     const redisReadyInterval = setInterval(() => {
-      if (process.env.REDIS_URL) {
-        const redisClient = new Redis(process.env.REDIS_URL);
-        console.log({ redisClient });
+      if (redisClient.status === "ready") {
+        console.log(
+          `A47BE | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+        );
         clearInterval(redisReadyInterval);
+        redisClient.quit();
         resolve();
       } else {
         console.log(
-          `WAIT REDIS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
       }
-    }, ONE_SECOND);
+    }, 10 * ONE_SECOND);
   });
 }
+
+const jobQueued = async (jobConfig) => {
+  try {
+    const jobs = await workUpdateRecommendationsQueue.getJobs(
+      ["completed", "active", "failed", "stalled"],
+      0,
+      100
+    );
+
+    jobs.forEach(async (job) => {
+      const jobState = await job.getState();
+      console.log(
+        `JOB` +
+          ` | JID: ${job.id}` +
+          ` | STATE: ${jobState}` +
+          ` | OP: ${job.data.op}` +
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | EPOCHS: ${job.data.epochs}`
+      );
+      if (
+        (jobState === "active" || jobState === "stalled") &&
+        job.data.op === jobConfig.op &&
+        job.data.oauthID === jobConfig.oauthID
+      ) {
+        console.log(
+          `JOB | -*- Q HIT` +
+            ` | JID: ${job.id}` +
+            ` | STATE: ${jobState}` +
+            ` | OP: ${job.data.op}` +
+            ` | OAUTHID: ${job.data.oauthID}` +
+            ` | EPOCHS: ${job.data.epochs}`
+        );
+        return true;
+      }
+    });
+    return false;
+  } catch (err) {
+    console.log(`JOB | jobQueued ERROR: ${err}`);
+    throw err;
+  }
+};
 
 (async () => {
   global.dbConnection = await global.artyouDb.connect();
 
-  console.log(`PRE redisReady`);
   await redisReady();
-  console.log(`POST redisReady`);
 
   workUpdateRecommendationsQueue = new Queue(
     "updateRecommendations",
@@ -116,27 +160,9 @@ function redisReady() {
     console.log(`A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`, result);
   });
 
-  await workUpdateRecommendationsQueue.clean(10000, "active");
-  await workUpdateRecommendationsQueue.clean(10000, "completed");
-  await workUpdateRecommendationsQueue.clean(10000, "failed");
-
-  const jobs = await workUpdateRecommendationsQueue.getJobs(
-    ["completed", "active", "failed", "stalled"],
-    0,
-    10
-  );
-
-  jobs.forEach(async (job) => {
-    const jobState = await job.getState();
-    console.log(
-      `JOB` +
-        ` | JID: ${job.id}` +
-        ` | STATE: ${jobState}` +
-        ` | OP: ${job.data.op}` +
-        ` | OAUTHID: ${job.data.oauthID}` +
-        ` | EPOCHS: ${job.data.epochs}`
-    );
-  });
+  await workUpdateRecommendationsQueue.clean(1000, "active");
+  await workUpdateRecommendationsQueue.clean(1000, "completed");
+  await workUpdateRecommendationsQueue.clean(1000, "failed");
 })();
 
 // const indexRouter = require('./routes/index');
@@ -323,12 +349,18 @@ app.post("/authenticated", async (req, res) => {
       const userObj = userDoc.toObject();
       res.json({ user: userObj });
 
-      if (workUpdateRecommendationsQueue) {
-        const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
-          op: "UPDATE_RECS",
-          oauthID: userDoc.oauthID,
-          epochs: EPOCHS,
-        });
+      const jobOptions = {
+        op: "UPDATE_RECS",
+        oauthID: userDoc.oauthID,
+        epochs: EPOCHS,
+      };
+
+      const jobAlreadyQueued = await jobQueued(jobOptions);
+
+      if (workUpdateRecommendationsQueue && !jobAlreadyQueued) {
+        const jobUpdateRecs = await workUpdateRecommendationsQueue.add(
+          jobOptions
+        );
 
         console.log(`JOB ADDED`);
         console.log(jobUpdateRecs.data);
