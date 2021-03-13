@@ -121,6 +121,28 @@ function start() {
       };
     }
   });
+
+  workQueue.on("waiting", function (jobId) {
+    console.log(
+      `${PF} | ... WORKER | PID: ${process.pid} | JOB WAITING: ${jobId}`
+    );
+  });
+
+  workQueue.on("resumed", function (job, err) {
+    console.log(
+      `${PF} | --- WORKER | PID: ${process.pid} | JOB RESUMED: ${job.id}`
+    );
+  });
+  workQueue.on("failed", function (job, err) {
+    console.log(
+      `${PF} | XXX WORKER | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
+    );
+  });
+  workQueue.on("stalled", function (job) {
+    console.log(
+      `${PF} | ??? WORKER | PID: ${process.pid} | JOB STALLED: ${job.id}`
+    );
+  });
 }
 
 // Initialize the clustered worker process

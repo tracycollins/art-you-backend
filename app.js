@@ -16,39 +16,48 @@ const ONE_SECOND = 1000;
 const ONE_MINUTE = 60 * ONE_SECOND;
 const ONE_HOUR = 60 * ONE_MINUTE;
 
-const EPOCHS = parseInt(process.env.ART47_NN_FIT_EPOCHS) || 5000;
+const EPOCHS = process.env.ART47_NN_FIT_EPOCHS
+  ? parseInt(process.env.ART47_NN_FIT_EPOCHS)
+  : 1000;
+
 console.log(`A47BE | NN FIT EPOCHS: ${EPOCHS}`);
 
 const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 console.log(`A47BE | REDIS_URL: ${REDIS_URL}`);
 
-console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
-const Queue = require("bull");
-
-const WORKER_QUEUE_LIMITER_MAX =
-  parseInt(process.env.WORKER_QUEUE_LIMITER_MAX) || 2;
+const WORKER_QUEUE_LIMITER_MAX = process.env.WORKER_QUEUE_LIMITER_MAX
+  ? parseInt(process.env.WORKER_QUEUE_LIMITER_MAX)
+  : 2;
 
 console.log(`A47BE | WORKER_QUEUE_LIMITER_MAX: ${WORKER_QUEUE_LIMITER_MAX}`);
 
-const WORKER_QUEUE_LIMITER_DURATION =
-  parseInt(process.env.WORKER_QUEUE_LIMITER_DURATION) || ONE_HOUR;
+const WORKER_QUEUE_LIMITER_DURATION = process.env.WORKER_QUEUE_LIMITER_DURATION
+  ? parseInt(process.env.WORKER_QUEUE_LIMITER_DURATION)
+  : 2 * ONE_HOUR;
 
 console.log(
   `A47BE | WORKER_QUEUE_LIMITER_DURATION: ${WORKER_QUEUE_LIMITER_DURATION}`
 );
 
+console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
+const Queue = require("bull");
+
 const workUpdateRecommendationsQueue = new Queue(
   "updateRecommendations",
-  // {
-  //   limiter: {
-  //     max: WORKER_QUEUE_LIMITER_MAX,
-  //     duration: WORKER_QUEUE_LIMITER_DURATION,
-  //   },
-  // },
+  {
+    limiter: {
+      max: WORKER_QUEUE_LIMITER_MAX,
+      duration: WORKER_QUEUE_LIMITER_DURATION,
+    },
+  },
   REDIS_URL
 );
+
 workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
   console.log(`A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`, result);
+});
+workUpdateRecommendationsQueue.on("global:failed", (jobId, result) => {
+  console.log(`A47BE | UPDATE REC JOB ${jobId} | *** FAILDED | RESULT`, result);
 });
 workUpdateRecommendationsQueue.on("global:error", (jobId, result) => {
   console.log(`A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`, result);
@@ -76,6 +85,25 @@ global.dbConnection = false;
 
 (async () => {
   global.dbConnection = await global.artyouDb.connect();
+  await workUpdateRecommendationsQueue.clean(10000, "active");
+  await workUpdateRecommendationsQueue.clean(10000, "completed");
+  await workUpdateRecommendationsQueue.clean(10000, "failed");
+  const jobs = await workUpdateRecommendationsQueue.getJobs(
+    ["completed", "active", "failed", "stalled"],
+    0,
+    10
+  );
+  jobs.forEach(async (job) => {
+    const jobState = await job.getState();
+    console.log(
+      `JOB` +
+        ` | JID: ${job.id}` +
+        ` | STATE: ${jobState}` +
+        ` | OP: ${job.data.op}` +
+        ` | OAUTHID: ${job.data.oauthID}` +
+        ` | EPOCHS: ${job.data.epochs}`
+    );
+  });
 })();
 
 // const indexRouter = require('./routes/index');
