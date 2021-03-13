@@ -81,13 +81,13 @@ const updateUserRecommendations = async (p) => {
     throw err;
   }
 };
-// const Redis = require("redis");
-const redis = require("redis");
+const Redis = require("ioredis");
+// const redis = require("redis");
 
 function redisReady() {
   return new Promise(function (resolve) {
-    // const redisClient = new Redis(process.env.REDIS_URL);
-    const redisClient = redis.createClient(process.env.REDIS_URL);
+    const redisClient = new Redis(process.env.REDIS_URL);
+    // const redisClient = redis.createClient(process.env.REDIS_URL);
 
     console.log(
       `${PF} | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_URL: ${process.env.REDIS_URL}`
