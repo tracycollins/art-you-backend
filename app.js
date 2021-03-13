@@ -22,7 +22,7 @@ const EPOCHS = process.env.ART47_NN_FIT_EPOCHS
 
 console.log(`A47BE | NN FIT EPOCHS: ${EPOCHS}`);
 
-const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const REDIS_URL = process.env.REDIS_URL;
 console.log(`A47BE | REDIS_URL: ${REDIS_URL}`);
 
 const WORKER_QUEUE_LIMITER_MAX = process.env.WORKER_QUEUE_LIMITER_MAX
@@ -40,6 +40,7 @@ console.log(
 );
 
 console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
+
 const Queue = require("bull");
 
 const workUpdateRecommendationsQueue = new Queue(
@@ -85,14 +86,17 @@ global.dbConnection = false;
 
 (async () => {
   global.dbConnection = await global.artyouDb.connect();
+
   await workUpdateRecommendationsQueue.clean(10000, "active");
   await workUpdateRecommendationsQueue.clean(10000, "completed");
   await workUpdateRecommendationsQueue.clean(10000, "failed");
+
   const jobs = await workUpdateRecommendationsQueue.getJobs(
     ["completed", "active", "failed", "stalled"],
     0,
     10
   );
+
   jobs.forEach(async (job) => {
     const jobState = await job.getState();
     console.log(
@@ -256,6 +260,7 @@ app.use(limiter);
 app.post("/authenticated", async (req, res) => {
   try {
     console.info(`POST /authenticated`, req.body);
+
     if (req.body && req.body.sub) {
       let userDoc = await global.artyouDb.User.findOne({
         oauthID: req.body.sub,
@@ -286,6 +291,9 @@ app.post("/authenticated", async (req, res) => {
         `APP | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | REDIS_URL: ${REDIS_URL}`
       );
 
+      const userObj = userDoc.toObject();
+      res.json({ user: userObj });
+
       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
         op: "UPDATE_RECS",
         oauthID: userDoc.oauthID,
@@ -294,9 +302,6 @@ app.post("/authenticated", async (req, res) => {
 
       console.log(`JOB ADDED`);
       console.log(jobUpdateRecs.data);
-
-      const userObj = userDoc.toObject();
-      res.json({ user: userObj });
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
       res.json({
