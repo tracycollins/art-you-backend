@@ -24,12 +24,25 @@ console.log(`A47BE | REDIS_URL: ${REDIS_URL}`);
 
 console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
 const Queue = require("bull");
+
+const WORKER_QUEUE_LIMITER_MAX =
+  parseInt(process.env.WORKER_QUEUE_LIMITER_MAX) || 2;
+
+console.log(`A47BE | WORKER_QUEUE_LIMITER_MAX: ${WORKER_QUEUE_LIMITER_MAX}`);
+
+const WORKER_QUEUE_LIMITER_DURATION =
+  parseInt(process.env.WORKER_QUEUE_LIMITER_DURATION) || ONE_HOUR;
+
+console.log(
+  `A47BE | WORKER_QUEUE_LIMITER_DURATION: ${WORKER_QUEUE_LIMITER_DURATION}`
+);
+
 const workUpdateRecommendationsQueue = new Queue(
   "updateRecommendations",
   {
     limiter: {
-      max: 2,
-      duration: ONE_HOUR,
+      max: WORKER_QUEUE_LIMITER_MAX,
+      duration: WORKER_QUEUE_LIMITER_DURATION,
     },
   },
   REDIS_URL

@@ -15,7 +15,7 @@ const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
 // Spin up multiple processes to handle jobs to take advantage of more CPU cores
 // See: https://devcenter.heroku.com/articles/node-concurrency for more info
-const workers = process.env.WORKER_CONCURRENCY || 2;
+const workers = process.env.WORKER_CONCURRENCY || 1;
 
 // The maximum number of jobs each worker should process at once. This will need
 // to be tuned for your application. If each job is mostly waiting on network
