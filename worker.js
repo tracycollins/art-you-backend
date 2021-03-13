@@ -72,78 +72,98 @@ const updateUserRecommendations = async (p) => {
     throw err;
   }
 };
-
-function start() {
-  console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
-
-  const workQueue = new Queue("updateRecommendations", process.env.REDIS_URL);
-
-  // job.data.
-  // op: "UPDATE_RECS",
-  // oauthID: userDoc.oauthID,
-  // epochs: EPOCHS,
-
-  workQueue.process(maxJobsPerWorker, async (job) => {
-    try {
-      console.log(
-        `${PF} | ->- WORKER | JOB START` +
-          ` | PID: ${process.pid}` +
-          ` | JID: ${job.id}` +
-          ` | OP: ${job.data.op}` +
-          ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}`
-      );
-      const results = await updateUserRecommendations(job);
-      console.log(
-        `${PF} | +++ WORKER | JOB COMPLETE` +
-          ` | PID: ${process.pid}` +
-          ` | JID: ${job.id}` +
-          ` | OP: ${job.data.op}` +
-          ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}`
-      );
-      results.stats = statsObj;
-      return results;
-    } catch (err) {
-      console.log(
-        `${PF} | *** WORKER | *** JOB ERROR` +
-          ` | PID: ${process.pid}` +
-          ` | JID: ${job.id}` +
-          ` | OP: ${job.data.op}` +
-          ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}` +
-          ` | ERR: ${err}`
-      );
-      return {
-        op: job.op,
-        stats: statsObj,
-        err: err,
-      };
-    }
-  });
-
-  workQueue.on("waiting", function (jobId) {
-    console.log(
-      `${PF} | ... WORKER | PID: ${process.pid} | JOB WAITING: ${jobId}`
-    );
-  });
-
-  workQueue.on("resumed", function (job, err) {
-    console.log(
-      `${PF} | --- WORKER | PID: ${process.pid} | JOB RESUMED: ${job.id}`
-    );
-  });
-  workQueue.on("failed", function (job, err) {
-    console.log(
-      `${PF} | XXX WORKER | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
-    );
-  });
-  workQueue.on("stalled", function (job) {
-    console.log(
-      `${PF} | ??? WORKER | PID: ${process.pid} | JOB STALLED: ${job.id}`
-    );
+const Redis = require("ioredis");
+function redisReady() {
+  return new Promise(function (resolve) {
+    const redisReadyInterval = setInterval(() => {
+      if (process.env.REDIS_URL !== undefined) {
+        const redisClient = new Redis(process.env.REDIS_URL);
+        console.log({ redisClient });
+        clearInterval(redisReadyInterval);
+        resolve();
+      }
+    }, 5000);
   });
 }
+
+const start = () => {
+  console.log(
+    `${PF} | ... WAIT | WORKER | PID: ${process.pid} START | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+  );
+
+  redisReady().then(() => {
+    console.log(
+      `${PF} | +++ WORKER | PID: ${process.pid} START | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+    );
+    const workQueue = new Queue("updateRecommendations", process.env.REDIS_URL);
+
+    // job.data.
+    // op: "UPDATE_RECS",
+    // oauthID: userDoc.oauthID,
+    // epochs: EPOCHS,
+
+    workQueue.process(maxJobsPerWorker, async (job) => {
+      try {
+        console.log(
+          `${PF} | ->- WORKER | JOB START` +
+            ` | PID: ${process.pid}` +
+            ` | JID: ${job.id}` +
+            ` | OP: ${job.data.op}` +
+            ` | OAUTHID: ${job.data.oauthID}` +
+            ` | EPOCHS: ${job.data.epochs}`
+        );
+        const results = await updateUserRecommendations(job);
+        console.log(
+          `${PF} | +++ WORKER | JOB COMPLETE` +
+            ` | PID: ${process.pid}` +
+            ` | JID: ${job.id}` +
+            ` | OP: ${job.data.op}` +
+            ` | OAUTHID: ${job.data.oauthID}` +
+            ` | EPOCHS: ${job.data.epochs}`
+        );
+        results.stats = statsObj;
+        return results;
+      } catch (err) {
+        console.log(
+          `${PF} | *** WORKER | *** JOB ERROR` +
+            ` | PID: ${process.pid}` +
+            ` | JID: ${job.id}` +
+            ` | OP: ${job.data.op}` +
+            ` | OAUTHID: ${job.data.oauthID}` +
+            ` | EPOCHS: ${job.data.epochs}` +
+            ` | ERR: ${err}`
+        );
+        return {
+          op: job.op,
+          stats: statsObj,
+          err: err,
+        };
+      }
+    });
+
+    workQueue.on("waiting", function (jobId) {
+      console.log(
+        `${PF} | ... WORKER | PID: ${process.pid} | JOB WAITING: ${jobId}`
+      );
+    });
+
+    workQueue.on("resumed", function (job, err) {
+      console.log(
+        `${PF} | --- WORKER | PID: ${process.pid} | JOB RESUMED: ${job.id}`
+      );
+    });
+    workQueue.on("failed", function (job, err) {
+      console.log(
+        `${PF} | XXX WORKER | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
+      );
+    });
+    workQueue.on("stalled", function (job) {
+      console.log(
+        `${PF} | ??? WORKER | PID: ${process.pid} | JOB STALLED: ${job.id}`
+      );
+    });
+  });
+};
 
 // Initialize the clustered worker process
 // See: https://devcenter.heroku.com/articles/node-concurrency for more info

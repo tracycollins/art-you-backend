@@ -43,27 +43,6 @@ console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
 
 const Queue = require("bull");
 
-const workUpdateRecommendationsQueue = new Queue(
-  "updateRecommendations",
-  {
-    limiter: {
-      max: WORKER_QUEUE_LIMITER_MAX,
-      duration: WORKER_QUEUE_LIMITER_DURATION,
-    },
-  },
-  process.env.REDIS_URL
-);
-
-workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
-  console.log(`A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`, result);
-});
-workUpdateRecommendationsQueue.on("global:failed", (jobId, result) => {
-  console.log(`A47BE | UPDATE REC JOB ${jobId} | *** FAILDED | RESULT`, result);
-});
-workUpdateRecommendationsQueue.on("global:error", (jobId, result) => {
-  console.log(`A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`, result);
-});
-
 const { join } = require("path");
 const createError = require("http-errors");
 const express = require("express");
@@ -81,11 +60,61 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 
+let workUpdateRecommendationsQueue;
+
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
 
+const Redis = require("ioredis");
+
+function redisReady() {
+  return new Promise(function (resolve) {
+    console.log(`WAIT REDIS | process.env.REDIS_URL: ${process.env.REDIS_URL}`);
+    const redisReadyInterval = setInterval(() => {
+      if (process.env.REDIS_URL) {
+        const redisClient = new Redis(process.env.REDIS_URL);
+        console.log({ redisClient });
+        clearInterval(redisReadyInterval);
+        resolve();
+      } else {
+        console.log(
+          `WAIT REDIS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+        );
+      }
+    }, ONE_SECOND);
+  });
+}
+
 (async () => {
   global.dbConnection = await global.artyouDb.connect();
+
+  console.log(`PRE redisReady`);
+  await redisReady();
+  console.log(`POST redisReady`);
+
+  workUpdateRecommendationsQueue = new Queue(
+    "updateRecommendations",
+    {
+      limiter: {
+        max: WORKER_QUEUE_LIMITER_MAX,
+        duration: WORKER_QUEUE_LIMITER_DURATION,
+      },
+    },
+    process.env.REDIS_URL
+  );
+
+  workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
+    console.log(`A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`, result);
+  });
+  workUpdateRecommendationsQueue.on("global:failed", (jobId, result) => {
+    console.log(
+      `A47BE | UPDATE REC JOB ${jobId} | *** FAILDED | RESULT`,
+      result
+    );
+  });
+  workUpdateRecommendationsQueue.on("global:error", (jobId, result) => {
+    console.log(`A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`, result);
+  });
 
   await workUpdateRecommendationsQueue.clean(10000, "active");
   await workUpdateRecommendationsQueue.clean(10000, "completed");
@@ -294,14 +323,16 @@ app.post("/authenticated", async (req, res) => {
       const userObj = userDoc.toObject();
       res.json({ user: userObj });
 
-      const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
-        op: "UPDATE_RECS",
-        oauthID: userDoc.oauthID,
-        epochs: EPOCHS,
-      });
+      if (workUpdateRecommendationsQueue) {
+        const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
+          op: "UPDATE_RECS",
+          oauthID: userDoc.oauthID,
+          epochs: EPOCHS,
+        });
 
-      console.log(`JOB ADDED`);
-      console.log(jobUpdateRecs.data);
+        console.log(`JOB ADDED`);
+        console.log(jobUpdateRecs.data);
+      }
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
       res.json({
