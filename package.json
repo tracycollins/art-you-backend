@@ -73,7 +73,7 @@
     "should": "^13.2.3",
     "typescript": "^4.2.2"
   },
-  "description": "art-you backend in node.js",
+  "description": "art47 backend in node.js",
   "main": "app.js",
   "author": "Tracy Collins",
   "license": "ISC"
