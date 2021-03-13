@@ -344,9 +344,6 @@ app.post("/authenticated", async (req, res) => {
           `APP | authenticated | USER FOUND | oauthID: ${userDoc.oauthID} | NAME: ${userDoc.name}`
         );
       }
-      console.log(
-        `APP | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
-      );
 
       const userObj = userDoc.toObject();
       res.json({ user: userObj });
@@ -360,12 +357,14 @@ app.post("/authenticated", async (req, res) => {
       const jobAlreadyQueued = await jobQueued(jobOptions);
 
       if (workUpdateRecommendationsQueue && !jobAlreadyQueued) {
-        const jobUpdateRecs = await workUpdateRecommendationsQueue.add(
-          jobOptions
+        await workUpdateRecommendationsQueue.add(jobOptions);
+        console.log(
+          `APP | +++ ADD JOB | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
-
-        console.log(`JOB ADDED`);
-        console.log(jobUpdateRecs.data);
+      } else {
+        console.log(
+          `APP | SKIP ADD JOB --- ALREADY IN QUEUE| UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+        );
       }
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
