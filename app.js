@@ -254,10 +254,9 @@ app.post("/authenticated", async (req, res) => {
           `APP | authenticated | USER FOUND | oauthID: ${userDoc.oauthID} | NAME: ${userDoc.name}`
         );
       }
-      console.log(`APP | ADDING JOB TO WORKER QUEUE | UPDATE_RECS`);
-
-      const userObj = userDoc.toObject();
-      res.json({ user: userObj });
+      console.log(
+        `APP | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | REDIS_URL: ${REDIS_URL}`
+      );
 
       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
         op: "UPDATE_RECS",
@@ -267,6 +266,9 @@ app.post("/authenticated", async (req, res) => {
 
       console.log(`JOB ADDED`);
       console.log(jobUpdateRecs.data);
+
+      const userObj = userDoc.toObject();
+      res.json({ user: userObj });
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
       res.json({
