@@ -69,7 +69,9 @@ const updateUserRecommendations = async (p) => {
 };
 
 function start() {
-  console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
+  console.log(
+    `${PF} | +++ WORKER | PID: ${process.pid} START | REDIS_URL: ${REDIS_URL}`
+  );
   // Connect to the named work queue
   const workQueue = new Queue("updateRecommendations", REDIS_URL);
 
@@ -81,16 +83,18 @@ function start() {
   workQueue.process(maxJobsPerWorker, async (job) => {
     try {
       console.log(
-        `${PF} | ->- WORKER | PID: ${process.pid} PROCESS | JOB START | OP: ${job.data.op} OAUTHID: ${job.data.oauthID} EPOCHS: ${job.data.epochs}`
+        `${PF} | ->- WORKER | PID: ${process.pid} PROCESS | JOB START | OP: ${job.data.op} | OAUTHID: ${job.data.oauthID} | EPOCHS: ${job.data.epochs}`
       );
       const results = await updateUserRecommendations(job);
       console.log(
-        `${PF} | +++ WORKER | PID: ${process.pid} PROCESS | JOB COMPLETE | OP: ${job.data.op} OAUTHID: ${job.data.oauthID} EPOCHS: ${job.data.epochs}`
+        `${PF} | +++ WORKER | PID: ${process.pid} PROCESS | JOB COMPLETE | OP: ${job.data.op} | OAUTHID: ${job.data.oauthID} | EPOCHS: ${job.data.epochs}`
       );
-      return { op: job.op, results: results, stats: statsObj };
+      results.op = job.data.op;
+      results.stats = statsObj;
+      return results;
     } catch (err) {
       console.log(
-        `${PF} | *** WORKER | PID: ${process.pid} PROCESS | JOB ERROR | OP: ${job.data.op} OAUTHID: ${job.data.oauthID} EPOCHS: ${job.data.epochs} | ERR: ${err}`
+        `${PF} | *** WORKER | PID: ${process.pid} PROCESS | JOB ERROR | OP: ${job.data.op} | OAUTHID: ${job.data.oauthID} | EPOCHS: ${job.data.epochs} | ERR: ${err}`
       );
       return {
         op: job.op,
