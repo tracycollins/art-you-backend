@@ -1,6 +1,6 @@
 const PF = `WKR_${process.pid}`;
 
-const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const REDIS_URL = process.env.REDIS_URL;
 const workers = process.env.WEB_CONCURRENCY || 2;
 const maxJobsPerWorker = process.env.WORKER_MAX_JOBS
   ? parseInt(process.env.WORKER_MAX_JOBS)
