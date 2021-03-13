@@ -54,7 +54,9 @@ const updateUserRatingCount = async (user) => {
       //   epochs: epochs,
       // });
 
-      console.log(`NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS`);
+      console.log(
+        `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
+      );
 
       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
         op: "UPDATE_RECS",
@@ -62,7 +64,8 @@ const updateUserRatingCount = async (user) => {
         epochs: epochs,
       });
 
-      console.log(`JOB ADDED: ${jobUpdateRecs}`);
+      console.log(`NTR | JOB ADDED`);
+      console.log({ jobUpdateRecs });
 
       userRatingUpdateCounterHashmap[user.id] = 0;
       nntUpdateRecommendationsReady = true;

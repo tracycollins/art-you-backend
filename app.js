@@ -39,12 +39,12 @@ console.log(
 
 const workUpdateRecommendationsQueue = new Queue(
   "updateRecommendations",
-  {
-    limiter: {
-      max: WORKER_QUEUE_LIMITER_MAX,
-      duration: WORKER_QUEUE_LIMITER_DURATION,
-    },
-  },
+  // {
+  //   limiter: {
+  //     max: WORKER_QUEUE_LIMITER_MAX,
+  //     duration: WORKER_QUEUE_LIMITER_DURATION,
+  //   },
+  // },
   REDIS_URL
 );
 workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
