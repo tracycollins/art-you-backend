@@ -39,16 +39,19 @@ console.log(
 
 const workUpdateRecommendationsQueue = new Queue(
   "updateRecommendations",
-  // {
-  //   limiter: {
-  //     max: WORKER_QUEUE_LIMITER_MAX,
-  //     duration: WORKER_QUEUE_LIMITER_DURATION,
-  //   },
-  // },
+  {
+    limiter: {
+      max: WORKER_QUEUE_LIMITER_MAX,
+      duration: WORKER_QUEUE_LIMITER_DURATION,
+    },
+  },
   REDIS_URL
 );
 workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
   console.log(`A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`, result);
+});
+workUpdateRecommendationsQueue.on("global:error", (jobId, result) => {
+  console.log(`A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`, result);
 });
 
 const { join } = require("path");
