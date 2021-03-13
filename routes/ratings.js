@@ -62,7 +62,7 @@ const updateUserRatingCount = async (user) => {
         epochs: epochs,
       });
 
-      console(`JOB ADDED: ${jobUpdateRecs}`);
+      console.log(`JOB ADDED: ${jobUpdateRecs}`);
 
       userRatingUpdateCounterHashmap[user.id] = 0;
       nntUpdateRecommendationsReady = true;
