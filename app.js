@@ -22,8 +22,8 @@ const EPOCHS = process.env.ART47_NN_FIT_EPOCHS
 
 console.log(`A47BE | NN FIT EPOCHS: ${EPOCHS}`);
 
-const REDIS_URL = process.env.REDIS_URL;
-console.log(`A47BE | REDIS_URL: ${REDIS_URL}`);
+// const REDIS_URL = process.env.REDIS_URL;
+console.log(`A47BE | process.env.REDIS_URL: ${process.env.REDIS_URL}`);
 
 const WORKER_QUEUE_LIMITER_MAX = process.env.WORKER_QUEUE_LIMITER_MAX
   ? parseInt(process.env.WORKER_QUEUE_LIMITER_MAX)
@@ -51,7 +51,7 @@ const workUpdateRecommendationsQueue = new Queue(
       duration: WORKER_QUEUE_LIMITER_DURATION,
     },
   },
-  REDIS_URL
+  process.env.REDIS_URL
 );
 
 workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
@@ -288,7 +288,7 @@ app.post("/authenticated", async (req, res) => {
         );
       }
       console.log(
-        `APP | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | REDIS_URL: ${REDIS_URL}`
+        `APP | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
       );
 
       const userObj = userDoc.toObject();

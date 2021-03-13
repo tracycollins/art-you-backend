@@ -1,6 +1,6 @@
 const PF = `WKR_${process.pid}`;
 
-const REDIS_URL = process.env.REDIS_URL;
+// const REDIS_URL = process.env.REDIS_URL;
 const workers = process.env.WEB_CONCURRENCY || 2;
 const maxJobsPerWorker = process.env.WORKER_MAX_JOBS
   ? parseInt(process.env.WORKER_MAX_JOBS)
@@ -17,7 +17,7 @@ console.log(
 console.log(
   `${PF}` +
     ` | INIT` +
-    ` | REDIS_URL: ${REDIS_URL}` +
+    // ` | REDIS_URL: ${REDIS_URL}` +
     ` | workers: ${workers}` +
     ` | maxJobsPerWorker: ${maxJobsPerWorker}`
 );
@@ -76,7 +76,7 @@ const updateUserRecommendations = async (p) => {
 function start() {
   console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
 
-  const workQueue = new Queue("updateRecommendations", REDIS_URL);
+  const workQueue = new Queue("updateRecommendations", process.env.REDIS_URL);
 
   // job.data.
   // op: "UPDATE_RECS",
