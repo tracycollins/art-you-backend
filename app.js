@@ -138,37 +138,47 @@ const jobQueued = async (jobConfig) => {
 };
 
 (async () => {
-  global.dbConnection = await global.artyouDb.connect();
+  try {
+    global.dbConnection = await global.artyouDb.connect();
 
-  await redisReady();
+    await redisReady();
 
-  workUpdateRecommendationsQueue = new Queue(
-    "updateRecommendations",
-    {
-      limiter: {
-        max: WORKER_QUEUE_LIMITER_MAX,
-        duration: WORKER_QUEUE_LIMITER_DURATION,
+    workUpdateRecommendationsQueue = new Queue(
+      "updateRecommendations",
+      {
+        limiter: {
+          max: WORKER_QUEUE_LIMITER_MAX,
+          duration: WORKER_QUEUE_LIMITER_DURATION,
+        },
       },
-    },
-    process.env.REDIS_URL
-  );
-
-  workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
-    console.log(`A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`, result);
-  });
-  workUpdateRecommendationsQueue.on("global:failed", (jobId, result) => {
-    console.log(
-      `A47BE | UPDATE REC JOB ${jobId} | *** FAILDED | RESULT`,
-      result
+      process.env.REDIS_URL
     );
-  });
-  workUpdateRecommendationsQueue.on("global:error", (jobId, result) => {
-    console.log(`A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`, result);
-  });
 
-  await workUpdateRecommendationsQueue.clean(1000, "active");
-  await workUpdateRecommendationsQueue.clean(1000, "completed");
-  await workUpdateRecommendationsQueue.clean(1000, "failed");
+    workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
+      console.log(
+        `A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`,
+        result
+      );
+    });
+    workUpdateRecommendationsQueue.on("global:failed", (jobId, result) => {
+      console.log(
+        `A47BE | UPDATE REC JOB ${jobId} | *** FAILDED | RESULT`,
+        result
+      );
+    });
+    workUpdateRecommendationsQueue.on("global:error", (jobId, result) => {
+      console.log(
+        `A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`,
+        result
+      );
+    });
+
+    await workUpdateRecommendationsQueue.clean(1000, "active");
+    await workUpdateRecommendationsQueue.clean(1000, "completed");
+    await workUpdateRecommendationsQueue.clean(1000, "failed");
+  } catch (err) {
+    console.log(`A47BE | *** ERROR DB + REDIS + WORKER QUEUE INIT | ERR:`, err);
+  }
 })();
 
 // const indexRouter = require('./routes/index');
