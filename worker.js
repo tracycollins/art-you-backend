@@ -82,136 +82,136 @@ const updateUserRecommendations = async (p) => {
   }
 };
 
-const url = require("url");
-const Redis = require("ioredis");
-// const redis = require("redis");
+// const url = require("url");
+// const Redis = require("ioredis");
+// // const redis = require("redis");
 
-function redisReady() {
-  return new Promise(function (resolve) {
-    // const redisClient = new Redis(process.env.REDIS_TLS_URL, {
-    //   tls: {
-    //     rejectUnauthorized: false,
-    //   },
-    // });
-    // const redisClient = redis.createClient(process.env.REDIS_TLS_URL);
+// function redisReady() {
+//   return new Promise(function (resolve) {
+//     // const redisClient = new Redis(process.env.REDIS_TLS_URL, {
+//     //   tls: {
+//     //     rejectUnauthorized: false,
+//     //   },
+//     // });
+//     // const redisClient = redis.createClient(process.env.REDIS_TLS_URL);
 
-    const redis_uri = url.parse(process.env.REDIS_TLS_URL);
-    const redisClient = new Redis({
-      port: Number(redis_uri.port) + 1,
-      host: redis_uri.hostname,
-      password: redis_uri.auth.split(":")[1],
-      db: 0,
-      tls: {
-        rejectUnauthorized: false,
-        requestCert: true,
-        agent: false,
-      },
-    });
+//     const redis_uri = url.parse(process.env.REDIS_TLS_URL);
+//     const redisClient = new Redis({
+//       port: Number(redis_uri.port) + 1,
+//       host: redis_uri.hostname,
+//       password: redis_uri.auth.split(":")[1],
+//       db: 0,
+//       tls: {
+//         rejectUnauthorized: false,
+//         requestCert: true,
+//         agent: false,
+//       },
+//     });
 
-    console.log(
-      `${PF} | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
-    );
-    const redisReadyInterval = setInterval(() => {
-      if (redisClient.status === "ready") {
-        console.log(
-          `${PF} | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
-        );
-        clearInterval(redisReadyInterval);
-        redisClient.quit();
-        resolve();
-      } else {
-        console.log(
-          `${PF} | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
-        );
-      }
-    }, 30 * ONE_SECOND);
-  });
-}
+//     console.log(
+//       `${PF} | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+//     );
+//     const redisReadyInterval = setInterval(() => {
+//       if (redisClient.status === "ready") {
+//         console.log(
+//           `${PF} | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+//         );
+//         clearInterval(redisReadyInterval);
+//         redisClient.quit();
+//         resolve();
+//       } else {
+//         console.log(
+//           `${PF} | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+//         );
+//       }
+//     }, 30 * ONE_SECOND);
+//   });
+// }
 
 const start = () => {
   console.log(
     `${PF} | ... WAIT | WORKER | PID: ${process.pid} START | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
   );
 
-  redisReady()
-    .then(() => {
+  // redisReady()
+  //   .then(() => {
+  console.log(
+    `${PF} | +++ WORKER | PID: ${process.pid} START | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+  );
+  const workQueue = new Queue(
+    "updateRecommendations",
+    process.env.REDIS_TLS_URL
+  );
+
+  // job.data.
+  // op: "UPDATE_RECS",
+  // oauthID: userDoc.oauthID,
+  // epochs: EPOCHS,
+
+  workQueue.process(maxJobsPerWorker, async (job) => {
+    try {
       console.log(
-        `${PF} | +++ WORKER | PID: ${process.pid} START | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+        `${PF} | ->- WORKER | JOB START` +
+          ` | PID: ${process.pid}` +
+          ` | JID: ${job.id}` +
+          ` | OP: ${job.data.op}` +
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | EPOCHS: ${job.data.epochs}`
       );
-      const workQueue = new Queue(
-        "updateRecommendations",
-        process.env.REDIS_TLS_URL
+      const results = await updateUserRecommendations(job);
+      console.log(
+        `${PF} | +++ WORKER | JOB COMPLETE` +
+          ` | PID: ${process.pid}` +
+          ` | JID: ${job.id}` +
+          ` | OP: ${job.data.op}` +
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | EPOCHS: ${job.data.epochs}`
       );
+      results.stats = statsObj;
+      return results;
+    } catch (err) {
+      console.log(
+        `${PF} | *** WORKER | *** JOB ERROR` +
+          ` | PID: ${process.pid}` +
+          ` | JID: ${job.id}` +
+          ` | OP: ${job.data.op}` +
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | EPOCHS: ${job.data.epochs}` +
+          ` | ERR: ${err}`
+      );
+      return {
+        op: job.op,
+        stats: statsObj,
+        err: err,
+      };
+    }
+  });
 
-      // job.data.
-      // op: "UPDATE_RECS",
-      // oauthID: userDoc.oauthID,
-      // epochs: EPOCHS,
+  workQueue.on("waiting", function (jobId) {
+    console.log(
+      `${PF} | ... WORKER | PID: ${process.pid} | JOB WAITING: ${jobId}`
+    );
+  });
 
-      workQueue.process(maxJobsPerWorker, async (job) => {
-        try {
-          console.log(
-            `${PF} | ->- WORKER | JOB START` +
-              ` | PID: ${process.pid}` +
-              ` | JID: ${job.id}` +
-              ` | OP: ${job.data.op}` +
-              ` | OAUTHID: ${job.data.oauthID}` +
-              ` | EPOCHS: ${job.data.epochs}`
-          );
-          const results = await updateUserRecommendations(job);
-          console.log(
-            `${PF} | +++ WORKER | JOB COMPLETE` +
-              ` | PID: ${process.pid}` +
-              ` | JID: ${job.id}` +
-              ` | OP: ${job.data.op}` +
-              ` | OAUTHID: ${job.data.oauthID}` +
-              ` | EPOCHS: ${job.data.epochs}`
-          );
-          results.stats = statsObj;
-          return results;
-        } catch (err) {
-          console.log(
-            `${PF} | *** WORKER | *** JOB ERROR` +
-              ` | PID: ${process.pid}` +
-              ` | JID: ${job.id}` +
-              ` | OP: ${job.data.op}` +
-              ` | OAUTHID: ${job.data.oauthID}` +
-              ` | EPOCHS: ${job.data.epochs}` +
-              ` | ERR: ${err}`
-          );
-          return {
-            op: job.op,
-            stats: statsObj,
-            err: err,
-          };
-        }
-      });
-
-      workQueue.on("waiting", function (jobId) {
-        console.log(
-          `${PF} | ... WORKER | PID: ${process.pid} | JOB WAITING: ${jobId}`
-        );
-      });
-
-      workQueue.on("resumed", function (job, err) {
-        console.log(
-          `${PF} | --- WORKER | PID: ${process.pid} | JOB RESUMED: ${job.id}`
-        );
-      });
-      workQueue.on("failed", function (job, err) {
-        console.log(
-          `${PF} | XXX WORKER | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
-        );
-      });
-      workQueue.on("stalled", function (job) {
-        console.log(
-          `${PF} | ??? WORKER | PID: ${process.pid} | JOB STALLED: ${job.id}`
-        );
-      });
-    })
-    .catch((err) => {
-      console.log(`${PF} | *** REDIS READY ERROR: ${err}`);
-    });
+  workQueue.on("resumed", function (job, err) {
+    console.log(
+      `${PF} | --- WORKER | PID: ${process.pid} | JOB RESUMED: ${job.id}`
+    );
+  });
+  workQueue.on("failed", function (job, err) {
+    console.log(
+      `${PF} | XXX WORKER | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
+    );
+  });
+  workQueue.on("stalled", function (job) {
+    console.log(
+      `${PF} | ??? WORKER | PID: ${process.pid} | JOB STALLED: ${job.id}`
+    );
+  });
+  // })
+  // .catch((err) => {
+  //   console.log(`${PF} | *** REDIS READY ERROR: ${err}`);
+  // });
 };
 
 // Initialize the clustered worker process

@@ -65,51 +65,51 @@ let workUpdateRecommendationsQueue;
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
 
-const url = require("url");
-const Redis = require("ioredis");
-// const redis = require("redis");
+// const url = require("url");
+// const Redis = require("ioredis");
+// // const redis = require("redis");
 
-function redisReady() {
-  return new Promise(function (resolve) {
-    // const redisClient = new Redis(process.env.REDIS_TLS_URL, {
-    //   tls: {
-    //     rejectUnauthorized: false,
-    //   },
-    // });
+// function redisReady() {
+//   return new Promise(function (resolve) {
+//     // const redisClient = new Redis(process.env.REDIS_TLS_URL, {
+//     //   tls: {
+//     //     rejectUnauthorized: false,
+//     //   },
+//     // });
 
-    const redis_uri = url.parse(process.env.REDIS_TLS_URL);
-    const redisClient = new Redis({
-      port: Number(redis_uri.port) + 1,
-      host: redis_uri.hostname,
-      password: redis_uri.auth.split(":")[1],
-      db: 0,
-      tls: {
-        rejectUnauthorized: false,
-        requestCert: true,
-        agent: false,
-      },
-    });
+//     const redis_uri = url.parse(process.env.REDIS_TLS_URL);
+//     const redisClient = new Redis({
+//       port: Number(redis_uri.port) + 1,
+//       host: redis_uri.hostname,
+//       password: redis_uri.auth.split(":")[1],
+//       db: 0,
+//       tls: {
+//         rejectUnauthorized: false,
+//         requestCert: true,
+//         agent: false,
+//       },
+//     });
 
-    // const redisClient = redis.createClient(process.env.REDIS_TLS_URL);
-    console.log(
-      `A47BE | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
-    );
-    const redisReadyInterval = setInterval(() => {
-      if (redisClient.status === "ready") {
-        console.log(
-          `A47BE | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
-        );
-        clearInterval(redisReadyInterval);
-        redisClient.quit();
-        resolve();
-      } else {
-        console.log(
-          `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
-        );
-      }
-    }, 30 * ONE_SECOND);
-  });
-}
+//     // const redisClient = redis.createClient(process.env.REDIS_TLS_URL);
+//     console.log(
+//       `A47BE | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+//     );
+//     const redisReadyInterval = setInterval(() => {
+//       if (redisClient.status === "ready") {
+//         console.log(
+//           `A47BE | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+//         );
+//         clearInterval(redisReadyInterval);
+//         redisClient.quit();
+//         resolve();
+//       } else {
+//         console.log(
+//           `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+//         );
+//       }
+//     }, 30 * ONE_SECOND);
+//   });
+// }
 
 const jobQueued = async (jobConfig) => {
   try {
@@ -156,7 +156,7 @@ const jobQueued = async (jobConfig) => {
   try {
     global.dbConnection = await global.artyouDb.connect();
 
-    await redisReady();
+    // await redisReady();
 
     workUpdateRecommendationsQueue = new Queue(
       "updateRecommendations",
