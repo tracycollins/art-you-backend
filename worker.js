@@ -81,17 +81,32 @@ const updateUserRecommendations = async (p) => {
     throw err;
   }
 };
+
+const url = require("url");
 const Redis = require("ioredis");
 // const redis = require("redis");
 
 function redisReady() {
   return new Promise(function (resolve) {
-    const redisClient = new Redis(process.env.REDIS_URL, {
+    // const redisClient = new Redis(process.env.REDIS_URL, {
+    //   tls: {
+    //     rejectUnauthorized: false,
+    //   },
+    // });
+    // const redisClient = redis.createClient(process.env.REDIS_URL);
+
+    const redis_uri = url.parse(process.env.REDIS_URL);
+    const redisClient = new Redis({
+      port: Number(redis_uri.port) + 1,
+      host: redis_uri.hostname,
+      password: redis_uri.auth.split(":")[1],
+      db: 0,
       tls: {
         rejectUnauthorized: false,
+        requestCert: true,
+        agent: false,
       },
     });
-    // const redisClient = redis.createClient(process.env.REDIS_URL);
 
     console.log(
       `${PF} | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_URL: ${process.env.REDIS_URL}`
