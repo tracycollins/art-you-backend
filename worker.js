@@ -8,7 +8,7 @@ const WORKER_START_TIMEOUT = process.env.WORKER_START_TIMEOUT
   ? parseInt(process.env.WORKER_START_TIMEOUT)
   : 10 * ONE_SECOND;
 
-// const REDIS_URL = process.env.REDIS_URL;
+// const REDIS_URL = process.env.REDIS_TLS_URL;
 const workers = process.env.WEB_CONCURRENCY || 2;
 const maxJobsPerWorker = process.env.WORKER_MAX_JOBS
   ? parseInt(process.env.WORKER_MAX_JOBS)
@@ -19,7 +19,7 @@ console.log(
   `${PF}` +
     ` | INIT` +
     ` | process.env.WORKER_START_TIMEOUT: ${process.env.WORKER_START_TIMEOUT}` +
-    ` | process.env.REDIS_URL: ${process.env.REDIS_URL}` +
+    ` | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}` +
     ` | process.env.WEB_CONCURRENCY: ${process.env.WEB_CONCURRENCY}` +
     ` | process.env.WORKER_MAX_JOBS: ${process.env.WORKER_MAX_JOBS}`
 );
@@ -88,12 +88,12 @@ const Redis = require("ioredis");
 
 function redisReady() {
   return new Promise(function (resolve) {
-    // const redisClient = new Redis(process.env.REDIS_URL, {
+    // const redisClient = new Redis(process.env.REDIS_TLS_URL, {
     //   tls: {
     //     rejectUnauthorized: false,
     //   },
     // });
-    // const redisClient = redis.createClient(process.env.REDIS_URL);
+    // const redisClient = redis.createClient(process.env.REDIS_TLS_URL);
 
     const redis_uri = url.parse(process.env.REDIS_TLS_URL);
     const redisClient = new Redis({
@@ -109,19 +109,19 @@ function redisReady() {
     });
 
     console.log(
-      `${PF} | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_URL: ${process.env.REDIS_URL}`
+      `${PF} | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
     );
     const redisReadyInterval = setInterval(() => {
       if (redisClient.status === "ready") {
         console.log(
-          `${PF} | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `${PF} | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
         );
         clearInterval(redisReadyInterval);
         redisClient.quit();
         resolve();
       } else {
         console.log(
-          `${PF} | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `${PF} | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
         );
       }
     }, 10 * ONE_SECOND);
@@ -130,17 +130,17 @@ function redisReady() {
 
 const start = () => {
   console.log(
-    `${PF} | ... WAIT | WORKER | PID: ${process.pid} START | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+    `${PF} | ... WAIT | WORKER | PID: ${process.pid} START | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
   );
 
   redisReady()
     .then(() => {
       console.log(
-        `${PF} | +++ WORKER | PID: ${process.pid} START | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+        `${PF} | +++ WORKER | PID: ${process.pid} START | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
       );
       const workQueue = new Queue(
         "updateRecommendations",
-        process.env.REDIS_URL
+        process.env.REDIS_TLS_URL
       );
 
       // job.data.
