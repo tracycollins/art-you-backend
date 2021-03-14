@@ -357,13 +357,20 @@ app.post("/authenticated", async (req, res) => {
       const jobAlreadyQueued = await jobQueued(jobOptions);
 
       if (workUpdateRecommendationsQueue && !jobAlreadyQueued) {
+        console.log(
+          `APP | --> ADDING JOB | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+        );
         await workUpdateRecommendationsQueue.add(jobOptions);
         console.log(
-          `APP | +++ ADD JOB | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `APP | +++ ADDED JOB  | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+        );
+      } else if (!workUpdateRecommendationsQueue) {
+        console.log(
+          `APP | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
       } else {
         console.log(
-          `APP | SKIP ADD JOB --- ALREADY IN QUEUE| UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `APP | !!! SKIP ADD JOB --- ALREADY IN Q | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
       }
     } else {
