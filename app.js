@@ -22,8 +22,8 @@ const EPOCHS = process.env.ART47_NN_FIT_EPOCHS
 
 console.log(`A47BE | NN FIT EPOCHS: ${EPOCHS}`);
 
-// const REDIS_URL = process.env.REDIS_TLS_URL;
-console.log(`A47BE | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`);
+// const REDIS_URL = process.env.REDIS_URL;
+console.log(`A47BE | process.env.REDIS_URL: ${process.env.REDIS_URL}`);
 
 const WORKER_QUEUE_LIMITER_MAX = process.env.WORKER_QUEUE_LIMITER_MAX
   ? parseInt(process.env.WORKER_QUEUE_LIMITER_MAX)
@@ -71,13 +71,13 @@ const Redis = require("ioredis");
 
 function redisReady() {
   return new Promise(function (resolve) {
-    // const redisClient = new Redis(process.env.REDIS_TLS_URL, {
+    // const redisClient = new Redis(process.env.REDIS_URL, {
     //   tls: {
     //     rejectUnauthorized: false,
     //   },
     // });
 
-    const redis_uri = url.parse(process.env.REDIS_TLS_URL);
+    const redis_uri = url.parse(process.env.REDIS_URL);
     const redisClient = new Redis({
       port: Number(redis_uri.port) + 1,
       host: redis_uri.hostname,
@@ -90,21 +90,21 @@ function redisReady() {
       },
     });
 
-    // const redisClient = redis.createClient(process.env.REDIS_TLS_URL);
+    // const redisClient = redis.createClient(process.env.REDIS_URL);
     console.log(
-      `A47BE | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+      `A47BE | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_URL: ${process.env.REDIS_URL}`
     );
     const redisReadyInterval = setInterval(() => {
       if (redisClient.status === "ready") {
         console.log(
-          `A47BE | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+          `A47BE | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
         clearInterval(redisReadyInterval);
         redisClient.quit();
         resolve();
       } else {
         console.log(
-          `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+          `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
       }
     }, 10 * ONE_SECOND);
@@ -166,7 +166,7 @@ const jobQueued = async (jobConfig) => {
           duration: WORKER_QUEUE_LIMITER_DURATION,
         },
       },
-      process.env.REDIS_TLS_URL
+      process.env.REDIS_URL
     );
 
     workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
@@ -387,19 +387,19 @@ app.post("/authenticated", async (req, res) => {
 
       if (workUpdateRecommendationsQueue && !jobAlreadyQueued) {
         console.log(
-          `APP | --> ADDING JOB | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+          `APP | --> ADDING JOB | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
         await workUpdateRecommendationsQueue.add(jobOptions);
         console.log(
-          `APP | +++ ADDED JOB  | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+          `APP | +++ ADDED JOB  | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
       } else if (!workUpdateRecommendationsQueue) {
         console.log(
-          `APP | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+          `APP | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
       } else {
         console.log(
-          `APP | !!! SKIP ADD JOB --- ALREADY IN Q | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
+          `APP | !!! SKIP ADD JOB --- ALREADY IN Q | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
         );
       }
     } else {
