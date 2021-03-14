@@ -97,14 +97,14 @@ global.dbConnection = false;
 //     const redisReadyInterval = setInterval(() => {
 //       if (redisClient.status === "ready") {
 //         console.log(
-//           `A47BE | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+//           `A47BE | REDIS CLIENT | STATUS: ${redisClient.status}`
 //         );
 //         clearInterval(redisReadyInterval);
 //         redisClient.quit();
 //         resolve();
 //       } else {
 //         console.log(
-//           `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+//           `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status}`
 //         );
 //       }
 //     }, 30 * ONE_SECOND);
@@ -119,32 +119,34 @@ const jobQueued = async (jobConfig) => {
       100
     );
 
-    jobs.forEach(async (job) => {
-      const jobState = await job.getState();
+    // jobs.forEach(async (job) => {
+    for (const job of jobs) {
+      job.state = await job.getState();
       console.log(
-        `JOB` +
+        `JOB | @@@ ENQUEUED` +
           ` | JID: ${job.id}` +
-          ` | STATE: ${jobState}` +
+          ` | STATE: ${job.state}` +
           ` | OP: ${job.data.op}` +
           ` | OAUTHID: ${job.data.oauthID}` +
           ` | EPOCHS: ${job.data.epochs}`
       );
       if (
-        (jobState === "active" || jobState === "stalled") &&
+        (job.state === "active" || job.state === "stalled") &&
         job.data.op === jobConfig.op &&
         job.data.oauthID === jobConfig.oauthID
       ) {
         console.log(
-          `JOB | -*- Q HIT` +
+          `JOB | @@@ QUEUED | -*- Q HIT` +
             ` | JID: ${job.id}` +
-            ` | STATE: ${jobState}` +
+            ` | STATE: ${job.state}` +
             ` | OP: ${job.data.op}` +
             ` | OAUTHID: ${job.data.oauthID}` +
             ` | EPOCHS: ${job.data.epochs}`
         );
-        return true;
+        return job;
       }
-    });
+    }
+
     return false;
   } catch (err) {
     console.log(`JOB | jobQueued ERROR: ${err}`);
@@ -156,16 +158,20 @@ const jobQueued = async (jobConfig) => {
   try {
     global.dbConnection = await global.artyouDb.connect();
 
-    // await redisReady();
+    console.log(
+      `A47BE | ... CREATING WORKER QUEUE` +
+        ` | WORKER_QUEUE_LIMITER_MAX: ${WORKER_QUEUE_LIMITER_MAX}` +
+        ` | WORKER_QUEUE_LIMITER_DURATION: ${WORKER_QUEUE_LIMITER_DURATION}`
+    );
 
     workUpdateRecommendationsQueue = new Queue(
       "updateRecommendations",
-      // {
-      //   limiter: {
-      //     max: WORKER_QUEUE_LIMITER_MAX,
-      //     duration: WORKER_QUEUE_LIMITER_DURATION,
-      //   },
-      // },
+      {
+        limiter: {
+          max: WORKER_QUEUE_LIMITER_MAX,
+          duration: WORKER_QUEUE_LIMITER_DURATION,
+        },
+      },
       process.env.REDIS_URL
     );
 
@@ -383,23 +389,25 @@ app.post("/authenticated", async (req, res) => {
         epochs: EPOCHS,
       };
 
-      const jobAlreadyQueued = await jobQueued(jobOptions);
+      const queuedJob = await jobQueued(jobOptions);
 
-      if (workUpdateRecommendationsQueue && !jobAlreadyQueued) {
+      if (workUpdateRecommendationsQueue && !queuedJob) {
         console.log(
-          `APP | --> ADDING JOB | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `APP | --> ADDING JOB | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS`
         );
-        await workUpdateRecommendationsQueue.add(jobOptions);
+        const jobAddResults = await workUpdateRecommendationsQueue.add(
+          jobOptions
+        );
         console.log(
-          `APP | +++ ADDED JOB  | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `APP | +++ ADDED JOB  | UPDATE_RECS | JID: ${jobAddResults.id} | ${userDoc.oauthID} | ${EPOCHS} EPOCHS`
         );
       } else if (!workUpdateRecommendationsQueue) {
         console.log(
-          `APP | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `APP | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS`
         );
       } else {
         console.log(
-          `APP | !!! SKIP ADD JOB --- ALREADY IN Q | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+          `APP | !!! SKIP ENQUEUED | JID: ${queuedJob.id} | STATE: ${queuedJob.state} | UPDATE_RECS | ${queuedJob.data.oauthID} | ${queuedJob.data.epochs} EPOCHS`
         );
       }
     } else {

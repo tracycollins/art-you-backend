@@ -114,14 +114,14 @@ const updateUserRecommendations = async (p) => {
 //     const redisReadyInterval = setInterval(() => {
 //       if (redisClient.status === "ready") {
 //         console.log(
-//           `${PF} | REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+//           `${PF} | REDIS CLIENT | STATUS: ${redisClient.status}`
 //         );
 //         clearInterval(redisReadyInterval);
 //         redisClient.quit();
 //         resolve();
 //       } else {
 //         console.log(
-//           `${PF} | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_URL: ${process.env.REDIS_URL}`
+//           `${PF} | WAIT REDIS CLIENT | STATUS: ${redisClient.status}`
 //         );
 //       }
 //     }, 30 * ONE_SECOND);
@@ -129,15 +129,11 @@ const updateUserRecommendations = async (p) => {
 // }
 
 const start = () => {
-  console.log(
-    `${PF} | ... WAIT | WORKER | PID: ${process.pid} START | process.env.REDIS_URL: ${process.env.REDIS_URL}`
-  );
+  console.log(`${PF} | ... WAIT | WORKER | PID: ${process.pid} START`);
 
   // redisReady()
   //   .then(() => {
-  console.log(
-    `${PF} | +++ WORKER | PID: ${process.pid} START | process.env.REDIS_URL: ${process.env.REDIS_URL}`
-  );
+  console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
   const workQueue = new Queue("updateRecommendations", process.env.REDIS_URL);
 
   // job.data.
@@ -214,6 +210,9 @@ const start = () => {
 // Initialize the clustered worker process
 // See: https://devcenter.heroku.com/articles/node-concurrency for more info
 
+console.log(
+  `${PF} | WORKER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`
+);
 setTimeout(() => {
   throng({ workers, start });
 }, WORKER_START_TIMEOUT);
