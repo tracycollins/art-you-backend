@@ -160,12 +160,12 @@ const jobQueued = async (jobConfig) => {
 
     workUpdateRecommendationsQueue = new Queue(
       "updateRecommendations",
-      {
-        limiter: {
-          max: WORKER_QUEUE_LIMITER_MAX,
-          duration: WORKER_QUEUE_LIMITER_DURATION,
-        },
-      },
+      // {
+      //   limiter: {
+      //     max: WORKER_QUEUE_LIMITER_MAX,
+      //     duration: WORKER_QUEUE_LIMITER_DURATION,
+      //   },
+      // },
       process.env.REDIS_URL
     );
 
