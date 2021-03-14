@@ -86,7 +86,11 @@ const Redis = require("ioredis");
 
 function redisReady() {
   return new Promise(function (resolve) {
-    const redisClient = new Redis(process.env.REDIS_URL);
+    const redisClient = new Redis(process.env.REDIS_URL, {
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
     // const redisClient = redis.createClient(process.env.REDIS_URL);
 
     console.log(
