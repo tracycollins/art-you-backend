@@ -107,7 +107,7 @@ function redisReady() {
           `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status} | process.env.REDIS_TLS_URL: ${process.env.REDIS_TLS_URL}`
         );
       }
-    }, 10 * ONE_SECOND);
+    }, 30 * ONE_SECOND);
   });
 }
 
