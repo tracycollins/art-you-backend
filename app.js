@@ -112,6 +112,12 @@ global.dbConnection = false;
 // }
 
 const jobQueued = async (jobConfig) => {
+  if (!workUpdateRecommendationsQueue) {
+    console.log(
+      `JOB | jobQueued | !!! workUpdateRecommendationsQueue NOT READY`
+    );
+    return false;
+  }
   try {
     const jobs = await workUpdateRecommendationsQueue.getJobs(
       ["completed", "active", "failed", "stalled"],
@@ -119,11 +125,18 @@ const jobQueued = async (jobConfig) => {
       100
     );
 
+    if (jobs.length === 0) {
+      console.log(
+        `JOB | jobQueued | --- NO JOBS IN QUEUE workUpdateRecommendationsQueue`
+      );
+      return false;
+    }
+
     // jobs.forEach(async (job) => {
     for (const job of jobs) {
       job.state = await job.getState();
       console.log(
-        `JOB | @@@ ENQUEUED` +
+        `JOB | jobQueued | @@@ ENQUEUED` +
           ` | JID: ${job.id}` +
           ` | STATE: ${job.state}` +
           ` | OP: ${job.data.op}` +
@@ -131,12 +144,13 @@ const jobQueued = async (jobConfig) => {
           ` | EPOCHS: ${job.data.epochs}`
       );
       if (
+        jobConfig &&
         (job.state === "active" || job.state === "stalled") &&
         job.data.op === jobConfig.op &&
         job.data.oauthID === jobConfig.oauthID
       ) {
         console.log(
-          `JOB | @@@ QUEUED | -*- Q HIT` +
+          `JOB | jobQueued | @@@ QUEUED | -*- Q HIT` +
             ` | JID: ${job.id}` +
             ` | STATE: ${job.state}` +
             ` | OP: ${job.data.op}` +
@@ -164,14 +178,16 @@ const jobQueued = async (jobConfig) => {
         ` | WORKER_QUEUE_LIMITER_DURATION: ${WORKER_QUEUE_LIMITER_DURATION}`
     );
 
+    await jobQueued();
+
     workUpdateRecommendationsQueue = new Queue(
       "updateRecommendations",
-      {
-        limiter: {
-          max: WORKER_QUEUE_LIMITER_MAX,
-          duration: WORKER_QUEUE_LIMITER_DURATION,
-        },
-      },
+      // {
+      //   limiter: {
+      //     max: WORKER_QUEUE_LIMITER_MAX,
+      //     duration: WORKER_QUEUE_LIMITER_DURATION,
+      //   },
+      // },
       process.env.REDIS_URL
     );
 
@@ -389,7 +405,17 @@ app.post("/authenticated", async (req, res) => {
         epochs: EPOCHS,
       };
 
-      const queuedJob = await jobQueued(jobOptions);
+      console.log(
+        `APP | JOB | ... CHECK QUEUED | OP: ${jobOptions.op} |  OAUTH ID: ${jobOptions.oauthID} | ${EPOCHS} EPOCHS`
+      );
+
+      let queuedJob = false;
+
+      try {
+        queuedJob = await jobQueued(jobOptions);
+      } catch (e) {
+        console.log(`APP | JOB | *** CHECK QUEUED ERROR: ${e}`);
+      }
 
       if (workUpdateRecommendationsQueue && !queuedJob) {
         console.log(
