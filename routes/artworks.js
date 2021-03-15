@@ -34,6 +34,166 @@ router.get("/cursor/:cursor", async (req, res) => {
   }
 });
 
+router.get("/top-rated/user/:id", async (req, res) => {
+  try {
+    console.log(
+      `GET ${model} | TOP 10 RATED | FILTER BY USER OAUTHID: ${req.params.id}`
+    );
+
+    const ratings = await await global.artyouDb.Rating.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+        },
+      },
+      {
+        $match: {
+          "user.oauthID": req.params.id,
+        },
+      },
+      {
+        $sort: {
+          rate: -1,
+        },
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $lookup: {
+          from: "artworks",
+          localField: "artwork",
+          foreignField: "_id",
+          as: "artwork",
+        },
+      },
+      {
+        $unwind: {
+          path: "$artwork",
+        },
+      },
+      {
+        $lookup: {
+          from: "images",
+          localField: "artwork.image",
+          foreignField: "_id",
+          as: "artwork.image",
+        },
+      },
+      {
+        $unwind: {
+          path: "$artwork.image",
+        },
+      },
+    ]);
+
+    console.log(
+      `FOUND ${model} BY USER OAUTHID: ${req.params.id} | TOP ${ratings.length} RATINGs`
+    );
+
+    const artworks = ratings.map((rating) => {
+      const art = Object.assign({}, rating.artwork);
+      art.ratingUser = { rate: rating.rate };
+      return art;
+    });
+
+    res.json(artworks);
+  } catch (err) {
+    console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+  }
+});
+
+router.get("/top-recs/user/:id", async (req, res) => {
+  try {
+    console.log(
+      `GET ${model} | TOP 10 RECS | FILTER BY USER OAUTHID: ${req.params.id}`
+    );
+
+    const recs = await await global.artyouDb.Recommendation.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+        },
+      },
+      {
+        $match: {
+          "user.oauthID": req.params.id,
+        },
+      },
+      {
+        $sort: {
+          score: -1,
+        },
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $lookup: {
+          from: "artworks",
+          localField: "artwork",
+          foreignField: "_id",
+          as: "artwork",
+        },
+      },
+      {
+        $unwind: {
+          path: "$artwork",
+        },
+      },
+      {
+        $lookup: {
+          from: "images",
+          localField: "artwork.image",
+          foreignField: "_id",
+          as: "artwork.image",
+        },
+      },
+      {
+        $unwind: {
+          path: "$artwork.image",
+        },
+      },
+    ]);
+
+    console.log(
+      `FOUND ${model} BY USER OAUTHID: ${req.params.id} | TOP ${recs.length} RECs`
+    );
+
+    const artworks = recs.map((rec) => {
+      const art = Object.assign({}, rec.artwork);
+      art.recommendationUser = { score: rec.score };
+      return art;
+    });
+
+    res.json(artworks);
+  } catch (err) {
+    console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+  }
+});
+
 router.get("/:artworkid/user/:userid", async (req, res) => {
   try {
     console.log(

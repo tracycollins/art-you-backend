@@ -115,6 +115,44 @@ const convertOathUser = async (oathUser) => {
   return user;
 };
 
+router.get("/user/:id", async (req, res) => {
+  try {
+    console.log(`GET ${model} | FILTER: USER OAUTHID: ${req.params.id}`);
+
+    const docs = await await global.artyouDb[model].aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+        },
+      },
+      {
+        $match: {
+          "user.oauthID": req.params.id,
+        },
+      },
+    ]);
+
+    console.log(
+      `FOUND ${model} BY USER OAUTHID: ${req.params.id} | ${docs.length} RATINGS`
+    );
+
+    res.json(docs);
+  } catch (err) {
+    console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+  }
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const query = {};
