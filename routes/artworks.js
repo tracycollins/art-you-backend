@@ -40,7 +40,7 @@ router.get("/top-rated/user/:id", async (req, res) => {
       `GET ${model} | TOP 10 RATED | FILTER BY USER OAUTHID: ${req.params.id}`
     );
 
-    const ratings = await await global.artyouDb.Rating.aggregate([
+    const ratings = await global.artyouDb.Rating.aggregate([
       {
         $lookup: {
           from: "users",
@@ -114,13 +114,79 @@ router.get("/top-rated/user/:id", async (req, res) => {
   }
 });
 
+router.get("/unrated/user/:id", async (req, res) => {
+  try {
+    console.log(
+      `GET ${model} | UNRATED | FILTER BY USER OAUTHID: ${req.params.id}`
+    );
+
+    const artworks = await global.artyouDb.Artwork.aggregate([
+      {
+        $lookup: {
+          from: "ratings",
+          localField: "ratings",
+          foreignField: "_id",
+          as: "ratings",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "ratings.user",
+          foreignField: "_id",
+          as: "users",
+        },
+      },
+      {
+        $match: {
+          "users.id": {
+            $ne: req.params.id,
+          },
+        },
+      },
+      {
+        $sort: {
+          id: 1,
+        },
+      },
+      {
+        $limit: 20,
+      },
+      {
+        $lookup: {
+          from: "images",
+          localField: "image",
+          foreignField: "_id",
+          as: "image",
+        },
+      },
+      {
+        $unwind: {
+          path: "$image",
+        },
+      },
+    ]);
+
+    console.log(
+      `FOUND ${model} BY USER OAUTHID: ${req.params.id} | ${artworks.length} UNRATED ARTWORKS`
+    );
+
+    res.json(artworks);
+  } catch (err) {
+    console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+  }
+});
+
 router.get("/top-recs/user/:id", async (req, res) => {
   try {
     console.log(
       `GET ${model} | TOP 10 RECS | FILTER BY USER OAUTHID: ${req.params.id}`
     );
 
-    const recs = await await global.artyouDb.Recommendation.aggregate([
+    const recs = await global.artyouDb.Recommendation.aggregate([
       {
         $lookup: {
           from: "users",

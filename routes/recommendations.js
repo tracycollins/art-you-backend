@@ -6,7 +6,7 @@ router.get("/user/:id", async (req, res) => {
   try {
     console.log(`GET ${model} | FILTER: USER OAUTHID: ${req.params.id}`);
 
-    const docs = await await global.artyouDb[model].aggregate([
+    const docs = await global.artyouDb[model].aggregate([
       {
         $lookup: {
           from: "users",
