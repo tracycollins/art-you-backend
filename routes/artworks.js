@@ -34,10 +34,52 @@ router.get("/cursor/:cursor", async (req, res) => {
   }
 });
 
-router.get("/top-rated/user/:id", async (req, res) => {
+router.get("/user/:userid/cursor/:cursor", async (req, res) => {
   try {
+    console.log(`URL: ${req.url} | PARAMS:`, req.params);
+    const userid = req.params.userid || 0;
+    const cursor = req.params.cursor || 0;
+    const limit = 20;
     console.log(
-      `GET ${model} | TOP 10 RATED | FILTER BY USER OAUTHID: ${req.params.id}`
+      `ARTWORKS | GET USER CURSOR | USER: ${req.params.userid} CURSOR: ${cursor} | LIMIT: ${limit}`
+    );
+
+    const docs = await global.artyouDb.Artwork.find({ id: { $gt: cursor } })
+      .sort()
+      .limit(limit)
+      .populate("image")
+      .populate({ path: "artist", populate: { path: "image" } })
+      .populate({ path: "ratings", populate: { path: "user" } })
+      .populate({ path: "recommendations", populate: { path: "user" } })
+      .populate({ path: "tags", populate: { path: "user" } })
+      .lean();
+
+    const artworks = docs.map((artwork) => {
+      artwork.ratingUser = artwork.ratings.find(
+        (rating) => rating.user.id === userid
+      );
+      artwork.recommendationUser = artwork.recommendations.find(
+        (rec) => rec.user.id === userid
+      );
+      return artwork;
+    });
+
+    console.log(`ARTWORKS | GET | ${artworks.length} | LIMIT: ${limit}`);
+
+    res.json(artworks);
+  } catch (err) {
+    const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
+    console.error(message);
+    res.status(400).send(message);
+  }
+});
+
+router.get("/top-rated/user/:userid", async (req, res) => {
+  try {
+    const userid = req.params.userid || 0;
+
+    console.log(
+      `GET ${model} | TOP 10 RATED | FILTER BY USER OAUTHID: ${userid}`
     );
 
     const ratings = await global.artyouDb.Rating.aggregate([
@@ -56,7 +98,7 @@ router.get("/top-rated/user/:id", async (req, res) => {
       },
       {
         $match: {
-          "user.oauthID": req.params.id,
+          "user.oauthID": userid,
         },
       },
       {
@@ -93,15 +135,26 @@ router.get("/top-rated/user/:id", async (req, res) => {
           path: "$artwork.image",
         },
       },
+      {
+        $lookup: {
+          from: "recommendations",
+          localField: "artwork.recommendations",
+          foreignField: "_id",
+          as: "artwork.recommendations",
+        },
+      },
     ]);
 
     console.log(
-      `FOUND ${model} BY USER OAUTHID: ${req.params.id} | TOP ${ratings.length} RATINGs`
+      `FOUND ${model} BY USER OAUTHID: ${userid} | TOP ${ratings.length} RATINGs`
     );
 
     const artworks = ratings.map((rating) => {
       const art = Object.assign({}, rating.artwork);
       art.ratingUser = { rate: rating.rate };
+      art.recommendationUser = art.recommendations.find(
+        (rec) => rec.user.id === userid
+      );
       return art;
     });
 
