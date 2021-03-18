@@ -35,17 +35,17 @@ router.get("/cursor/:cursor", async (req, res) => {
   }
 });
 
-router.get("/user/:userid/cursor/:cursor", async (req, res) => {
+router.get("/user/:userid/cursor/:cursorid", async (req, res) => {
   try {
     console.log(`URL: ${req.url} | PARAMS:`, req.params);
     const userid = req.params.userid || 0;
-    const cursor = req.params.cursor || 0;
+    const cursorid = req.params.cursorid || 0;
     const limit = process.env.CURSOR_GET_LIMIT || 20;
     console.log(
-      `ARTWORKS | GET USER CURSOR | USER: ${req.params.userid} CURSOR: ${cursor} | LIMIT: ${limit}`
+      `ARTWORKS | GET USER CURSOR | USER: ${req.params.userid} CURSOR: ${cursorid} | LIMIT: ${limit}`
     );
 
-    const docs = await global.artyouDb.Artwork.find({ id: { $gt: cursor } })
+    const docs = await global.artyouDb.Artwork.find({ id: { $gt: cursorid } })
       .sort()
       .limit(limit)
       .populate("image")
@@ -69,34 +69,42 @@ router.get("/user/:userid/cursor/:cursor", async (req, res) => {
 
     res.json(artworks);
   } catch (err) {
-    const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
+    const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursorid} | ERROR: ${err}`;
     console.error(message);
     res.status(400).send(message);
   }
 });
 
 router.get(
-  "/top-rated/user/:userid/cursor/:cursor/rate/:rate",
+  "/user/:userid/cursor/:cursorid/sort/:subdoc/:sort/:value",
   async (req, res) => {
     try {
       const userid = req.params.userid || 0;
       const match = { "user.oauthID": userid };
-      const limit = process.env.TOP_RATED_LIMIT || 20;
-      const cursor = { _id: req.params.cursor, rate: req.params.rate };
+      const limit = process.env.PAGE_SIZE || 20;
+      const subDoc = req.params.subdoc; // rating, recommendation
+      const sort = req.params.sort; // name of field :'rate', 'score'
+      const value = req.params.value; // field value: rate, score
+      const cursorid = req.params.cursorid;
+
+      const cursor = {
+        _id: cursorid,
+        [sort]: value,
+      };
 
       console.log(
-        `GET ${model} | TOP 10 RATED | FILTER BY USER OAUTHID: ${userid} | CURSOR: _id: ${cursor._id} rate: ${cursor.rate}`
+        `GET ${model} | CURSOR | SORT ${subDoc} | FILTER BY USER OAUTHID: ${userid} | CURSOR: _id: ${cursor._id} sort: ${sort} value: ${value}`
       );
 
       const paginationOptions = {
         query: match,
-        sort: ["rate", -1],
+        sort: [sort, -1],
       };
 
       if (cursor !== undefined && cursor._id !== "0") {
         paginationOptions.nextKey = {
           _id: cursor._id,
-          rate: parseInt(cursor.rate),
+          [sort]: parseInt(cursor[sort].value),
         };
       }
 
@@ -104,32 +112,37 @@ router.get(
         paginationOptions
       );
 
-      const ratings = await global.artyouDb.ratingByUserPaginate({
+      const docs = await global.artyouDb.sortBySubDocUserPaginate({
         match: paginationResults.paginatedQuery,
         limit: limit,
-        sort: { rate: -1 },
+        subDoc: subDoc,
+        sort: sort,
       });
 
-      const next = paginationResults.nextKeyFn(ratings);
+      const next = paginationResults.nextKeyFn(docs);
 
       if (next) {
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next._id} RATE: ${next.rate} | TOP ${ratings.length} RATINGs`
+          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next._id} | RATE: ${next.rate} | TOP ${docs.length} DOCs`
         );
       } else {
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next} | TOP ${ratings.length} RATINGs`
+          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next} | TOP ${docs.length} DOCs`
         );
       }
 
-      const artworks = ratings.map((rating) => {
-        const art = Object.assign({}, rating.artwork);
-        art.ratingUser = { rate: rating.rate };
-        art.recommendationUser = art.recommendations.find(
-          (rec) => rec.user.id === userid
-        );
+      const artworks = docs.map((doc) => {
+        const art = Object.assign({}, doc.artwork);
+        art.ratingUser =
+          subDoc === "rating"
+            ? doc
+            : art.ratings.find((rating) => rating.user.id === userid);
+        art.recommendationUser =
+          subDoc === "recommendation"
+            ? doc
+            : art.recommendations.find((rec) => rec.user.id === userid);
         return art;
       });
 
