@@ -21,8 +21,6 @@ const EPOCHS = process.env.ART47_NN_FIT_EPOCHS
   : 1000;
 
 console.log(`A47BE | NN FIT EPOCHS: ${EPOCHS}`);
-
-// const REDIS_URL = process.env.REDIS_URL;
 console.log(`A47BE | process.env.REDIS_URL: ${process.env.REDIS_URL}`);
 
 const WORKER_QUEUE_LIMITER_MAX = process.env.WORKER_QUEUE_LIMITER_MAX
@@ -42,19 +40,12 @@ console.log(
 console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
 
 const Queue = require("bull");
-
 const { join } = require("path");
 const createError = require("http-errors");
 const express = require("express");
 const cors = require("cors");
 const chalk = require("chalk");
-
-// const jwt = require('express-jwt');
-// const jwks = require('jwks-rsa');
-
-// const { auth, requiresAuth } = require("express-openid-connect");
 const { auth } = require("express-openid-connect");
-
 const cookieSession = require("cookie-session");
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -64,52 +55,6 @@ let workUpdateRecommendationsQueue;
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
-
-// const url = require("url");
-// const Redis = require("ioredis");
-// // const redis = require("redis");
-
-// function redisReady() {
-//   return new Promise(function (resolve) {
-//     // const redisClient = new Redis(process.env.REDIS_URL, {
-//     //   tls: {
-//     //     rejectUnauthorized: false,
-//     //   },
-//     // });
-
-//     const redis_uri = url.parse(process.env.REDIS_URL);
-//     const redisClient = new Redis({
-//       port: Number(redis_uri.port) + 1,
-//       host: redis_uri.hostname,
-//       password: redis_uri.auth.split(":")[1],
-//       db: 0,
-//       tls: {
-//         rejectUnauthorized: false,
-//         requestCert: true,
-//         agent: false,
-//       },
-//     });
-
-//     // const redisClient = redis.createClient(process.env.REDIS_URL);
-//     console.log(
-//       `A47BE | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_URL: ${process.env.REDIS_URL}`
-//     );
-//     const redisReadyInterval = setInterval(() => {
-//       if (redisClient.status === "ready") {
-//         console.log(
-//           `A47BE | REDIS CLIENT | STATUS: ${redisClient.status}`
-//         );
-//         clearInterval(redisReadyInterval);
-//         redisClient.quit();
-//         resolve();
-//       } else {
-//         console.log(
-//           `A47BE | WAIT REDIS CLIENT | STATUS: ${redisClient.status}`
-//         );
-//       }
-//     }, 30 * ONE_SECOND);
-//   });
-// }
 
 const jobQueued = async (jobConfig) => {
   if (!workUpdateRecommendationsQueue) {
@@ -182,12 +127,6 @@ const jobQueued = async (jobConfig) => {
 
     workUpdateRecommendationsQueue = new Queue(
       "updateRecommendations",
-      // {
-      //   limiter: {
-      //     max: WORKER_QUEUE_LIMITER_MAX,
-      //     duration: WORKER_QUEUE_LIMITER_DURATION,
-      //   },
-      // },
       process.env.REDIS_URL
     );
 

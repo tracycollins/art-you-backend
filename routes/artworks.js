@@ -39,7 +39,7 @@ router.get("/user/:userid/cursor/:cursor", async (req, res) => {
     console.log(`URL: ${req.url} | PARAMS:`, req.params);
     const userid = req.params.userid || 0;
     const cursor = req.params.cursor || 0;
-    const limit = 20;
+    const limit = process.env.CURSOR_GET_LIMIT || 20;
     console.log(
       `ARTWORKS | GET USER CURSOR | USER: ${req.params.userid} CURSOR: ${cursor} | LIMIT: ${limit}`
     );
@@ -77,6 +77,7 @@ router.get("/user/:userid/cursor/:cursor", async (req, res) => {
 router.get("/top-rated/user/:userid", async (req, res) => {
   try {
     const userid = req.params.userid || 0;
+    const limit = process.env.TOP_RATED_LIMIT || 20;
 
     console.log(
       `GET ${model} | TOP 10 RATED | FILTER BY USER OAUTHID: ${userid}`
@@ -107,7 +108,7 @@ router.get("/top-rated/user/:userid", async (req, res) => {
         },
       },
       {
-        $limit: 10,
+        $limit: limit,
       },
       {
         $lookup: {
@@ -169,8 +170,10 @@ router.get("/top-rated/user/:userid", async (req, res) => {
 
 router.get("/unrated/user/:id", async (req, res) => {
   try {
+    const limit = process.env.UNRATED_LIMIT || 20;
+
     console.log(
-      `GET ${model} | UNRATED | FILTER BY USER OAUTHID: ${req.params.id}`
+      `GET ${model} | UNRATED | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
     );
 
     const artworks = await global.artyouDb.Artwork.aggregate([
@@ -180,6 +183,19 @@ router.get("/unrated/user/:id", async (req, res) => {
           localField: "ratings",
           foreignField: "_id",
           as: "ratings",
+        },
+      },
+      {
+        $lookup: {
+          from: "artists",
+          localField: "artist",
+          foreignField: "_id",
+          as: "artist",
+        },
+      },
+      {
+        $unwind: {
+          path: "$artist",
         },
       },
       {
@@ -203,7 +219,7 @@ router.get("/unrated/user/:id", async (req, res) => {
         },
       },
       {
-        $limit: 20,
+        $limit: limit,
       },
       {
         $lookup: {
@@ -235,8 +251,10 @@ router.get("/unrated/user/:id", async (req, res) => {
 
 router.get("/top-recs/user/:id", async (req, res) => {
   try {
+    const limit = process.env.UNRATED_LIMIT || 20;
+
     console.log(
-      `GET ${model} | TOP 10 RECS | FILTER BY USER OAUTHID: ${req.params.id}`
+      `GET ${model} | TOP 10 RECS | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
     );
 
     const recs = await global.artyouDb.Recommendation.aggregate([
