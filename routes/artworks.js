@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable dot-notation */
 const model = "Artwork";
 const express = require("express");
@@ -74,123 +75,75 @@ router.get("/user/:userid/cursor/:cursor", async (req, res) => {
   }
 });
 
-router.get("/top-rated/user/:userid/cursor/:cursor", async (req, res) => {
-  try {
-    const userid = req.params.userid || 0;
-    const match = { "user.oauthID": userid };
-    const limit = process.env.TOP_RATED_LIMIT || 20;
-    const cursor = req.params.cursor;
+router.get(
+  "/top-rated/user/:userid/cursor/:cursor/rate/:rate",
+  async (req, res) => {
+    try {
+      const userid = req.params.userid || 0;
+      const match = { "user.oauthID": userid };
+      const limit = process.env.TOP_RATED_LIMIT || 20;
+      const cursor = { _id: req.params.cursor, rate: req.params.rate };
 
-    console.log(
-      `GET ${model} | TOP 10 RATED | FILTER BY USER OAUTHID: ${userid} | CURSOR: ${cursor}`
-    );
-
-    const paginationOptions = {
-      query: match,
-      sort: ["rate", -1],
-    };
-
-    if (cursor !== undefined && cursor !== "0") {
-      paginationOptions.nextKey = cursor;
-    }
-
-    const paginationResults = global.artyouDb.generatePaginationQuery(
-      paginationOptions
-    );
-
-    const ratings = await global.artyouDb.ratingByUserPaginate({
-      match: paginationResults.paginatedQuery,
-      limit: limit,
-      sort: { rate: -1 },
-    });
-
-    const next = paginationResults.nextKeyFn(ratings);
-
-    // const ratings = await global.artyouDb.Rating.aggregate([
-    //   {
-    //     $lookup: {
-    //       from: "users",
-    //       localField: "user",
-    //       foreignField: "_id",
-    //       as: "user",
-    //     },
-    //   },
-    //   {
-    //     $unwind: {
-    //       path: "$user",
-    //     },
-    //   },
-    //   {
-    //     $match: {
-    //       "user.oauthID": userid,
-    //     },
-    //   },
-    //   {
-    //     $sort: {
-    //       rate: -1,
-    //     },
-    //   },
-    //   {
-    //     $limit: limit,
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: "artworks",
-    //       localField: "artwork",
-    //       foreignField: "_id",
-    //       as: "artwork",
-    //     },
-    //   },
-    //   {
-    //     $unwind: {
-    //       path: "$artwork",
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: "images",
-    //       localField: "artwork.image",
-    //       foreignField: "_id",
-    //       as: "artwork.image",
-    //     },
-    //   },
-    //   {
-    //     $unwind: {
-    //       path: "$artwork.image",
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: "recommendations",
-    //       localField: "artwork.recommendations",
-    //       foreignField: "_id",
-    //       as: "artwork.recommendations",
-    //     },
-    //   },
-    // ]);
-
-    console.log(
-      // eslint-disable-next-line no-underscore-dangle
-      `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next._id} RATE: ${next.rate}| TOP ${ratings.length} RATINGs`
-    );
-
-    const artworks = ratings.map((rating) => {
-      const art = Object.assign({}, rating.artwork);
-      art.ratingUser = { rate: rating.rate };
-      art.recommendationUser = art.recommendations.find(
-        (rec) => rec.user.id === userid
+      console.log(
+        `GET ${model} | TOP 10 RATED | FILTER BY USER OAUTHID: ${userid} | CURSOR: _id: ${cursor._id} rate: ${cursor.rate}`
       );
-      return art;
-    });
 
-    res.json({ artworks: artworks, cursor: next });
-  } catch (err) {
-    console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
-    res
-      .status(400)
-      .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+      const paginationOptions = {
+        query: match,
+        sort: ["rate", -1],
+      };
+
+      if (cursor !== undefined && cursor._id !== "0") {
+        paginationOptions.nextKey = {
+          _id: cursor._id,
+          rate: parseInt(cursor.rate),
+        };
+      }
+
+      const paginationResults = global.artyouDb.generatePaginationQuery(
+        paginationOptions
+      );
+
+      const ratings = await global.artyouDb.ratingByUserPaginate({
+        match: paginationResults.paginatedQuery,
+        limit: limit,
+        sort: { rate: -1 },
+      });
+
+      const next = paginationResults.nextKeyFn(ratings);
+
+      if (next) {
+        console.log(
+          // eslint-disable-next-line no-underscore-dangle
+          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next._id} RATE: ${next.rate} | TOP ${ratings.length} RATINGs`
+        );
+      } else {
+        console.log(
+          // eslint-disable-next-line no-underscore-dangle
+          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next} | TOP ${ratings.length} RATINGs`
+        );
+      }
+
+      const artworks = ratings.map((rating) => {
+        const art = Object.assign({}, rating.artwork);
+        art.ratingUser = { rate: rating.rate };
+        art.recommendationUser = art.recommendations.find(
+          (rec) => rec.user.id === userid
+        );
+        return art;
+      });
+
+      res.json({ artworks: artworks, cursor: next });
+    } catch (err) {
+      console.error(
+        `GET | ${model} | OAUTHID: ${req.params.userid} ERROR: ${err}`
+      );
+      res
+        .status(400)
+        .send(`GET | ${model} | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
+    }
   }
-});
+);
 
 router.get("/unrated/user/:id", async (req, res) => {
   try {
