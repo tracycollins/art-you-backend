@@ -43,6 +43,7 @@ const Queue = require("bull");
 const { join } = require("path");
 const createError = require("http-errors");
 const express = require("express");
+const slash = require("express-slash");
 const cors = require("cors");
 const chalk = require("chalk");
 const { auth } = require("express-openid-connect");
@@ -224,6 +225,7 @@ const config = {
 };
 
 const app = express();
+app.enable("strict routing");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -397,6 +399,8 @@ app.use("/ratings", ratingsRouter);
 app.use("/recommendations", recommendationsRouter);
 app.use("/networkinputs", networkinputsRouter);
 app.use("/neuralnetworks", neuralnetworksRouter);
+
+app.use(slash());
 
 app.get("/authorize", (req, res) => {
   console.info(`GET /authorize`);

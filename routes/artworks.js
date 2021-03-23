@@ -2,7 +2,9 @@
 /* eslint-disable dot-notation */
 const model = "Artwork";
 const express = require("express");
-const router = express.Router();
+const router = express.Router({
+  strict: true,
+});
 
 // get artworks by id, pop with rating and rec by user id
 
@@ -25,7 +27,7 @@ router.get("/cursor/:cursor", async (req, res) => {
 
     // const nextCursor = docs.length < limit ? 0 : docs[limit - 1].id;
 
-    console.log(`ARTWORKS | GET | ${docs.length} | LIMIT: ${limit}`);
+    console.log(`ARTWORKS | GET | ${docs.length} ARTWORKS | LIMIT: ${limit}`);
 
     res.json(docs);
   } catch (err) {
@@ -35,88 +37,59 @@ router.get("/cursor/:cursor", async (req, res) => {
   }
 });
 
-router.get("/user/:userid/cursor/:cursorid", async (req, res) => {
-  try {
-    console.log(`URL: ${req.url} | PARAMS:`, req.params);
-    const userid = req.params.userid || 0;
-    const cursorid = req.params.cursorid || 0;
-    const limit = process.env.CURSOR_GET_LIMIT || 20;
-    console.log(
-      `ARTWORKS | GET USER CURSOR | USER: ${req.params.userid} CURSOR: ${cursorid} | LIMIT: ${limit}`
-    );
-
-    const docs = await global.artyouDb.Artwork.find({ id: { $gt: cursorid } })
-      .sort()
-      .limit(limit)
-      .populate("image")
-      .populate({ path: "artist", populate: { path: "image" } })
-      .populate({ path: "ratings", populate: { path: "user" } })
-      .populate({ path: "recommendations", populate: { path: "user" } })
-      .populate({ path: "tags", populate: { path: "user" } })
-      .lean();
-
-    const artworks = docs.map((artwork) => {
-      artwork.ratingUser = artwork.ratings.find(
-        (rating) => rating.user.id === userid
-      );
-      artwork.recommendationUser = artwork.recommendations.find(
-        (rec) => rec.user.id === userid
-      );
-      return artwork;
-    });
-
-    console.log(`ARTWORKS | GET | ${artworks.length} | LIMIT: ${limit}`);
-
-    res.json(artworks);
-  } catch (err) {
-    const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursorid} | ERROR: ${err}`;
-    console.error(message);
-    res.status(400).send(message);
-  }
-});
-
 router.get(
-  "/user/:userid/cursor/:cursorid/sort/:subdoc/:sort/:value",
+  "/user/:userid/cursor/:cursorid/(:subdoc.:sort.:value)?",
   async (req, res) => {
     try {
       const userid = req.params.userid || 0;
-      const match = { "user.oauthID": userid };
-      const limit = process.env.PAGE_SIZE || 20;
-      const subDoc = req.params.subdoc; // rating, recommendation
-      const sort = req.params.sort; // name of field :'rate', 'score'
-      const value = req.params.value; // field value: rate, score
       const cursorid = req.params.cursorid;
+      const subDoc = req.params.subdoc || false; // rating, recommendation
+      const sort = req.params.sort || false; // name of field :'rate', 'score'
+      const match = sort ? { "user.oauthID": userid } : {};
+      const value = req.params.value || false; // field value: rate, score
+      const limit = process.env.PAGE_SIZE || 20;
 
-      const cursor = {
-        _id: cursorid,
-        [sort]: value,
-      };
+      const cursor = {};
+      cursor._id = cursorid;
+      if (sort) {
+        cursor[sort] = parseInt(value);
+      }
 
+      console.log(`GET `);
       console.log(
-        `GET ${model} | CURSOR | SORT ${subDoc} | FILTER BY USER OAUTHID: ${userid} | CURSOR: _id: ${cursor._id} sort: ${sort} value: ${value}`
+        `GET ${model} | URL: ${req.url} | CURSOR | SORT ${subDoc}` +
+          ` | FILTER BY USER OAUTHID: ${userid}` +
+          ` | CURSOR: _id: ${cursor._id} sort: ${sort} value: ${value}`
       );
 
-      const paginationOptions = {
-        query: match,
-        sort: [sort, -1],
-      };
+      const paginationOptions = {};
+      paginationOptions.query = match;
+      if (sort) {
+        paginationOptions[sort] = [sort, -1];
+      }
 
       if (cursor !== undefined && cursor._id !== "0") {
-        paginationOptions.nextKey = {
-          _id: cursor._id,
-          [sort]: parseInt(cursor[sort].value),
-        };
+        paginationOptions.nextKey = {};
+        paginationOptions.nextKey._id = cursor._id;
+        if (sort) {
+          paginationOptions[sort] = parseInt(cursor[sort].value);
+        }
       }
 
       const paginationResults = global.artyouDb.generatePaginationQuery(
         paginationOptions
       );
 
+      console.log(
+        `paginationResults.paginatedQuery: `,
+        paginationResults.paginatedQuery
+      );
+
       const docs = await global.artyouDb.sortBySubDocUserPaginate({
         match: paginationResults.paginatedQuery,
         limit: limit,
-        subDoc: subDoc,
-        sort: sort,
+        subDoc: subDoc || null,
+        sort: sort || null,
       });
 
       const next = paginationResults.nextKeyFn(docs);
@@ -124,7 +97,11 @@ router.get(
       if (next) {
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next._id} | RATE: ${next.rate} | TOP ${docs.length} DOCs`
+          `FOUND ${model} BY USER OAUTHID: ${userid}` +
+            ` | NEXT: ${next._id}` +
+            ` | RATE: ${next.rate} ` +
+            ` | SCORE: ${next.score}` +
+            ` | TOP ${docs.length} DOCs`
         );
       } else {
         console.log(
@@ -133,18 +110,32 @@ router.get(
         );
       }
 
-      const artworks = docs.map((doc) => {
-        const art = Object.assign({}, doc.artwork);
-        art.ratingUser =
-          subDoc === "rating"
-            ? doc
-            : art.ratings.find((rating) => rating.user.id === userid);
-        art.recommendationUser =
-          subDoc === "recommendation"
-            ? doc
-            : art.recommendations.find((rec) => rec.user.id === userid);
-        return art;
-      });
+      let artworks = [];
+
+      if (subDoc) {
+        artworks = docs.map((doc) => {
+          const art = Object.assign({}, doc.artwork);
+          art.ratingUser =
+            subDoc === "rating"
+              ? doc
+              : art.ratings.find((rating) => rating.user.id === userid);
+          art.recommendationUser =
+            subDoc === "recommendation"
+              ? doc
+              : art.recommendations.find((rec) => rec.user.id === userid);
+          return art;
+        });
+      } else {
+        artworks = docs.map((artwork) => {
+          artwork.ratingUser = artwork.ratings.find(
+            (rating) => rating.user.id === userid
+          );
+          artwork.recommendationUser = artwork.recommendations.find(
+            (rec) => rec.user.id === userid
+          );
+          return artwork;
+        });
+      }
 
       res.json({ artworks: artworks, cursor: next });
     } catch (err) {
@@ -157,6 +148,66 @@ router.get(
     }
   }
 );
+
+// router.get("/user/:userid/cursor/:cursorid", async (req, res) => {
+//   try {
+//     console.log(`URL: ${req.url} | PARAMS:`, req.params);
+//     const userid = req.params.userid || 0;
+//     const match = { "user.oauthID": userid };
+//     const cursorid = req.params.cursorid || 0;
+//     const limit = process.env.CURSOR_GET_LIMIT || 20;
+//     console.log(
+//       `ARTWORKS | GET USER CURSOR | USER: ${req.params.userid} CURSOR: ${cursorid} | LIMIT: ${limit}`
+//     );
+
+//     const cursor = {
+//       _id: cursorid,
+//     };
+
+//     const paginationOptions = {
+//       query: match,
+//     };
+
+//     if (cursor !== undefined && cursor._id !== "0") {
+//       paginationOptions.nextKey = {
+//         _id: cursor._id,
+//       };
+//     }
+
+//     const paginationResults = global.artyouDb.generatePaginationQuery(
+//       paginationOptions
+//     );
+
+//     const docs = await global.artyouDb.Artwork.find({ _id: { $gt: cursorid } })
+//       .sort()
+//       .limit(limit)
+//       .populate("image")
+//       .populate({ path: "artist", populate: { path: "image" } })
+//       .populate({ path: "ratings", populate: { path: "user" } })
+//       .populate({ path: "recommendations", populate: { path: "user" } })
+//       .populate({ path: "tags", populate: { path: "user" } })
+//       .lean();
+
+//     const artworks = docs.map((artwork) => {
+//       artwork.ratingUser = artwork.ratings.find(
+//         (rating) => rating.user.id === userid
+//       );
+//       artwork.recommendationUser = artwork.recommendations.find(
+//         (rec) => rec.user.id === userid
+//       );
+//       return artwork;
+//     });
+
+//     console.log(`ARTWORKS | GET | ${artworks.length} | LIMIT: ${limit}`);
+//     res.json({ artworks: artworks, cursor: next });
+
+//     // res.json(artworks);
+//   } catch (err) {
+//     const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursorid} | ERROR: ${err}`;
+//     console.error(message);
+//     res.status(400).send(message);
+//   }
+// });
 
 router.get("/unrated/user/:id", async (req, res) => {
   try {

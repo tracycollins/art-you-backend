@@ -26,6 +26,7 @@
     "express": "~4.17.1",
     "express-openid-connect": "^2.3.0",
     "express-rate-limit": "^5.2.6",
+    "express-slash": "^2.0.1",
     "graceful-fs": "^4.2.6",
     "hashmap": "^2.4.0",
     "http-errors": "~1.8.0",
