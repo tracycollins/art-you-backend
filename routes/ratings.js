@@ -218,10 +218,14 @@ router.post("/create", async (req, res) => {
     let ratingDoc = await global.artyouDb.Rating.findOne({
       user: dbUser,
       artwork: dbArtwork,
-    });
+    })
+      .populate({ path: "artwork", populate: { path: "artist" } })
+      .populate("user");
 
     if (!ratingDoc) {
-      ratingDoc = new global.artyouDb.Rating(ratingObj);
+      ratingDoc = new global.artyouDb.Rating(ratingObj)
+        .populate({ path: "artwork", populate: { path: "artist" } })
+        .populate("user");
       console.log(
         `NEW | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
       );
