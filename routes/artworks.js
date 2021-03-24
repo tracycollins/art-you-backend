@@ -51,13 +51,14 @@ router.get(
 
       const cursor = {};
       cursor._id = cursorid;
+
       if (sort) {
         cursor[sort] = parseInt(value);
       }
 
       console.log(`GET `);
       console.log(
-        `GET ${model} | URL: ${req.url} | CURSOR | SORT ${subDoc}` +
+        `GET ${model} | URL: ${req.url} | CURSOR | SORT (subDoc): ${subDoc}` +
           ` | FILTER BY USER OAUTHID: ${userid}` +
           ` | CURSOR: _id: ${cursor._id} sort: ${sort} value: ${value}`
       );
@@ -65,25 +66,35 @@ router.get(
       const paginationOptions = {};
       paginationOptions.query = match;
       if (sort) {
-        paginationOptions[sort] = [sort, -1];
+        // paginationOptions[sort] = [sort, -1];
+        paginationOptions.sort = [sort, -1];
       }
 
       if (cursor !== undefined && cursor._id !== "0") {
         paginationOptions.nextKey = {};
         paginationOptions.nextKey._id = cursor._id;
         if (sort) {
-          paginationOptions[sort] = parseInt(cursor[sort].value);
+          // paginationOptions[sort] = parseInt(cursor[sort].value);
+          paginationOptions.sort = [sort, -1];
         }
       }
+
+      console.log({ paginationOptions });
 
       const paginationResults = global.artyouDb.generatePaginationQuery(
         paginationOptions
       );
 
       console.log(
-        `paginationResults.paginatedQuery: `,
-        paginationResults.paginatedQuery
+        `paginationResults.paginatedQuery['$and']: `,
+        paginationResults.paginatedQuery["$and"]
       );
+      if (paginationResults.paginatedQuery["$and"]) {
+        console.log(
+          `paginationResults.paginatedQuery['$and'][1]: `,
+          paginationResults.paginatedQuery["$and"][1]["$or"]
+        );
+      }
 
       const docs = await global.artyouDb.sortBySubDocUserPaginate({
         match: paginationResults.paginatedQuery,
@@ -295,7 +306,7 @@ router.get("/top-recs/user/:id", async (req, res) => {
     const limit = process.env.UNRATED_LIMIT || 20;
 
     console.log(
-      `GET ${model} | TOP 10 RECS | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
+      `GET ${model} | TOP RECS | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
     );
 
     const recs = await global.artyouDb.Recommendation.aggregate([
