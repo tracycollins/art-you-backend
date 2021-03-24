@@ -2,9 +2,19 @@
 /* eslint-disable dot-notation */
 const model = "Artwork";
 const express = require("express");
+const ObjectID = require("mongodb").ObjectID;
+const treeify = require("treeify");
 const router = express.Router({
   strict: true,
 });
+
+const jsonPrint = function (obj) {
+  if (obj && obj != undefined) {
+    return treeify.asTree(obj, true, true);
+  } else {
+    return "UNDEFINED";
+  }
+};
 
 // get artworks by id, pop with rating and rec by user id
 
@@ -66,7 +76,6 @@ router.get(
       const paginationOptions = {};
       paginationOptions.query = match;
       if (sort) {
-        // paginationOptions[sort] = [sort, -1];
         paginationOptions.sort = [sort, -1];
       }
 
@@ -75,49 +84,57 @@ router.get(
         paginationOptions.nextKey._id = cursor._id;
         if (sort) {
           // paginationOptions[sort] = parseInt(cursor[sort].value);
+          paginationOptions.nextKey[sort] = cursor[sort];
           paginationOptions.sort = [sort, -1];
         }
       }
 
       console.log({ paginationOptions });
 
+      //   query: match,
+      //   sort: ["rate", -1],
+      //   nextKey,
+      // }
+
       const paginationResults = global.artyouDb.generatePaginationQuery(
         paginationOptions
       );
 
-      console.log(
-        `paginationResults.paginatedQuery['$and']: `,
-        paginationResults.paginatedQuery["$and"]
+      // console.log(`paginationResults\n${jsonPrint(paginationResults)}`);
+
+      const sortByOptions = {};
+
+      sortByOptions.match = paginationResults.paginatedQuery;
+      sortByOptions.limit = limit;
+      sortByOptions.subDoc = subDoc || null;
+      sortByOptions.sort = { [sort]: -1 } || null;
+
+      // console.log(`sortByOptions\n ${jsonPrint(sortByOptions)}`);
+
+      // docs can be ratings or recommendations
+      const docs = await global.artyouDb.sortBySubDocUserPaginate(
+        sortByOptions
       );
-      if (paginationResults.paginatedQuery["$and"]) {
-        console.log(
-          `paginationResults.paginatedQuery['$and'][1]: `,
-          paginationResults.paginatedQuery["$and"][1]["$or"]
-        );
-      }
 
-      const docs = await global.artyouDb.sortBySubDocUserPaginate({
-        match: paginationResults.paginatedQuery,
-        limit: limit,
-        subDoc: subDoc || null,
-        sort: sort || null,
-      });
+      // console.log(`docs[0]\n ${docs.length > 0 ? jsonPrint(docs[0]) : ""}`);
 
-      const next = paginationResults.nextKeyFn(docs);
+      const nextKey = paginationResults.nextKeyFn(docs);
 
-      if (next) {
+      if (nextKey) {
+        console.log({ nextKey });
         console.log(
           // eslint-disable-next-line no-underscore-dangle
           `FOUND ${model} BY USER OAUTHID: ${userid}` +
-            ` | NEXT: ${next._id}` +
-            ` | RATE: ${next.rate} ` +
-            ` | SCORE: ${next.score}` +
+            ` | NEXT ID: ${nextKey._id}` +
+            ` | NEXT SORT: ${nextKey.sort} ` +
+            ` | NEXT RATE: ${nextKey.rate} ` +
+            ` | NEXT SCORE: ${nextKey.score}` +
             ` | TOP ${docs.length} DOCs`
         );
       } else {
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT: ${next} | TOP ${docs.length} DOCs`
+          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT KEY: ${nextKey} | TOP ${docs.length} DOCs`
         );
       }
 
@@ -148,7 +165,7 @@ router.get(
         });
       }
 
-      res.json({ artworks: artworks, cursor: next });
+      res.json({ artworks: artworks, nextKey: nextKey });
     } catch (err) {
       console.error(
         `GET | ${model} | OAUTHID: ${req.params.userid} ERROR: ${err}`
