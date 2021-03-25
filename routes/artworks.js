@@ -47,15 +47,17 @@ router.get("/cursor/:cursor", async (req, res) => {
   }
 });
 
+// if subdoc === 'unrated' => sort and value can be null and can be ignored
 router.get(
-  "/user/:userid/cursor/:cursorid/(:subdoc.:sort.:value)?",
+  // "/user/:userid/cursor/:cursorid/(:subdoc.:sort.:value)?",
+  "/user/:userid/cursor/:cursorid/(:subdoc)?(.:sort.:value)?",
   async (req, res) => {
     try {
       const userid = req.params.userid || 0;
       const cursorid = req.params.cursorid;
-      const subDoc = req.params.subdoc || false; // rating, recommendation
+      const subDoc = req.params.subdoc || false; // rating, recommendation, unrated
       const sort = req.params.sort || false; // name of field :'rate', 'score'
-      const match = sort ? { "user.oauthID": userid } : {};
+      let match = sort ? { "user.oauthID": userid } : {};
       const value = req.params.value || false; // field value: rate, score
       const limit = process.env.PAGE_SIZE || 20;
 
@@ -66,7 +68,19 @@ router.get(
         cursor[sort] = parseInt(value);
       }
 
-      console.log(`GET `);
+      if (subDoc === "unrated") {
+        if (req.params.userid) {
+          const userDoc = await global.artyouDb.User.findOne({
+            id: req.params.userid,
+          });
+
+          if (userDoc) {
+            console.log(`GET | FOUND USER: ${userid} | _id: ${userDoc._id}`);
+            match = { "ratings.user": { $nin: [userDoc._id] } };
+          }
+        }
+      }
+
       console.log(
         `GET ${model} | URL: ${req.url} | CURSOR | SORT (subDoc): ${subDoc}` +
           ` | FILTER BY USER OAUTHID: ${userid}` +
@@ -140,7 +154,7 @@ router.get(
 
       let artworks = [];
 
-      if (subDoc) {
+      if (subDoc && subDoc !== "unrated") {
         artworks = docs.map((doc) => {
           const art = Object.assign({}, doc.artwork);
           art.ratingUser =
@@ -176,66 +190,6 @@ router.get(
     }
   }
 );
-
-// router.get("/user/:userid/cursor/:cursorid", async (req, res) => {
-//   try {
-//     console.log(`URL: ${req.url} | PARAMS:`, req.params);
-//     const userid = req.params.userid || 0;
-//     const match = { "user.oauthID": userid };
-//     const cursorid = req.params.cursorid || 0;
-//     const limit = process.env.CURSOR_GET_LIMIT || 20;
-//     console.log(
-//       `ARTWORKS | GET USER CURSOR | USER: ${req.params.userid} CURSOR: ${cursorid} | LIMIT: ${limit}`
-//     );
-
-//     const cursor = {
-//       _id: cursorid,
-//     };
-
-//     const paginationOptions = {
-//       query: match,
-//     };
-
-//     if (cursor !== undefined && cursor._id !== "0") {
-//       paginationOptions.nextKey = {
-//         _id: cursor._id,
-//       };
-//     }
-
-//     const paginationResults = global.artyouDb.generatePaginationQuery(
-//       paginationOptions
-//     );
-
-//     const docs = await global.artyouDb.Artwork.find({ _id: { $gt: cursorid } })
-//       .sort()
-//       .limit(limit)
-//       .populate("image")
-//       .populate({ path: "artist", populate: { path: "image" } })
-//       .populate({ path: "ratings", populate: { path: "user" } })
-//       .populate({ path: "recommendations", populate: { path: "user" } })
-//       .populate({ path: "tags", populate: { path: "user" } })
-//       .lean();
-
-//     const artworks = docs.map((artwork) => {
-//       artwork.ratingUser = artwork.ratings.find(
-//         (rating) => rating.user.id === userid
-//       );
-//       artwork.recommendationUser = artwork.recommendations.find(
-//         (rec) => rec.user.id === userid
-//       );
-//       return artwork;
-//     });
-
-//     console.log(`ARTWORKS | GET | ${artworks.length} | LIMIT: ${limit}`);
-//     res.json({ artworks: artworks, cursor: next });
-
-//     // res.json(artworks);
-//   } catch (err) {
-//     const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursorid} | ERROR: ${err}`;
-//     console.error(message);
-//     res.status(400).send(message);
-//   }
-// });
 
 router.get("/unrated/user/:id", async (req, res) => {
   try {
