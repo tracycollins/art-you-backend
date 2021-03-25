@@ -53,7 +53,7 @@ router.get(
   "/user/:userid/cursor/:cursorid/(:subdoc)?(.:sort.:value)?",
   async (req, res) => {
     try {
-      const userid = req.params.userid || 0;
+      let userid = req.params.userid || 0;
       const cursorid = req.params.cursorid;
       const subDoc = req.params.subdoc || false; // rating, recommendation, unrated
       const sort = req.params.sort || false; // name of field :'rate', 'score'
@@ -72,11 +72,15 @@ router.get(
         if (req.params.userid) {
           const userDoc = await global.artyouDb.User.findOne({
             id: req.params.userid,
-          });
+          }).lean();
 
           if (userDoc) {
             console.log(`GET | FOUND USER: ${userid} | _id: ${userDoc._id}`);
-            match = { "ratings.user": { $nin: [userDoc._id] } };
+            userid = userDoc._id;
+            match = {
+              "ratings.user": { $nin: [userid] },
+            };
+            console.log({ match });
           }
         }
       }
@@ -167,6 +171,8 @@ router.get(
               : art.recommendations.find((rec) => rec.user.id === userid);
           return art;
         });
+      } else if (subDoc === "unrated") {
+        artworks = docs.filter((artwork) => !artwork.ratings.includes(userid));
       } else {
         artworks = docs.map((artwork) => {
           artwork.ratingUser = artwork.ratings.find(
