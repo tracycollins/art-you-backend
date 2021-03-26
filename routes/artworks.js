@@ -53,11 +53,19 @@ router.get(
   "/user/:userid/cursor/:cursorid/(:subdoc)?(.:sort.:value)?",
   async (req, res) => {
     try {
-      let userid = req.params.userid || 0;
+      const userDoc = req.params.userid
+        ? await global.artyouDb.User.findOne({
+            id: req.params.userid,
+          }).select("_id")
+        : false;
+
+      const user_id = userDoc ? userDoc._id : false;
+
+      // let userid = req.params.userid || 0;
       const cursorid = req.params.cursorid;
       const subDoc = req.params.subdoc || false; // rating, recommendation, unrated
       const sort = req.params.sort || false; // name of field :'rate', 'score'
-      let match = sort ? { "user.oauthID": userid } : {};
+      let match = sort ? { "user._id": user_id } : {};
       const value = req.params.value || false; // field value: rate, score
       const limit = process.env.PAGE_SIZE || 20;
 
@@ -69,25 +77,18 @@ router.get(
       }
 
       if (subDoc === "unrated") {
-        if (req.params.userid) {
-          const userDoc = await global.artyouDb.User.findOne({
-            id: req.params.userid,
-          }).lean();
-
-          if (userDoc) {
-            console.log(`GET | FOUND USER: ${userid} | _id: ${userDoc._id}`);
-            userid = userDoc._id;
-            match = {
-              "ratings.user": { $nin: [userid] },
-            };
-            console.log({ match });
-          }
+        if (user_id !== 0) {
+          console.log(`GET | FOUND USER | _ID: ${user_id}`);
+          match = {
+            "ratings.user._id": { $nin: [user_id] },
+          };
+          console.log(`match\n${jsonPrint(match)}`);
         }
       }
 
       console.log(
         `GET ${model} | URL: ${req.url} | CURSOR | SORT (subDoc): ${subDoc}` +
-          ` | FILTER BY USER OAUTHID: ${userid}` +
+          ` | FILTER BY USER _ID: ${user_id}` +
           ` | CURSOR: _id: ${cursor._id} sort: ${sort} value: ${value}`
       );
 
@@ -118,8 +119,6 @@ router.get(
         paginationOptions
       );
 
-      // console.log(`paginationResults\n${jsonPrint(paginationResults)}`);
-
       const sortByOptions = {};
 
       sortByOptions.match = paginationResults.paginatedQuery;
@@ -127,14 +126,10 @@ router.get(
       sortByOptions.subDoc = subDoc || null;
       sortByOptions.sort = { [sort]: -1 } || null;
 
-      // console.log(`sortByOptions\n ${jsonPrint(sortByOptions)}`);
-
       // docs can be ratings or recommendations
       const docs = await global.artyouDb.sortBySubDocUserPaginate(
         sortByOptions
       );
-
-      // console.log(`docs[0]\n ${docs.length > 0 ? jsonPrint(docs[0]) : ""}`);
 
       const nextKey = paginationResults.nextKeyFn(docs);
 
@@ -142,7 +137,7 @@ router.get(
         console.log({ nextKey });
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER OAUTHID: ${userid}` +
+          `FOUND ${model} BY USER _ID: ${user_id}` +
             ` | NEXT ID: ${nextKey._id}` +
             ` | NEXT SORT: ${nextKey.sort} ` +
             ` | NEXT RATE: ${nextKey.rate} ` +
@@ -152,7 +147,7 @@ router.get(
       } else {
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER OAUTHID: ${userid} | NEXT KEY: ${nextKey} | TOP ${docs.length} DOCs`
+          `FOUND ${model} BY USER _ID: ${user_id} | NEXT KEY: ${nextKey} | TOP ${docs.length} DOCs`
         );
       }
 
@@ -164,22 +159,22 @@ router.get(
           art.ratingUser =
             subDoc === "rating"
               ? doc
-              : art.ratings.find((rating) => rating.user.id === userid);
+              : art.ratings.find((rating) => rating.user._id === user_id);
           art.recommendationUser =
             subDoc === "recommendation"
               ? doc
-              : art.recommendations.find((rec) => rec.user.id === userid);
+              : art.recommendations.find((rec) => rec.user._id === user_id);
           return art;
         });
       } else if (subDoc === "unrated") {
-        artworks = docs.filter((artwork) => !artwork.ratings.includes(userid));
+        artworks = docs.filter((artwork) => !artwork.ratings.includes(user_id));
       } else {
         artworks = docs.map((artwork) => {
           artwork.ratingUser = artwork.ratings.find(
-            (rating) => rating.user.id === userid
+            (rating) => rating.user._id === user_id
           );
           artwork.recommendationUser = artwork.recommendations.find(
-            (rec) => rec.user.id === userid
+            (rec) => rec.user._id === user_id
           );
           return artwork;
         });
