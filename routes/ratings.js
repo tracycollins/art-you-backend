@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
 const model = "Rating";
@@ -182,13 +183,13 @@ router.post("/create", async (req, res) => {
       } | ARTWORK: ${req.body.artwork.id} | RATE: ${req.body.rate}`
     );
 
-    const userObj = await convertOathUser(req.body.user);
+    console.log(req.body.user);
 
-    const dbUser = await global.artyouDb.User.findOneAndUpdate(
-      { id: userObj.id },
-      userObj,
-      findOneAndUpdateOptions
-    );
+    // const userObj = await convertOathUser(req.body.user);
+
+    const dbUser = await global.artyouDb.User.findOne({
+      _id: req.body.user._id,
+    });
 
     if (!dbUser) {
       console.log(`*** CREATE ERROR | Rating | USER ID ${dbUser.id} NOT FOUND`);
