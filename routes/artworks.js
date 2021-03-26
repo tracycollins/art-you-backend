@@ -159,11 +159,16 @@ router.get(
           art.ratingUser =
             subDoc === "rating"
               ? doc
-              : art.ratings.find((rating) => rating.user._id === user_id);
+              : art.ratings.find(
+                  (rating) =>
+                    rating.user === user_id || rating.user._id === user_id
+                );
           art.recommendationUser =
             subDoc === "recommendation"
               ? doc
-              : art.recommendations.find((rec) => rec.user._id === user_id);
+              : art.recommendations.find(
+                  (rec) => (rec.user === user_id || rec.user._id) === user_id
+                );
           return art;
         });
       } else if (subDoc === "unrated") {
@@ -171,10 +176,10 @@ router.get(
       } else {
         artworks = docs.map((artwork) => {
           artwork.ratingUser = artwork.ratings.find(
-            (rating) => rating.user._id === user_id
+            (rating) => rating.user === user_id || rating.user._id === user_id
           );
           artwork.recommendationUser = artwork.recommendations.find(
-            (rec) => rec.user._id === user_id
+            (rec) => rec.user === user_id || rec.user._id === user_id
           );
           return artwork;
         });
@@ -192,86 +197,86 @@ router.get(
   }
 );
 
-router.get("/unrated/user/:id", async (req, res) => {
-  try {
-    const limit = process.env.UNRATED_LIMIT || 20;
+// router.get("/unrated/user/:id", async (req, res) => {
+//   try {
+//     const limit = process.env.UNRATED_LIMIT || 20;
 
-    console.log(
-      `GET ${model} | UNRATED | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
-    );
+//     console.log(
+//       `GET ${model} | UNRATED | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
+//     );
 
-    const artworks = await global.artyouDb.Artwork.aggregate([
-      {
-        $lookup: {
-          from: "ratings",
-          localField: "ratings",
-          foreignField: "_id",
-          as: "ratings",
-        },
-      },
-      {
-        $lookup: {
-          from: "artists",
-          localField: "artist",
-          foreignField: "_id",
-          as: "artist",
-        },
-      },
-      {
-        $unwind: {
-          path: "$artist",
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "ratings.user",
-          foreignField: "_id",
-          as: "users",
-        },
-      },
-      {
-        $match: {
-          "users.id": {
-            $ne: req.params.id,
-          },
-        },
-      },
-      {
-        $sort: {
-          id: 1,
-        },
-      },
-      {
-        $limit: limit,
-      },
-      {
-        $lookup: {
-          from: "images",
-          localField: "image",
-          foreignField: "_id",
-          as: "image",
-        },
-      },
-      {
-        $unwind: {
-          path: "$image",
-        },
-      },
-    ]);
+//     const artworks = await global.artyouDb.Artwork.aggregate([
+//       {
+//         $lookup: {
+//           from: "ratings",
+//           localField: "ratings",
+//           foreignField: "_id",
+//           as: "ratings",
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "artists",
+//           localField: "artist",
+//           foreignField: "_id",
+//           as: "artist",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$artist",
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "ratings.user",
+//           foreignField: "_id",
+//           as: "users",
+//         },
+//       },
+//       {
+//         $match: {
+//           "users.id": {
+//             $ne: req.params.id,
+//           },
+//         },
+//       },
+//       {
+//         $sort: {
+//           id: 1,
+//         },
+//       },
+//       {
+//         $limit: limit,
+//       },
+//       {
+//         $lookup: {
+//           from: "images",
+//           localField: "image",
+//           foreignField: "_id",
+//           as: "image",
+//         },
+//       },
+//       {
+//         $unwind: {
+//           path: "$image",
+//         },
+//       },
+//     ]);
 
-    console.log(
-      `FOUND ${model} BY USER OAUTHID: ${req.params.id} | ${artworks.length} UNRATED ARTWORKS`
-    );
+//     console.log(
+//       `FOUND ${model} BY USER OAUTHID: ${req.params.id} | ${artworks.length} UNRATED ARTWORKS`
+//     );
 
-    res.json(artworks);
-  } catch (err) {
-    console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
-    res
-      .status(400)
-      .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
-  }
-});
+//     res.json(artworks);
+//   } catch (err) {
+//     console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
+//     res
+//       .status(400)
+//       .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+//   }
+// });
 
 router.get("/top-recs/user/:id", async (req, res) => {
   try {
