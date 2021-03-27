@@ -5,6 +5,7 @@ const model = "Rating";
 const express = require("express");
 const router = express.Router();
 const Queue = require("bull");
+const _ = require("lodash");
 
 const NeuralNetworkTools = require("../lib/nnTools.js");
 const nnt = new NeuralNetworkTools("NTR");
@@ -180,7 +181,7 @@ router.post("/create", async (req, res) => {
     console.log(
       `${model} | POST | CREATE ${model} | USER: ${
         req.body.user.id || req.body.user.sub
-      } | ARTWORK: ${req.body.artwork.id} | RATE: ${req.body.rate}`
+      } | ARTWORK ID: ${req.body.artwork.id} | RATE: ${req.body.rate}`
     );
 
     console.log(req.body.user);
@@ -197,6 +198,13 @@ router.post("/create", async (req, res) => {
         `*** CREATE ERROR | Rating | USER ID ${dbUser.id} NOT FOUND`
       );
     }
+
+    console.log(
+      `--> FOUND USER | USER ID ${dbUser.id} _ID: ${dbUser._id} NAME: ${dbUser.name}`
+    );
+
+    console.log({ dbUser });
+
     const dbArtwork = await global.artyouDb.Artwork.findOne({
       id: req.body.artwork.id,
     });
@@ -224,6 +232,9 @@ router.post("/create", async (req, res) => {
       .populate("user");
 
     if (!ratingDoc) {
+      console.log(
+        `==> NEW | Rating | | RATE: ${ratingObj.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
+      );
       ratingDoc = new global.artyouDb.Rating(ratingObj)
         .populate({ path: "artwork", populate: { path: "artist" } })
         .populate("user");
@@ -233,15 +244,30 @@ router.post("/create", async (req, res) => {
     } else {
       ratingDoc.rate = ratingObj.rate;
       console.log(
-        `UPDATE | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
+        `^^^ UPDATE | Rating | ID: ${ratingDoc.id} | RATE: ${ratingDoc.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
       );
     }
 
     await ratingDoc.save();
 
     // eslint-disable-next-line no-underscore-dangle
-    dbArtwork.ratings.addToSet(ratingDoc._id);
+    // dbArtwork.ratings.addToSet(ratingDoc._id);
+    // await dbArtwork.save();
+
+    let artworkRatingsIds = dbArtwork.ratings.map((ratingRef) =>
+      ratingRef.toString()
+    );
+
+    artworkRatingsIds.push(ratingDoc._id.toString());
+
+    artworkRatingsIds = _.uniq(artworkRatingsIds);
+    console.log({ artworkRatingsIds });
+
+    dbArtwork.set({ ratings: artworkRatingsIds });
+
     await dbArtwork.save();
+
+    console.log({ dbArtwork });
 
     // userRatingUpdateCounterHashmap[dbUser.id] = userRatingUpdateCounterHashmap[
     //   dbUser.id
@@ -254,13 +280,20 @@ router.post("/create", async (req, res) => {
     console.log(
       `SAVED | Rating` +
         ` | ID: ${ratingDoc.id}` +
+        ` | _ID: ${ratingDoc._id.toString()}` +
         ` | NUM RATING UPDATES: ${userRatingUpdateCounterHashmap[dbUser.id]}` +
         ` | RATE: ${ratingDoc.rate}` +
         ` | USER: ${dbUser.id}` +
         ` | ARTWORK: ${dbArtwork.id}`
     );
 
-    res.json(ratingDoc.toObject());
+    const rating = ratingDoc.toObject();
+    const artwork = dbArtwork.toObject();
+    artwork.ratingUser = rating;
+
+    console.log({ artwork });
+
+    res.json({ rating, artwork });
   } catch (err) {
     console.error(
       `POST | CREATE | ${model} | USER: ${req.body.user.sub} | ARTWORK: ${req.body.artwork.id} | ERROR: ${err}`

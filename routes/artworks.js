@@ -171,8 +171,6 @@ router.get(
                 );
           return art;
         });
-      } else if (subDoc === "unrated") {
-        artworks = docs.filter((artwork) => !artwork.ratings.includes(user_id));
       } else {
         artworks = docs.map((artwork) => {
           artwork.ratingUser = artwork.ratings.find(
