@@ -121,8 +121,9 @@ router.get(
       );
 
       const sortByOptions = {};
-
+      sortByOptions.user_id = ObjectID(user_id);
       sortByOptions.match = paginationResults.paginatedQuery;
+
       sortByOptions.limit = limit;
       sortByOptions.subDoc = subDoc || null;
       sortByOptions.sort = { [sort]: -1 } || null;
