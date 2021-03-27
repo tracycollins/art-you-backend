@@ -83,7 +83,7 @@ router.get(
             // "ratings.user._id": { $nin: [user_id] },
             "ratings.user._id": { $nin: [ObjectID(user_id)] },
           };
-          console.log(`match\n${jsonPrint(match)}`);
+          console.log(`match.ratings.user._id: ${match.ratings.user._id}`);
         }
       }
 
