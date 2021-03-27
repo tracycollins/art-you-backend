@@ -59,7 +59,7 @@ router.get(
           }).select("_id")
         : false;
 
-      const user_id = userDoc ? userDoc._id : false;
+      const user_id = userDoc ? userDoc._id.toString() : false;
 
       // let userid = req.params.userid || 0;
       const cursorid = req.params.cursorid;
@@ -80,6 +80,7 @@ router.get(
         if (user_id !== 0) {
           console.log(`GET | FOUND USER | _ID: ${user_id}`);
           match = {
+            // "ratings.user._id": { $nin: [user_id] },
             "ratings.user._id": { $nin: [user_id] },
           };
           console.log(`match\n${jsonPrint(match)}`);
