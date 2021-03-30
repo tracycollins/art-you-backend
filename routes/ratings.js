@@ -203,7 +203,7 @@ router.post("/create", async (req, res) => {
       `--> FOUND USER | USER ID ${dbUser.id} _ID: ${dbUser._id} NAME: ${dbUser.name}`
     );
 
-    console.log({ dbUser });
+    // console.log({ dbUser });
 
     const dbArtwork = await global.artyouDb.Artwork.findOne({
       id: req.body.artwork.id,
@@ -249,23 +249,25 @@ router.post("/create", async (req, res) => {
     }
 
     await ratingDoc.save();
+    const ratingUpdated = await global.artyouDb.Rating.findOne({
+      _id: ratingDoc._id,
+    });
 
+    dbArtwork.updateOne();
     // eslint-disable-next-line no-underscore-dangle
-    // dbArtwork.ratings.addToSet(ratingDoc._id);
-    // await dbArtwork.save();
-
-    let artworkRatingsIds = dbArtwork.ratings.map((ratingRef) =>
-      ratingRef.toString()
-    );
-
-    artworkRatingsIds.push(ratingDoc._id.toString());
-
-    artworkRatingsIds = _.uniq(artworkRatingsIds);
-    console.log({ artworkRatingsIds });
-
-    dbArtwork.set({ ratings: artworkRatingsIds });
-
+    dbArtwork.ratings.addToSet(ratingUpdated._id);
     await dbArtwork.save();
+
+    // let artworkRatingsIds = dbArtwork.ratings.map((ratingRef) =>
+    //   ratingRef.toString()
+    // );
+
+    // artworkRatingsIds.push(ratingDoc._id.toString());
+
+    // artworkRatingsIds = _.uniq(artworkRatingsIds);
+
+    // dbArtwork.set({ ratings: artworkRatingsIds });
+    // await dbArtwork.save();
 
     console.log({ dbArtwork });
 
