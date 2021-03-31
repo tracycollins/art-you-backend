@@ -49,7 +49,6 @@ router.get("/cursor/:cursor", async (req, res) => {
 
 // if subdoc === 'unrated' => sort and value can be null and can be ignored
 router.get(
-  // "/user/:userid/cursor/:cursorid/(:subdoc.:sort.:value)?",
   "/user/:userid/cursor/:cursorid/(:subdoc)?(.:sort.:value)?",
   async (req, res) => {
     try {
@@ -121,7 +120,7 @@ router.get(
       );
 
       const sortByOptions = {};
-      sortByOptions.user_id = ObjectID(user_id);
+      sortByOptions.user_id = user_id ? ObjectID(user_id) : null;
       sortByOptions.match = paginationResults.paginatedQuery;
 
       sortByOptions.limit = limit;
@@ -197,86 +196,45 @@ router.get(
   }
 );
 
-// router.get("/unrated/user/:id", async (req, res) => {
-//   try {
-//     const limit = process.env.UNRATED_LIMIT || 20;
+router.get("/user/:userid/id/:artworkId/", async (req, res) => {
+  try {
+    const userDoc =
+      req.params.userid !== "0"
+        ? await global.artyouDb.User.findOne({
+            id: req.params.userid,
+          }).select("_id")
+        : false;
 
-//     console.log(
-//       `GET ${model} | UNRATED | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
-//     );
+    const user_id = userDoc ? userDoc._id.toString() : false;
+    const artworkId = req.params.artworkId || false;
 
-//     const artworks = await global.artyouDb.Artwork.aggregate([
-//       {
-//         $lookup: {
-//           from: "ratings",
-//           localField: "ratings",
-//           foreignField: "_id",
-//           as: "ratings",
-//         },
-//       },
-//       {
-//         $lookup: {
-//           from: "artists",
-//           localField: "artist",
-//           foreignField: "_id",
-//           as: "artist",
-//         },
-//       },
-//       {
-//         $unwind: {
-//           path: "$artist",
-//         },
-//       },
-//       {
-//         $lookup: {
-//           from: "users",
-//           localField: "ratings.user",
-//           foreignField: "_id",
-//           as: "users",
-//         },
-//       },
-//       {
-//         $match: {
-//           "users.id": {
-//             $ne: req.params.id,
-//           },
-//         },
-//       },
-//       {
-//         $sort: {
-//           id: 1,
-//         },
-//       },
-//       {
-//         $limit: limit,
-//       },
-//       {
-//         $lookup: {
-//           from: "images",
-//           localField: "image",
-//           foreignField: "_id",
-//           as: "image",
-//         },
-//       },
-//       {
-//         $unwind: {
-//           path: "$image",
-//         },
-//       },
-//     ]);
+    console.log(
+      `GET ${model} | URL: ${req.url}` +
+        ` | USER _ID: ${user_id}` +
+        ` | ARTWORK ID: ${artworkId}`
+    );
 
-//     console.log(
-//       `FOUND ${model} BY USER OAUTHID: ${req.params.id} | ${artworks.length} UNRATED ARTWORKS`
-//     );
+    // docs can be ratings or recommendations
+    const artwork = await global.artyouDb.Artwork.findOne({ id: artworkId })
+      .populate("image")
+      .populate("ratings")
+      .populate("recommendations")
+      .lean();
 
-//     res.json(artworks);
-//   } catch (err) {
-//     console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
-//     res
-//       .status(400)
-//       .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
-//   }
-// });
+    console.log(
+      `FOUND ARTWORK BY ID } | ID: ${artwork.id} | _ID: ${artwork._id}`
+    );
+
+    res.json({ artwork: artwork });
+  } catch (err) {
+    console.error(
+      `GET | ${model} | OAUTHID: ${req.params.userid} ERROR: ${err}`
+    );
+    res
+      .status(400)
+      .send(`GET | ${model} | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
+  }
+});
 
 router.get("/top-recs/user/:id", async (req, res) => {
   try {
