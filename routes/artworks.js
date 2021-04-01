@@ -80,7 +80,7 @@ router.get(
           console.log(`GET | FOUND USER | _ID: ${user_id}`);
           match = {
             // "ratings.user._id": { $nin: [user_id] },
-            "ratings.user._id": { $nin: [ObjectID(user_id)] },
+            "ratings.user._id": { $nin: [ObjectID(user_id), user_id] },
           };
           // console.log(`match.ratings.user._id: ${match.ratings.user._id}`);
         }
