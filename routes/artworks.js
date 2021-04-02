@@ -80,7 +80,7 @@ router.get(
           console.log(`GET | FOUND USER | _ID: ${user_id}`);
           match = {
             // "ratings.user._id": { $nin: [user_id] },
-            "ratings.user._id": { $nin: [ObjectID(user_id), user_id] },
+            // "ratings.user._id": { $nin: [ObjectID(user_id), user_id] },
           };
           // console.log(`match.ratings.user._id: ${match.ratings.user._id}`);
         }
@@ -139,6 +139,7 @@ router.get(
         console.log(
           // eslint-disable-next-line no-underscore-dangle
           `FOUND ${model} BY USER _ID: ${user_id}` +
+            ` | SUBDOC: ${subDoc}` +
             ` | NEXT ID: ${nextKey._id}` +
             ` | NEXT SORT: ${nextKey.sort} ` +
             ` | NEXT RATE: ${nextKey.rate} ` +
@@ -148,7 +149,7 @@ router.get(
       } else {
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER _ID: ${user_id} | NEXT KEY: ${nextKey} | TOP ${docs.length} DOCs`
+          `FOUND ${model} BY USER _ID: ${user_id} | SUBDOC: ${subDoc} | NEXT KEY: ${nextKey} | TOP ${docs.length} DOCs`
         );
       }
 
@@ -222,9 +223,16 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
       .lean();
 
     console.log(
-      `FOUND ARTWORK BY ID } | ID: ${artwork.id} | _ID: ${artwork._id}`
+      `FOUND ARTWORK BY ID } | ID: ${artwork.id} | _ID: ${artwork._id} | ${
+        artwork.ratings.length
+      } RATINGS | RATING USER: ${
+        artwork.ratingUser ? artwork.ratingUser.user : "none"
+      }`
     );
 
+    for (const rating of artwork.ratings) {
+      console.log(`RATING | ${rating._id} | USER: ${rating.user}`);
+    }
     res.json({ artwork: artwork });
   } catch (err) {
     console.error(
