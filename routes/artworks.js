@@ -155,7 +155,7 @@ router.get(
 
       let artworks = [];
 
-      if (subDoc && subDoc !== "unrated") {
+      if (subDoc !== "none" && subDoc && subDoc !== "unrated") {
         artworks = docs.map((doc) => {
           const art = Object.assign({}, doc.artwork);
           art.ratings = art.ratings || [];
