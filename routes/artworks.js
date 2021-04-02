@@ -3,18 +3,18 @@
 const model = "Artwork";
 const express = require("express");
 const ObjectID = require("mongodb").ObjectID;
-const treeify = require("treeify");
+// const treeify = require("treeify");
 const router = express.Router({
   strict: true,
 });
 
-const jsonPrint = function (obj) {
-  if (obj && obj != undefined) {
-    return treeify.asTree(obj, true, true);
-  } else {
-    return "UNDEFINED";
-  }
-};
+// const jsonPrint = function (obj) {
+//   if (obj && obj != undefined) {
+//     return treeify.asTree(obj, true, true);
+//   } else {
+//     return "UNDEFINED";
+//   }
+// };
 
 // get artworks by id, pop with rating and rec by user id
 
@@ -102,7 +102,6 @@ router.get(
         paginationOptions.nextKey = {};
         paginationOptions.nextKey._id = cursor._id;
         if (sort) {
-          // paginationOptions[sort] = parseInt(cursor[sort].value);
           paginationOptions.nextKey[sort] = cursor[sort];
           paginationOptions.sort = [sort, -1];
         }
@@ -110,17 +109,18 @@ router.get(
 
       console.log({ paginationOptions });
 
-      //   query: match,
-      //   sort: ["rate", -1],
-      //   nextKey,
-      // }
-
       const paginationResults = global.artyouDb.generatePaginationQuery(
         paginationOptions
       );
 
       const sortByOptions = {};
       sortByOptions.user_id = user_id ? ObjectID(user_id) : null;
+      console.log(
+        `USER ID ${sortByOptions.user_id} | IS ObjectID: ${ObjectID.isValid(
+          sortByOptions.user_id
+        )}`
+      );
+      // sortByOptions.user_id = user_id;
       sortByOptions.match = paginationResults.paginatedQuery;
 
       sortByOptions.limit = limit;
