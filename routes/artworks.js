@@ -62,7 +62,7 @@ router.get(
 
       // let userid = req.params.userid || 0;
       const cursorid = req.params.cursorid;
-      const subDoc = req.params.subdoc || false; // rating, recommendation, unrated
+      const subDoc = req.params.subdoc || "none"; // rating, recommendation, unrated
       const sort = req.params.sort || false; // name of field :'rate', 'score'
       let match = sort ? { "user._id": user_id } : {};
       const value = req.params.value || false; // field value: rate, score
@@ -158,6 +158,8 @@ router.get(
       if (subDoc && subDoc !== "unrated") {
         artworks = docs.map((doc) => {
           const art = Object.assign({}, doc.artwork);
+          art.ratings = art.ratings || [];
+          art.recommendations = art.recommendations || [];
           art.ratingUser =
             subDoc === "rating"
               ? doc
@@ -175,12 +177,13 @@ router.get(
         });
       } else {
         artworks = docs.map((artwork) => {
-          artwork.ratingUser = artwork.ratings.find(
-            (rating) => rating.user === user_id || rating.user._id === user_id
-          );
-          artwork.recommendationUser = artwork.recommendations.find(
-            (rec) => rec.user === user_id || rec.user._id === user_id
-          );
+          console.log({ artwork });
+          // artwork.ratingUser = artwork.ratings.find(
+          //   (rating) => rating.user === user_id || rating.user._id === user_id
+          // );
+          // artwork.recommendationUser = artwork.recommendations.find(
+          //   (rec) => rec.user === user_id || rec.user._id === user_id
+          // );
           return artwork;
         });
       }
