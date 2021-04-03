@@ -63,15 +63,16 @@ router.get(
       // let userid = req.params.userid || 0;
       const cursorid = req.params.cursorid;
       const subDoc = req.params.subdoc || "none"; // rating, recommendation, unrated
-      const sort = req.params.sort || false; // name of field :'rate', 'score'
-      let match = sort ? { "user._id": user_id } : {};
+      const sort = req.params.sort || "none"; // name of field :'rate', 'score'
+      let match = sort && sort !== "none" ? { "user._id": user_id } : {};
       const value = req.params.value || false; // field value: rate, score
       const limit = process.env.PAGE_SIZE || 20;
 
       const cursor = {};
       cursor._id = cursorid;
 
-      if (sort) {
+      // if (sort) {
+      if (sort && sort !== "none") {
         cursor[sort] = parseInt(value);
       }
 
@@ -94,14 +95,16 @@ router.get(
 
       const paginationOptions = {};
       paginationOptions.query = match;
-      if (sort) {
+      // if (sort) {
+      if (sort && sort !== "none") {
         paginationOptions.sort = [sort, -1];
       }
 
       if (cursor !== undefined && cursor._id !== "0") {
         paginationOptions.nextKey = {};
         paginationOptions.nextKey._id = cursor._id;
-        if (sort) {
+        // if (sort) {
+        if (sort && sort !== "none") {
           paginationOptions.nextKey[sort] = cursor[sort];
           paginationOptions.sort = [sort, -1];
         }
@@ -124,8 +127,8 @@ router.get(
       sortByOptions.match = paginationResults.paginatedQuery;
 
       sortByOptions.limit = limit;
-      sortByOptions.subDoc = subDoc || null;
-      sortByOptions.sort = { [sort]: -1 } || null;
+      sortByOptions.subDoc = subDoc || "none";
+      sortByOptions.sort = sort && sort !== "none" ? { [sort]: -1 } : "none";
 
       // docs can be ratings or recommendations
       const docs = await global.artyouDb.sortBySubDocUserPaginate(
