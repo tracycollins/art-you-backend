@@ -392,7 +392,7 @@ app.post("/authenticated", async (req, res) => {
 });
 
 app.use("/login", loginRouter);
-app.use("/artists/", artistsRouter);
+app.use("/artists", artistsRouter);
 app.use("/artworks", artworksRouter);
 app.use("/users", usersRouter);
 app.use("/ratings", ratingsRouter);
