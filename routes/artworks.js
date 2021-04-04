@@ -3,20 +3,9 @@
 const model = "Artwork";
 const express = require("express");
 const ObjectID = require("mongodb").ObjectID;
-// const treeify = require("treeify");
 const router = express.Router({
   strict: true,
 });
-
-// const jsonPrint = function (obj) {
-//   if (obj && obj != undefined) {
-//     return treeify.asTree(obj, true, true);
-//   } else {
-//     return "UNDEFINED";
-//   }
-// };
-
-// get artworks by id, pop with rating and rec by user id
 
 router.get("/cursor/:cursor", async (req, res) => {
   try {
@@ -179,16 +168,17 @@ router.get(
           return art;
         });
       } else {
-        artworks = docs.map((artwork) => {
-          console.log({ artwork });
-          // artwork.ratingUser = artwork.ratings.find(
-          //   (rating) => rating.user === user_id || rating.user._id === user_id
-          // );
-          // artwork.recommendationUser = artwork.recommendations.find(
-          //   (rec) => rec.user === user_id || rec.user._id === user_id
-          // );
-          return artwork;
-        });
+        artworks = docs.map(
+          (artwork) =>
+            // console.log({ artwork });
+            // artwork.ratingUser = artwork.ratings.find(
+            //   (rating) => rating.user === user_id || rating.user._id === user_id
+            // );
+            // artwork.recommendationUser = artwork.recommendations.find(
+            //   (rec) => rec.user === user_id || rec.user._id === user_id
+            // );
+            artwork
+        );
       }
 
       res.json({ artworks: artworks, nextKey: nextKey });

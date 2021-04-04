@@ -288,6 +288,7 @@ app.use(cookieSession({ secret: process.env.ARTYOU_COOKIE_SESSION_SECRET }));
 
 function count(req, res, next) {
   req.session.count = (req.session.count || 0) + 1;
+  console.log(`SESSION COUNT: ${req.session.count}`);
   next();
 }
 
