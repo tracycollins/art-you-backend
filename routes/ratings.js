@@ -5,8 +5,6 @@ const model = "Rating";
 const express = require("express");
 const router = express.Router();
 const Queue = require("bull");
-const _ = require("lodash");
-
 const NeuralNetworkTools = require("../lib/nnTools.js");
 const nnt = new NeuralNetworkTools("NTR");
 
@@ -16,8 +14,6 @@ nnt.on("ready", async (appName) => {
 
 nnt.on("connect", async (appName) => {
   console.log(`NTR | RATINGS | DB CONNECTED | APP NAME: ${appName}`);
-  // console.log(`NNT | >>> START NETWORK TEST`);
-  // await nnt.runNetworkTest();
 });
 
 const workUpdateRecommendationsQueue = new Queue(
@@ -26,10 +22,6 @@ const workUpdateRecommendationsQueue = new Queue(
 );
 
 const triggerNetworkFitRatingsUpdateNumber = 10;
-const findOneAndUpdateOptions = {
-  new: true,
-  upsert: true,
-};
 
 const userRatingUpdateCounterHashmap = {};
 let nntUpdateRecommendationsReady = true;
@@ -48,13 +40,6 @@ const updateUserRatingCount = async (user) => {
     try {
       nntUpdateRecommendationsReady = false;
       const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
-      // console.log(
-      //   `NTR | RATINGS | >>> START updateRecommendationsChild | USER ID: ${user.id}`
-      // );
-      // await nnt.updateRecommendationsChild({
-      //   user: user,
-      //   epochs: epochs,
-      // });
 
       console.log(
         `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
@@ -79,42 +64,6 @@ const updateUserRatingCount = async (user) => {
     }
   }
   return userRatingUpdateCounterHashmap[user.id];
-};
-
-const convertOathUser = async (oathUser) => {
-  const oathType = oathUser.sub.split("|")[0];
-  const user = Object.assign({}, oathUser);
-
-  console.log(
-    `RATING | convertOathUser | oathType: ${oathType}| USER SUB: ${oathUser.sub}`
-  );
-
-  switch (oathType) {
-    case "auth0":
-    case "github":
-    case "google-oauth2":
-    case "twitter":
-    case "facebook":
-      user.id = oathUser.sub;
-      user.oauthID = oathUser.sub;
-      user.name = oathUser.name;
-      user.nickname = oathUser.nickname;
-      user.firstName = oathUser.given_name;
-      user.lastName = oathUser.family_name;
-      user.email = oathUser.email;
-      user.image = new global.artyouDb.Image({
-        id: oathUser.sub,
-        url: oathUser.picture,
-        title: oathUser.name,
-      });
-      break;
-
-    default:
-      console.log(`*** UNKNOWN oathType: ${oathType}`);
-      throw new Error(`*** UNKNOWN oathType: ${oathType} | ${oathUser.sub}`);
-  }
-
-  return user;
 };
 
 router.get("/user/:id", async (req, res) => {
@@ -184,10 +133,6 @@ router.post("/create", async (req, res) => {
       } | ARTWORK ID: ${req.body.artwork.id} | RATE: ${req.body.rate}`
     );
 
-    console.log(req.body.user);
-
-    // const userObj = await convertOathUser(req.body.user);
-
     const dbUser = await global.artyouDb.User.findOne({
       _id: req.body.user._id,
     });
@@ -202,8 +147,6 @@ router.post("/create", async (req, res) => {
     console.log(
       `--> FOUND USER | USER ID ${dbUser.id} _ID: ${dbUser._id} NAME: ${dbUser.name}`
     );
-
-    // console.log({ dbUser });
 
     const dbArtwork = await global.artyouDb.Artwork.findOne({
       id: req.body.artwork.id,
@@ -256,27 +199,8 @@ router.post("/create", async (req, res) => {
     dbArtwork.updateOne();
     // eslint-disable-next-line no-underscore-dangle
     dbArtwork.ratings.addToSet(ratingUpdated._id);
+
     await dbArtwork.save();
-
-    // let artworkRatingsIds = dbArtwork.ratings.map((ratingRef) =>
-    //   ratingRef.toString()
-    // );
-
-    // artworkRatingsIds.push(ratingDoc._id.toString());
-
-    // artworkRatingsIds = _.uniq(artworkRatingsIds);
-
-    // dbArtwork.set({ ratings: artworkRatingsIds });
-    // await dbArtwork.save();
-
-    console.log({ dbArtwork });
-
-    // userRatingUpdateCounterHashmap[dbUser.id] = userRatingUpdateCounterHashmap[
-    //   dbUser.id
-    // ]
-    //   ? (userRatingUpdateCounterHashmap[dbUser.id] += 1)
-    //   : (userRatingUpdateCounterHashmap[dbUser.id] = 1);
-
     updateUserRatingCount(dbUser);
 
     console.log(
@@ -292,8 +216,6 @@ router.post("/create", async (req, res) => {
     const rating = ratingDoc.toObject();
     const artwork = dbArtwork.toObject();
     artwork.ratingUser = rating;
-
-    console.log({ artwork });
 
     res.json({ rating, artwork });
   } catch (err) {
@@ -319,7 +241,6 @@ router.post("/update", async (req, res) => {
         ` | ARTWORK: ${req.artwork.id}` +
         ` | RATE: ${req.body.rate}`
     );
-    console.log(req.body);
 
     const ratingDoc = await global.artyouDb[model]
       .findOne({ id: req.body.id })

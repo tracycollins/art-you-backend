@@ -24,8 +24,6 @@ router.get("/cursor/:cursor", async (req, res) => {
       .populate({ path: "tags", populate: { path: "user" } })
       .lean();
 
-    // const nextCursor = docs.length < limit ? 0 : docs[limit - 1].id;
-
     console.log(`ARTWORKS | GET | ${docs.length} ARTWORKS | LIMIT: ${limit}`);
 
     res.json(docs);
@@ -68,11 +66,7 @@ router.get(
       if (subDoc === "unrated") {
         if (user_id !== 0) {
           console.log(`GET | FOUND USER | _ID: ${user_id}`);
-          match = {
-            // "ratings.user._id": { $nin: [user_id] },
-            // "ratings.user._id": { $nin: [ObjectID(user_id), user_id] },
-          };
-          // console.log(`match.ratings.user._id: ${match.ratings.user._id}`);
+          match = {};
         }
       }
 
@@ -84,7 +78,7 @@ router.get(
 
       const paginationOptions = {};
       paginationOptions.query = match;
-      // if (sort) {
+
       if (sort && sort !== "none") {
         paginationOptions.sort = [sort, -1];
       }
@@ -92,14 +86,11 @@ router.get(
       if (cursor !== undefined && cursor._id !== "0") {
         paginationOptions.nextKey = {};
         paginationOptions.nextKey._id = cursor._id;
-        // if (sort) {
         if (sort && sort !== "none") {
           paginationOptions.nextKey[sort] = cursor[sort];
           paginationOptions.sort = [sort, -1];
         }
       }
-
-      console.log({ paginationOptions });
 
       const paginationResults = global.artyouDb.generatePaginationQuery(
         paginationOptions
@@ -112,7 +103,6 @@ router.get(
           sortByOptions.user_id
         )}`
       );
-      // sortByOptions.user_id = user_id;
       sortByOptions.match = paginationResults.paginatedQuery;
 
       sortByOptions.limit = limit;
@@ -127,7 +117,6 @@ router.get(
       const nextKey = paginationResults.nextKeyFn(docs);
 
       if (nextKey) {
-        console.log({ nextKey });
         console.log(
           // eslint-disable-next-line no-underscore-dangle
           `FOUND ${model} BY USER _ID: ${user_id}` +
@@ -168,17 +157,7 @@ router.get(
           return art;
         });
       } else {
-        artworks = docs.map(
-          (artwork) =>
-            // console.log({ artwork });
-            // artwork.ratingUser = artwork.ratings.find(
-            //   (rating) => rating.user === user_id || rating.user._id === user_id
-            // );
-            // artwork.recommendationUser = artwork.recommendations.find(
-            //   (rec) => rec.user === user_id || rec.user._id === user_id
-            // );
-            artwork
-        );
+        artworks = docs.map((artwork) => artwork);
       }
 
       res.json({ artworks: artworks, nextKey: nextKey });
@@ -339,8 +318,6 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
     const query = {};
     query.id = parseInt(req.params.artworkid);
 
-    console.log({ query });
-
     const artworkDoc = await global.artyouDb.Artwork.findOne(query)
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
@@ -390,7 +367,6 @@ router.get("/user/:userid", async (req, res) => {
     const userDoc = await global.artyouDb.User.findOne({
       id: req.params.userid,
     }).lean();
-    // console.log({ userDoc });
 
     const artworkDocs = await global.artyouDb.Artwork.find({})
       .populate("image")
@@ -400,24 +376,17 @@ router.get("/user/:userid", async (req, res) => {
       .populate({ path: "tags", populate: { path: "user" } })
       .lean();
 
-    // const ratingDocs = await global.artyouDb.Rating.find({user: userDoc}).lean()
-    // const recommendationDocs = await global.artyouDb.Recommendation.findOne({user: userDoc}).lean()
-
     const docs = [];
 
     for (const artworkDoc of artworkDocs) {
-      // console.log({artworkDoc})
-
       if (userDoc) {
         for (const rating of artworkDoc.ratings) {
-          // console.log({ rating });
           if (rating.user && rating.user.id === userDoc.id) {
             artworkDoc.ratingUser = rating;
           }
         }
 
         for (const rec of artworkDoc.recommendations) {
-          // console.log({ rec });
           if (rec.user && rec.user.id === userDoc.id) {
             artworkDoc.recommendationUser = rec;
           }
@@ -439,8 +408,6 @@ router.get("/:id", async (req, res) => {
 
   console.log(`GET ${model} | ID: ${req.params.id}`);
   query.id = parseInt(req.params.id);
-
-  console.log({ query });
 
   const doc = await global.artyouDb.Artwork.findOne(query)
     .populate("image")
