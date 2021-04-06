@@ -46,8 +46,6 @@ router.get(
         : false;
 
       const user_id = userDoc ? userDoc._id.toString() : false;
-
-      // let userid = req.params.userid || 0;
       const cursorid = req.params.cursorid;
       const subDoc = req.params.subdoc || "none"; // rating, recommendation, unrated
       const sort = req.params.sort || "none"; // name of field :'rate', 'score'
@@ -193,22 +191,51 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
     // docs can be ratings or recommendations
     const artwork = await global.artyouDb.Artwork.findOne({ id: artworkId })
       .populate("image")
-      .populate("ratings")
-      .populate("recommendations")
+      .populate({ path: "artist", populate: { path: "image" } })
+      .populate({ path: "ratings", populate: { path: "user" } })
+      .populate({ path: "recommendations", populate: { path: "user" } })
+      .populate({ path: "tags", populate: { path: "user" } })
       .lean();
 
-    console.log(
-      `FOUND ARTWORK BY ID } | ID: ${artwork.id} | _ID: ${artwork._id} | ${
-        artwork.ratings.length
-      } RATINGS | RATING USER: ${
-        artwork.ratingUser ? artwork.ratingUser.user : "none"
-      }`
-    );
+    const ratingDoc = await global.artyouDb.Rating.findOne({
+      user: userDoc,
+      artwork: artwork,
+    }).lean();
+    const recommendationDoc = await global.artyouDb.Recommendation.findOne({
+      user: userDoc,
+      artwork: artwork,
+    }).lean();
 
-    for (const rating of artwork.ratings) {
-      console.log(`RATING | ${rating._id} | USER: ${rating.user}`);
+    if (artwork) {
+      if (ratingDoc) {
+        artwork.ratingUser = ratingDoc;
+      }
+
+      if (recommendationDoc) {
+        artwork.recommendationUser = recommendationDoc;
+      }
+
+      console.log(
+        `FOUND ARTWORK BY ID` +
+          ` | ID: ${artwork.id}` +
+          ` | _ID: ${artwork._id}` +
+          ` | ${artwork.ratings.length} RATINGS` +
+          ` | RATING USER: ${
+            artwork.ratingUser ? artwork.ratingUser.user.id : "none"
+          }` +
+          ` | REC USER: ${
+            artwork.recommendationUser
+              ? artwork.recommendationUser.user.id
+              : "none"
+          }`
+      );
+      res.json({ artwork });
+    } else {
+      console.log(
+        `ARTWORK OR USER NOT FOUND | ARTWORK ID: ${req.params.artworkid} | USER ID: ${req.params.userid}`
+      );
+      res.json();
     }
-    res.json({ artwork: artwork });
   } catch (err) {
     console.error(
       `GET | ${model} | OAUTHID: ${req.params.userid} ERROR: ${err}`
