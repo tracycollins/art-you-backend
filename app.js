@@ -11,7 +11,9 @@ if (process.env.ARTYOU_ENV_VARS_FILE) {
   console.log(`A47BE | !!! ENV CONFIG NOT SET: ARTYOU_ENV_VARS_FILE`);
   console.log(`A47BE | !!! ENV CONFIG NOT LOADED`);
 }
+const DYNO = process.env.DYNO || "NO_DYNO";
 
+console.log(`DYNO: ${DYNO}`);
 const ONE_SECOND = 1000;
 const ONE_MINUTE = 60 * ONE_SECOND;
 const ONE_HOUR = 60 * ONE_MINUTE;
@@ -365,7 +367,7 @@ app.use(limiter);
 
 app.post("/authenticated", async (req, res) => {
   try {
-    console.info(`POST /authenticated`, req.body);
+    console.info(`DYNO: ${DYNO}POST /authenticated`, req.body);
 
     if (req.body && req.body.sub) {
       let userDoc = await global.artyouDb.User.findOne({
