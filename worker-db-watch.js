@@ -21,9 +21,7 @@ const WORKER_START_TIMEOUT = process.env.WORKER_START_TIMEOUT
   : 10 * ONE_SECOND;
 
 const workers = 1;
-const maxJobsPerWorker = process.env.WORKER_MAX_JOBS
-  ? parseInt(process.env.WORKER_MAX_JOBS)
-  : 1;
+const maxJobsPerWorker = 1;
 
 console.log(
   `${PF}` +
@@ -154,14 +152,16 @@ const start = () => {
   });
 
   console.log(`${PF} | initUserRatingUpdateJobQueue`);
-  setInterval(async () => {
-    await initUserRatingUpdateJobQueue();
-  }, ONE_MINUTE);
 };
+
+setInterval(async () => {
+  await initUserRatingUpdateJobQueue();
+}, ONE_MINUTE);
 
 console.log(
   `${PF} | WORKER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`
 );
+
 setTimeout(() => {
   throng({ workers, start });
 }, WORKER_START_TIMEOUT);

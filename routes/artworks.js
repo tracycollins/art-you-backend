@@ -63,7 +63,7 @@ router.get(
 
       if (subDoc === "unrated") {
         if (user_id !== 0) {
-          console.log(`GET | FOUND USER | _ID: ${user_id}`);
+          console.log(`GET | UNRATED | FOUND USER | _ID: ${user_id}`);
           match = {};
         }
       }
