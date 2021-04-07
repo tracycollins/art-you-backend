@@ -1,19 +1,15 @@
 const PF = `WKR_${process.pid}`;
 
 const ONE_SECOND = 1000;
-// const ONE_MINUTE = 60 * ONE_SECOND;
-// const ONE_HOUR = 60 * ONE_MINUTE;
 
 const WORKER_START_TIMEOUT = process.env.WORKER_START_TIMEOUT
   ? parseInt(process.env.WORKER_START_TIMEOUT)
   : 10 * ONE_SECOND;
 
-// const REDIS_URL = process.env.REDIS_URL;
-const workers = process.env.WEB_CONCURRENCY || 2;
+const workers = process.env.WEB_CONCURRENCY || 1;
 const maxJobsPerWorker = process.env.WORKER_MAX_JOBS
   ? parseInt(process.env.WORKER_MAX_JOBS)
   : 1;
-// const maxJobsPerWorker = 1;
 
 console.log(
   `${PF}` +
@@ -82,64 +78,11 @@ const updateUserRecommendations = async (p) => {
   }
 };
 
-// const url = require("url");
-// const Redis = require("ioredis");
-// // const redis = require("redis");
-
-// function redisReady() {
-//   return new Promise(function (resolve) {
-//     // const redisClient = new Redis(process.env.REDIS_URL, {
-//     //   tls: {
-//     //     rejectUnauthorized: false,
-//     //   },
-//     // });
-//     // const redisClient = redis.createClient(process.env.REDIS_URL);
-
-//     const redis_uri = url.parse(process.env.REDIS_URL);
-//     const redisClient = new Redis({
-//       port: Number(redis_uri.port) + 1,
-//       host: redis_uri.hostname,
-//       password: redis_uri.auth.split(":")[1],
-//       db: 0,
-//       tls: {
-//         rejectUnauthorized: false,
-//         requestCert: true,
-//         agent: false,
-//       },
-//     });
-
-//     console.log(
-//       `${PF} | WAIT REDIS | CLIENT STATUS: ${redisClient.status} process.env.REDIS_URL: ${process.env.REDIS_URL}`
-//     );
-//     const redisReadyInterval = setInterval(() => {
-//       if (redisClient.status === "ready") {
-//         console.log(
-//           `${PF} | REDIS CLIENT | STATUS: ${redisClient.status}`
-//         );
-//         clearInterval(redisReadyInterval);
-//         redisClient.quit();
-//         resolve();
-//       } else {
-//         console.log(
-//           `${PF} | WAIT REDIS CLIENT | STATUS: ${redisClient.status}`
-//         );
-//       }
-//     }, 30 * ONE_SECOND);
-//   });
-// }
-
 const start = () => {
   console.log(`${PF} | ... WAIT | WORKER | PID: ${process.pid} START`);
-
-  // redisReady()
-  //   .then(() => {
   console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
-  const workQueue = new Queue("updateRecommendations", process.env.REDIS_URL);
 
-  // job.data.
-  // op: "UPDATE_RECS",
-  // oauthID: userDoc.oauthID,
-  // epochs: EPOCHS,
+  const workQueue = new Queue("updateRecommendations", process.env.REDIS_URL);
 
   workQueue.process(maxJobsPerWorker, async (job) => {
     try {
@@ -201,14 +144,7 @@ const start = () => {
       `${PF} | ??? WORKER | PID: ${process.pid} | JOB STALLED: ${job.id}`
     );
   });
-  // })
-  // .catch((err) => {
-  //   console.log(`${PF} | *** REDIS READY ERROR: ${err}`);
-  // });
 };
-
-// Initialize the clustered worker process
-// See: https://devcenter.heroku.com/articles/node-concurrency for more info
 
 console.log(
   `${PF} | WORKER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`

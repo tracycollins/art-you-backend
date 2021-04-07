@@ -1,10 +1,10 @@
 /* eslint-disable no-underscore-dangle */
-const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+// const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
 const model = "Rating";
 const express = require("express");
 const router = express.Router();
-const Queue = require("bull");
+// const Queue = require("bull");
 const NeuralNetworkTools = require("../lib/nnTools.js");
 const nnt = new NeuralNetworkTools("NTR");
 
@@ -16,55 +16,56 @@ nnt.on("connect", async (appName) => {
   console.log(`NTR | RATINGS | DB CONNECTED | APP NAME: ${appName}`);
 });
 
-const workUpdateRecommendationsQueue = new Queue(
-  "updateRecommendations",
-  REDIS_URL
-);
+// const workUpdateRecommendationsQueue = new Queue(
+//   "updateRecommendations",
+//   REDIS_URL
+// );
 
-const triggerNetworkFitRatingsUpdateNumber = 10;
+// const triggerNetworkFitRatingsUpdateNumber = 10;
 
 const userRatingUpdateCounterHashmap = {};
-let nntUpdateRecommendationsReady = true;
-const updateUserRatingCount = async (user) => {
-  userRatingUpdateCounterHashmap[user.id] = userRatingUpdateCounterHashmap[
-    user.id
-  ]
-    ? (userRatingUpdateCounterHashmap[user.id] += 1)
-    : (userRatingUpdateCounterHashmap[user.id] = 1);
+// let nntUpdateRecommendationsReady = true;
 
-  if (
-    nntUpdateRecommendationsReady &&
-    userRatingUpdateCounterHashmap[user.id] >=
-      triggerNetworkFitRatingsUpdateNumber
-  ) {
-    try {
-      nntUpdateRecommendationsReady = false;
-      const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
+// const updateUserRatingCount = async (user) => {
+//   userRatingUpdateCounterHashmap[user.id] = userRatingUpdateCounterHashmap[
+//     user.id
+//   ]
+//     ? (userRatingUpdateCounterHashmap[user.id] += 1)
+//     : (userRatingUpdateCounterHashmap[user.id] = 1);
 
-      console.log(
-        `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
-      );
+//   if (
+//     nntUpdateRecommendationsReady &&
+//     userRatingUpdateCounterHashmap[user.id] >=
+//       triggerNetworkFitRatingsUpdateNumber
+//   ) {
+//     try {
+//       nntUpdateRecommendationsReady = false;
+//       const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
 
-      const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
-        op: "UPDATE_RECS",
-        oauthID: user.id,
-        epochs: epochs,
-      });
+//       console.log(
+//         `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
+//       );
 
-      console.log(`NTR | JOB ADDED`);
-      console.log({ jobUpdateRecs });
+//       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
+//         op: "UPDATE_RECS",
+//         oauthID: user.id,
+//         epochs: epochs,
+//       });
 
-      userRatingUpdateCounterHashmap[user.id] = 0;
-      nntUpdateRecommendationsReady = true;
-    } catch (err) {
-      nntUpdateRecommendationsReady = true;
-      console.log(
-        `NTR | RATINGS | *** updateRecommendationsChild ERROR: ${err}`
-      );
-    }
-  }
-  return userRatingUpdateCounterHashmap[user.id];
-};
+//       console.log(`NTR | JOB ADDED`);
+//       console.log({ jobUpdateRecs });
+
+//       userRatingUpdateCounterHashmap[user.id] = 0;
+//       nntUpdateRecommendationsReady = true;
+//     } catch (err) {
+//       nntUpdateRecommendationsReady = true;
+//       console.log(
+//         `NTR | RATINGS | *** updateRecommendationsChild ERROR: ${err}`
+//       );
+//     }
+//   }
+//   return userRatingUpdateCounterHashmap[user.id];
+// };
 
 router.get("/user/:id", async (req, res) => {
   try {
@@ -201,7 +202,7 @@ router.post("/create", async (req, res) => {
     dbArtwork.ratings.addToSet(ratingUpdated._id);
 
     await dbArtwork.save();
-    updateUserRatingCount(dbUser);
+    // updateUserRatingCount(dbUser);
 
     console.log(
       `SAVED | Rating` +
@@ -249,7 +250,7 @@ router.post("/update", async (req, res) => {
     ratingDoc.rate = req.body.rate;
     await ratingDoc.save();
 
-    updateUserRatingCount(ratingDoc.user);
+    // updateUserRatingCount(ratingDoc.user);
 
     console.log(
       `UPDATED | Rating` +
