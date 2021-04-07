@@ -14,6 +14,17 @@ if (process.env.ARTYOU_ENV_VARS_FILE) {
 const DYNO = process.env.DYNO || "NO_DYNO";
 
 console.log(`DYNO: ${DYNO}`);
+
+process.on("SIGTERM", () => {
+  console.log(`APP | ${process.pid} received a SIGTERM signal`);
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  console.log(`APP | ${process.pid} has been interrupted`);
+  process.exit(0);
+});
+
 const ONE_SECOND = 1000;
 const ONE_MINUTE = 60 * ONE_SECOND;
 const ONE_HOUR = 60 * ONE_MINUTE;

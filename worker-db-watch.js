@@ -39,6 +39,24 @@ console.log(
     ` | maxJobsPerWorker: ${maxJobsPerWorker}`
 );
 
+let initUserRatingUpdateJobQueueInterval = false;
+
+process.on("SIGTERM", () => {
+  console.log(`${PF} | ${process.pid} received a SIGTERM signal`);
+  if (initUserRatingUpdateJobQueueInterval) {
+    clearInterval(initUserRatingUpdateJobQueueInterval);
+  }
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  console.log(`${PF} | ${process.pid} has been interrupted`);
+  if (initUserRatingUpdateJobQueueInterval) {
+    clearInterval(initUserRatingUpdateJobQueueInterval);
+  }
+  process.exit(0);
+});
+
 const configuration = {};
 configuration.verbose = false;
 
@@ -154,7 +172,7 @@ const start = () => {
   console.log(`${PF} | initUserRatingUpdateJobQueue`);
 };
 
-setInterval(async () => {
+initUserRatingUpdateJobQueueInterval = setInterval(async () => {
   await initUserRatingUpdateJobQueue();
 }, ONE_MINUTE);
 

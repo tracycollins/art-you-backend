@@ -27,6 +27,24 @@ console.log(
     ` | maxJobsPerWorker: ${maxJobsPerWorker}`
 );
 
+let waitInterval = false;
+
+process.on("SIGTERM", () => {
+  console.log(`${PF} | ${process.pid} received a SIGTERM signal`);
+  if (waitInterval) {
+    clearInterval(waitInterval);
+  }
+  process.exit(0);
+});
+
+process.on("SIGINT", () => {
+  console.log(`${PF} | ${process.pid} has been interrupted`);
+  if (waitInterval) {
+    clearInterval(waitInterval);
+  }
+  process.exit(0);
+});
+
 const configuration = {};
 configuration.verbose = false;
 
@@ -53,7 +71,7 @@ function waitFor() {
     if (statsObj.nnt.ready) {
       return resolve();
     }
-    const waitInterval = setInterval(() => {
+    waitInterval = setInterval(() => {
       if (statsObj.nnt.ready) {
         console.log(
           `${PF} | END WAIT | statsObj.nnt.ready: ${statsObj.nnt.ready}`
