@@ -69,7 +69,7 @@ let workQueue;
   try {
     global.dbConnection = await global.artyouDb.connect();
   } catch (err) {
-    console.log(`${PF} | *** ERROR DB + REDIS + WORKER QUEUE INIT | ERR:`, err);
+    console.log(`${PF} | *** ERROR DB INIT | ERR:`, err);
   }
 })();
 
@@ -117,7 +117,7 @@ const initUserRatingUpdateJobQueue = async () => {
         });
 
         console.log(
-          `${PF} | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
+          `${PF} | ADDING JOB TO WATCHER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
         );
 
         const jobUpdateRecs = await workQueue.add({
@@ -142,30 +142,30 @@ const initUserRatingUpdateJobQueue = async () => {
 };
 
 const start = () => {
-  console.log(`${PF} | ... WAIT | WORKER | PID: ${process.pid} START`);
-  console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
+  console.log(`${PF} | ... WAIT | WATCHER | PID: ${process.pid} START`);
+  console.log(`${PF} | +++ WATCHER | PID: ${process.pid} START`);
 
   workQueue = new Queue("updateRecommendations", process.env.REDIS_URL);
 
   workQueue.on("waiting", function (jobId) {
     console.log(
-      `${PF} | ... WORKER | PID: ${process.pid} | JOB WAITING: ${jobId}`
+      `${PF} | ... WATCHER | PID: ${process.pid} | JOB WAITING: ${jobId}`
     );
   });
 
   workQueue.on("resumed", function (job, err) {
     console.log(
-      `${PF} | --- WORKER | PID: ${process.pid} | JOB RESUMED: ${job.id}`
+      `${PF} | --- WATCHER | PID: ${process.pid} | JOB RESUMED: ${job.id}`
     );
   });
   workQueue.on("failed", function (job, err) {
     console.log(
-      `${PF} | XXX WORKER | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
+      `${PF} | XXX WATCHER | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
     );
   });
   workQueue.on("stalled", function (job) {
     console.log(
-      `${PF} | ??? WORKER | PID: ${process.pid} | JOB STALLED: ${job.id}`
+      `${PF} | ??? WATCHER | PID: ${process.pid} | JOB STALLED: ${job.id}`
     );
   });
 
@@ -177,7 +177,7 @@ initUserRatingUpdateJobQueueInterval = setInterval(async () => {
 }, ONE_MINUTE);
 
 console.log(
-  `${PF} | WORKER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`
+  `${PF} | WATCHER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`
 );
 
 setTimeout(() => {
