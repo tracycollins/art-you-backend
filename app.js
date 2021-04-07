@@ -53,12 +53,12 @@ const cookieSession = require("cookie-session");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-const {
-  updateUserRatingCount,
-  resetUserRatingCount,
-  getUserRatingCount,
-  getAllUsersRatingCount,
-} = require("./lib/userRatingUpdateCounter");
+// const {
+//   updateUserRatingCount,
+//   resetUserRatingCount,
+//   getUserRatingCount,
+//   getAllUsersRatingCount,
+// } = require("./lib/userRatingUpdateCounter");
 
 let workUpdateRecommendationsQueue;
 
@@ -301,54 +301,54 @@ function count(req, res, next) {
   next();
 }
 
-let nntUpdateRecommendationsReady = true;
-const initUserRatingUpdateJobQueue = async () => {
-  // eslint-disable-next-line no-useless-catch
-  try {
-    console.log(`initUserRatingUpdateJobQueue`);
+// let nntUpdateRecommendationsReady = true;
+// const initUserRatingUpdateJobQueue = async () => {
+//   // eslint-disable-next-line no-useless-catch
+//   try {
+//     console.log(`initUserRatingUpdateJobQueue`);
 
-    const triggerNetworkFitRatingsUpdateNumber =
-      process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
-    const allUsersRatingCount = getAllUsersRatingCount();
-    const userIds = Object.keys(allUsersRatingCount);
-    const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
+//     const triggerNetworkFitRatingsUpdateNumber =
+//       process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
+//     const allUsersRatingCount = getAllUsersRatingCount();
+//     const userIds = Object.keys(allUsersRatingCount);
+//     const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
 
-    console.log({ allUsersRatingCount });
+//     console.log({ allUsersRatingCount });
 
-    for (const user_id of userIds) {
-      if (
-        nntUpdateRecommendationsReady &&
-        allUsersRatingCount[user_id] >= triggerNetworkFitRatingsUpdateNumber
-      ) {
-        nntUpdateRecommendationsReady = false;
+//     for (const user_id of userIds) {
+//       if (
+//         nntUpdateRecommendationsReady &&
+//         allUsersRatingCount[user_id] >= triggerNetworkFitRatingsUpdateNumber
+//       ) {
+//         nntUpdateRecommendationsReady = false;
 
-        const user = await global.artyouDb.User.findOne({
-          _id: user_id,
-        });
+//         const user = await global.artyouDb.User.findOne({
+//           _id: user_id,
+//         });
 
-        console.log(
-          `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
-        );
+//         console.log(
+//           `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
+//         );
 
-        const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
-          op: "UPDATE_RECS",
-          oauthID: user.id,
-          epochs: epochs,
-        });
+//         const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
+//           op: "UPDATE_RECS",
+//           oauthID: user.id,
+//           epochs: epochs,
+//         });
 
-        console.log(`NTR | JOB ADDED`);
-        console.log({ jobUpdateRecs });
+//         console.log(`NTR | JOB ADDED`);
+//         console.log({ jobUpdateRecs });
 
-        resetUserRatingCount(user_id);
-        nntUpdateRecommendationsReady = true;
-      }
-    }
+//         resetUserRatingCount(user_id);
+//         nntUpdateRecommendationsReady = true;
+//       }
+//     }
 
-    return;
-  } catch (err) {
-    throw err;
-  }
-};
+//     return;
+//   } catch (err) {
+//     throw err;
+//   }
+// };
 
 app.use(logger("dev"));
 app.use(cookieParser());
@@ -538,10 +538,10 @@ app.use(function (err, req, res) {
   res.render("error");
 });
 
-if (DYNO === "web.1" || DYNO === "NO_DYNO") {
-  console.log(`${DYNO} | initUserRatingUpdateJobQueue`);
-  setInterval(async () => {
-    await initUserRatingUpdateJobQueue();
-  }, ONE_MINUTE);
-}
+// if (DYNO === "web.1" || DYNO === "NO_DYNO") {
+//   console.log(`${DYNO} | initUserRatingUpdateJobQueue`);
+//   setInterval(async () => {
+//     await initUserRatingUpdateJobQueue();
+//   }, ONE_MINUTE);
+// }
 module.exports = app;

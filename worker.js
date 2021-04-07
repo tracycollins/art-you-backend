@@ -92,6 +92,7 @@ const start = () => {
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
           ` | OAUTHID: ${job.data.oauthID}` +
+          ` | FORCE FIT: ${job.data.forceFit}` +
           ` | EPOCHS: ${job.data.epochs}`
       );
       const results = await updateUserRecommendations(job);
