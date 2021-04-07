@@ -20,7 +20,7 @@ const WORKER_START_TIMEOUT = process.env.WORKER_START_TIMEOUT
   ? parseInt(process.env.WORKER_START_TIMEOUT)
   : 10 * ONE_SECOND;
 
-const workers = process.env.WEB_CONCURRENCY || 1;
+const workers = 1;
 const maxJobsPerWorker = process.env.WORKER_MAX_JOBS
   ? parseInt(process.env.WORKER_MAX_JOBS)
   : 1;
