@@ -51,6 +51,12 @@ const cookieSession = require("cookie-session");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
+const {
+  updateUserRatingCount,
+  resetUserRatingCount,
+  getUserRatingCount,
+  getAllUsersRatingCount,
+} = require("./lib/userRatingUpdateCounter");
 
 let workUpdateRecommendationsQueue;
 
@@ -159,6 +165,7 @@ const jobQueued = async (jobConfig) => {
 })();
 
 // const indexRouter = require('./routes/index');
+const statsRouter = require("./routes/stats");
 const loginRouter = require("./routes/login");
 const artworksRouter = require("./routes/artworks");
 const artistsRouter = require("./routes/artists");
@@ -238,6 +245,7 @@ var allowedOrigins = [
   "http://localhost:5000",
   "http://localhost:3000",
   "https://threecee-art-you-frontend.herokuapp.com",
+  "https://art47-frontend.herokuapp.com",
 ];
 
 console.log({ allowedOrigins });
@@ -288,9 +296,57 @@ app.use(cookieSession({ secret: process.env.ARTYOU_COOKIE_SESSION_SECRET }));
 
 function count(req, res, next) {
   req.session.count = (req.session.count || 0) + 1;
-  console.log(`SESSION COUNT: ${req.session.count}`);
   next();
 }
+
+let nntUpdateRecommendationsReady = true;
+const initUserRatingUpdateJobQueue = async () => {
+  // eslint-disable-next-line no-useless-catch
+  try {
+    console.log(`initUserRatingUpdateJobQueue`);
+
+    const triggerNetworkFitRatingsUpdateNumber =
+      process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
+    const allUsersRatingCount = getAllUsersRatingCount();
+    const userIds = Object.keys(allUsersRatingCount);
+    const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
+
+    console.log({ allUsersRatingCount });
+
+    for (const user_id of userIds) {
+      if (
+        nntUpdateRecommendationsReady &&
+        allUsersRatingCount[user_id] >= triggerNetworkFitRatingsUpdateNumber
+      ) {
+        nntUpdateRecommendationsReady = false;
+
+        const user = await global.artyouDb.User.findOne({
+          _id: user_id,
+        });
+
+        console.log(
+          `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
+        );
+
+        const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
+          op: "UPDATE_RECS",
+          oauthID: user.id,
+          epochs: epochs,
+        });
+
+        console.log(`NTR | JOB ADDED`);
+        console.log({ jobUpdateRecs });
+
+        resetUserRatingCount(user_id);
+        nntUpdateRecommendationsReady = true;
+      }
+    }
+
+    return;
+  } catch (err) {
+    throw err;
+  }
+};
 
 app.use(logger("dev"));
 app.use(cookieParser());
@@ -478,5 +534,9 @@ app.use(function (err, req, res) {
   res.status(err.status || 500);
   res.render("error");
 });
+
+setInterval(async () => {
+  await initUserRatingUpdateJobQueue();
+}, ONE_MINUTE);
 
 module.exports = app;

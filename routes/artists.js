@@ -4,6 +4,7 @@ const express = require("express");
 const router = express.Router({
   strict: true,
 });
+const ObjectID = require("mongodb").ObjectID;
 
 router.get("/cursor/:cursor", async (req, res) => {
   try {
@@ -95,11 +96,11 @@ router.get(
 
       const sortByOptions = {};
       sortByOptions.user_id = user_id ? ObjectID(user_id) : null;
-      console.log(
-        `USER ID ${sortByOptions.user_id} | IS ObjectID: ${ObjectID.isValid(
-          sortByOptions.user_id
-        )}`
-      );
+      // console.log(
+      //   `USER ID ${sortByOptions.user_id} | IS ObjectID: ${ObjectID.isValid(
+      //     sortByOptions.user_id
+      //   )}`
+      // );
       sortByOptions.match = paginationResults.paginatedQuery;
 
       sortByOptions.limit = limit;

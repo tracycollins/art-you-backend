@@ -23,7 +23,7 @@ nnt.on("connect", async (appName) => {
 
 // const triggerNetworkFitRatingsUpdateNumber = 10;
 
-const userRatingUpdateCounterHashmap = {};
+// const userRatingUpdateCounterHashmap = {};
 // let nntUpdateRecommendationsReady = true;
 
 // const updateUserRatingCount = async (user) => {
@@ -208,7 +208,6 @@ router.post("/create", async (req, res) => {
       `SAVED | Rating` +
         ` | ID: ${ratingDoc.id}` +
         ` | _ID: ${ratingDoc._id.toString()}` +
-        ` | NUM RATING UPDATES: ${userRatingUpdateCounterHashmap[dbUser.id]}` +
         ` | RATE: ${ratingDoc.rate}` +
         ` | USER: ${dbUser.id}` +
         ` | ARTWORK: ${dbArtwork.id}`
@@ -255,9 +254,6 @@ router.post("/update", async (req, res) => {
     console.log(
       `UPDATED | Rating` +
         ` | ID: ${ratingDoc.id}` +
-        ` | NUM RATING UPDATES: ${
-          userRatingUpdateCounterHashmap[ratingDoc.user.id]
-        }` +
         ` | RATE: ${ratingDoc.rate}` +
         ` | USER: ${ratingDoc.user.id}` +
         ` | ARTIST: ${ratingDoc.artist.name}` +
