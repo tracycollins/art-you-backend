@@ -367,7 +367,7 @@ app.use(limiter);
 
 app.post("/authenticated", async (req, res) => {
   try {
-    console.info(`DYNO: ${DYNO}POST /authenticated`, req.body);
+    console.info(`POST /authenticated`, req.body);
 
     if (req.body && req.body.sub) {
       let userDoc = await global.artyouDb.User.findOne({
@@ -538,8 +538,10 @@ app.use(function (err, req, res) {
   res.render("error");
 });
 
-setInterval(async () => {
-  await initUserRatingUpdateJobQueue();
-}, ONE_MINUTE);
-
+if (DYNO === "web.1" || DYNO === "NO_DYNO") {
+  console.log(`${DYNO} | initUserRatingUpdateJobQueue`);
+  setInterval(async () => {
+    await initUserRatingUpdateJobQueue();
+  }, ONE_MINUTE);
+}
 module.exports = app;
