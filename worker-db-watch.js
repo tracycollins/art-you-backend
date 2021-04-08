@@ -212,6 +212,7 @@ const initUserRatingUpdateJobQueue = async () => {
               ` | ${epochs} EPOCHS`
           );
           await jobQueued();
+          resetUserRatingCount(user_id);
         } else if (!workQueue) {
           console.log(
             `${PF}  | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS` +
@@ -227,7 +228,6 @@ const initUserRatingUpdateJobQueue = async () => {
           );
           await jobQueued();
         }
-        resetUserRatingCount(user_id);
         nntUpdateRecommendationsReady = true;
       }
     }
