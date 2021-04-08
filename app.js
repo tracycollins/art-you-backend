@@ -69,15 +69,15 @@ const jobQueued = async (jobConfig) => {
     );
     const jobs = await workUpdateRecommendationsQueue.getJobs(
       [
-        "completed",
-        "failed",
+        // "completed",
+        // "failed",
         "delayed",
         "active",
         "waiting",
         "paused",
         "stalled",
         "stuck",
-        "null",
+        // "null",
       ],
       0,
       100

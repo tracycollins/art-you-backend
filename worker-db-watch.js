@@ -91,11 +91,7 @@ const jobQueued = async (jobConfig) => {
     return false;
   }
   try {
-    const jobs = await workQueue.getJobs(
-      ["completed", "active", "failed", "stalled"],
-      0,
-      100
-    );
+    const jobs = await workQueue.getJobs(["active", "stalled"], 0, 100);
 
     if (jobs.length === 0) {
       console.log(`JOB | jobQueued | --- NO JOBS IN QUEUE workQueue`);
@@ -164,7 +160,7 @@ const initUserRatingUpdateJobQueue = async () => {
         });
 
         console.log(
-          `${PF} | ADDING JOB TO WATCHER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
+          `${PF} | ADD JOB TO WATCHER Q | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
         );
 
         const jobOptions = {
