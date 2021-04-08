@@ -56,6 +56,26 @@ let workUpdateRecommendationsQueue;
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
 
+const JOB_STATES = [
+  "completed",
+  "failed",
+  "delayed",
+  "active",
+  "waiting",
+  "paused",
+  "stalled",
+  "stuck",
+  "null",
+];
+
+const JOB_RUNNING_STATES = [
+  "delayed",
+  "active",
+  "waiting",
+  "paused",
+  "stalled",
+];
+
 const jobQueued = async (jobConfig) => {
   if (!workUpdateRecommendationsQueue) {
     console.log(
@@ -68,17 +88,7 @@ const jobQueued = async (jobConfig) => {
       `JOB | jobQueued | =============================================================================`
     );
     const jobs = await workUpdateRecommendationsQueue.getJobs(
-      [
-        // "completed",
-        // "failed",
-        "delayed",
-        "active",
-        "waiting",
-        "paused",
-        "stalled",
-        "stuck",
-        // "null",
-      ],
+      JOB_STATES,
       0,
       100
     );
@@ -99,7 +109,7 @@ const jobQueued = async (jobConfig) => {
 
       if (
         jobConfig &&
-        (job.state === "active" || job.state === "stalled") &&
+        !JOB_RUNNING_STATES.includes(job.state) &&
         job.data.op === jobConfig.op &&
         job.data.oauthID === jobConfig.oauthID
       ) {

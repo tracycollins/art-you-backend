@@ -85,13 +85,33 @@ let workQueue;
 //   });
 // }
 
+const JOB_STATES = [
+  "completed",
+  "failed",
+  "delayed",
+  "active",
+  "waiting",
+  "paused",
+  "stalled",
+  "stuck",
+  "null",
+];
+
+const JOB_RUNNING_STATES = [
+  "delayed",
+  "active",
+  "waiting",
+  "paused",
+  "stalled",
+];
+
 const jobQueued = async (jobConfig) => {
   if (!workQueue) {
     console.log(`JOB | jobQueued | !!! workQueue NOT READY`);
     return false;
   }
   try {
-    const jobs = await workQueue.getJobs(["active", "stalled"], 0, 100);
+    const jobs = await workQueue.getJobs(JOB_STATES, 0, 100);
 
     if (jobs.length === 0) {
       console.log(`JOB | jobQueued | --- NO JOBS IN QUEUE workQueue`);
@@ -111,7 +131,7 @@ const jobQueued = async (jobConfig) => {
       );
       if (
         jobConfig &&
-        (job.state === "active" || job.state === "stalled") &&
+        !JOB_RUNNING_STATES.includes(job.state) &&
         job.data.op === jobConfig.op &&
         job.data.oauthID === jobConfig.oauthID
       ) {
