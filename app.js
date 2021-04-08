@@ -341,7 +341,7 @@ app.post("/authenticated", async (req, res) => {
     if (req.body && req.body.sub) {
       let userDoc = await global.artyouDb.User.findOne({
         oauthID: req.body.sub,
-      });
+      }).populate("image");
 
       if (!userDoc) {
         console.log(
