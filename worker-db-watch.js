@@ -1,4 +1,9 @@
+// const throng = require("throng");
+const Queue = require("bull");
+
 const PF = `WATCH_${process.pid}`;
+
+console.log({ PF });
 
 global.artyouDb = require("@threeceelabs/mongoose-artyou");
 global.dbConnection = false;
@@ -60,18 +65,7 @@ process.on("SIGINT", () => {
 const configuration = {};
 configuration.verbose = false;
 
-const throng = require("throng");
-const Queue = require("bull");
-
 let workQueue;
-
-(async () => {
-  try {
-    global.dbConnection = await global.artyouDb.connect();
-  } catch (err) {
-    console.log(`${PF} | *** ERROR DB INIT | ERR:`, err);
-  }
-})();
 
 // function waitFor() {
 //   return new Promise(function (resolve) {
@@ -91,19 +85,72 @@ let workQueue;
 //   });
 // }
 
+const jobQueued = async (jobConfig) => {
+  if (!workQueue) {
+    console.log(`JOB | jobQueued | !!! workQueue NOT READY`);
+    return false;
+  }
+  try {
+    const jobs = await workQueue.getJobs(
+      ["completed", "active", "failed", "stalled"],
+      0,
+      100
+    );
+
+    if (jobs.length === 0) {
+      console.log(`JOB | jobQueued | --- NO JOBS IN QUEUE workQueue`);
+      return false;
+    }
+
+    // jobs.forEach(async (job) => {
+    for (const job of jobs) {
+      job.state = await job.getState();
+      console.log(
+        `JOB | jobQueued | @@@ ENQUEUED` +
+          ` | JID: ${job.id}` +
+          ` | STATE: ${job.state}` +
+          ` | OP: ${job.data.op}` +
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | EPOCHS: ${job.data.epochs}`
+      );
+      if (
+        jobConfig &&
+        (job.state === "active" || job.state === "stalled") &&
+        job.data.op === jobConfig.op &&
+        job.data.oauthID === jobConfig.oauthID
+      ) {
+        console.log(
+          `JOB | jobQueued | @@@ QUEUED | -*- Q HIT` +
+            ` | JID: ${job.id}` +
+            ` | STATE: ${job.state}` +
+            ` | OP: ${job.data.op}` +
+            ` | OAUTHID: ${job.data.oauthID}` +
+            ` | EPOCHS: ${job.data.epochs}`
+        );
+        return job;
+      }
+    }
+
+    return false;
+  } catch (err) {
+    console.log(`JOB | jobQueued ERROR: ${err}`);
+    throw err;
+  }
+};
+
 let nntUpdateRecommendationsReady = true;
 const initUserRatingUpdateJobQueue = async () => {
   // eslint-disable-next-line no-useless-catch
   try {
-    console.log(`${PF} | initUserRatingUpdateJobQueue`);
-
     const triggerNetworkFitRatingsUpdateNumber =
       process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
     const allUsersRatingCount = getAllUsersRatingCount();
     const userIds = Object.keys(allUsersRatingCount);
     const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
 
-    console.log({ allUsersRatingCount });
+    console.log(
+      `${PF} | initUserRatingUpdateJobQueue | ${userIds.length} USERS`
+    );
 
     for (const user_id of userIds) {
       if (
@@ -120,16 +167,50 @@ const initUserRatingUpdateJobQueue = async () => {
           `${PF} | ADDING JOB TO WATCHER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
         );
 
-        const jobUpdateRecs = await workQueue.add({
+        const jobOptions = {
           op: "UPDATE_RECS",
-          oauthID: user.id,
+          oauthID: user.oauthID,
           epochs: epochs,
           forceFit: FORCE_FIT,
-        });
+        };
 
-        console.log(`${PF} | JOB ADDED`);
-        console.log({ jobUpdateRecs });
+        let queuedJob = false;
 
+        try {
+          queuedJob = await jobQueued(jobOptions);
+        } catch (e) {
+          console.log(`${PF} | JOB | *** CHECK QUEUED ERROR: ${e}`);
+        }
+
+        if (workQueue && !queuedJob) {
+          console.log(
+            `${PF}  | --> ADDING JOB | UPDATE_RECS` +
+              ` | ${user.oauthID}` +
+              ` | ${epochs} EPOCHS`
+          );
+          const jobAddResults = await workQueue.add(jobOptions);
+          console.log(
+            `${PF}  | +++ ADDED JOB  | UPDATE_RECS` +
+              ` | JID: ${jobAddResults.id}` +
+              ` | ${user.oauthID}` +
+              ` | ${epochs} EPOCHS`
+          );
+          await jobQueued();
+        } else if (!workQueue) {
+          console.log(
+            `${PF}  | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS` +
+              ` | ${user.oauthID}` +
+              ` | ${epochs} EPOCHS`
+          );
+        } else {
+          console.log(
+            `${PF}  | !!! SKIP ENQUEUED | JID: ${queuedJob.id}` +
+              ` | STATE: ${queuedJob.state}` +
+              ` | UPDATE_RECS | ${queuedJob.data.oauthID}` +
+              ` | ${queuedJob.data.epochs} EPOCHS`
+          );
+          await jobQueued();
+        }
         resetUserRatingCount(user_id);
         nntUpdateRecommendationsReady = true;
       }
@@ -176,10 +257,15 @@ initUserRatingUpdateJobQueueInterval = setInterval(async () => {
   await initUserRatingUpdateJobQueue();
 }, ONE_MINUTE);
 
-console.log(
-  `${PF} | WATCHER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`
-);
+// setTimeout(() => {
+// throng({ workers, start });
+// }, WORKER_START_TIMEOUT);
 
-setTimeout(() => {
-  throng({ workers, start });
-}, WORKER_START_TIMEOUT);
+(async () => {
+  try {
+    global.dbConnection = await global.artyouDb.connect();
+    start();
+  } catch (err) {
+    console.log(`${PF} | *** ERROR DB INIT | ERR:`, err);
+  }
+})();

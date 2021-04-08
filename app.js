@@ -25,9 +25,9 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
-const ONE_SECOND = 1000;
-const ONE_MINUTE = 60 * ONE_SECOND;
-const ONE_HOUR = 60 * ONE_MINUTE;
+// const ONE_SECOND = 1000;
+// const ONE_MINUTE = 60 * ONE_SECOND;
+// const ONE_HOUR = 60 * ONE_MINUTE;
 
 const EPOCHS = process.env.ART47_NN_FIT_EPOCHS
   ? parseInt(process.env.ART47_NN_FIT_EPOCHS)
@@ -35,20 +35,6 @@ const EPOCHS = process.env.ART47_NN_FIT_EPOCHS
 
 console.log(`A47BE | NN FIT EPOCHS: ${EPOCHS}`);
 console.log(`A47BE | process.env.REDIS_URL: ${process.env.REDIS_URL}`);
-
-const WORKER_QUEUE_LIMITER_MAX = process.env.WORKER_QUEUE_LIMITER_MAX
-  ? parseInt(process.env.WORKER_QUEUE_LIMITER_MAX)
-  : 2;
-
-console.log(`A47BE | WORKER_QUEUE_LIMITER_MAX: ${WORKER_QUEUE_LIMITER_MAX}`);
-
-const WORKER_QUEUE_LIMITER_DURATION = process.env.WORKER_QUEUE_LIMITER_DURATION
-  ? parseInt(process.env.WORKER_QUEUE_LIMITER_DURATION)
-  : 2 * ONE_HOUR;
-
-console.log(
-  `A47BE | WORKER_QUEUE_LIMITER_DURATION: ${WORKER_QUEUE_LIMITER_DURATION}`
-);
 
 console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
 
@@ -64,12 +50,6 @@ const cookieSession = require("cookie-session");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-// const {
-//   updateUserRatingCount,
-//   resetUserRatingCount,
-//   getUserRatingCount,
-//   getAllUsersRatingCount,
-// } = require("./lib/userRatingUpdateCounter");
 
 let workUpdateRecommendationsQueue;
 
@@ -84,8 +64,21 @@ const jobQueued = async (jobConfig) => {
     return false;
   }
   try {
+    console.log(
+      `JOB | jobQueued | =============================================================================`
+    );
     const jobs = await workUpdateRecommendationsQueue.getJobs(
-      ["completed", "active", "failed", "stalled"],
+      [
+        "completed",
+        "failed",
+        "delayed",
+        "active",
+        "waiting",
+        "paused",
+        "stalled",
+        "stuck",
+        "null",
+      ],
       0,
       100
     );
@@ -94,20 +87,16 @@ const jobQueued = async (jobConfig) => {
       console.log(
         `JOB | jobQueued | --- NO JOBS IN QUEUE workUpdateRecommendationsQueue`
       );
+      console.log(
+        `JOB | jobQueued | =============================================================================`
+      );
       return false;
     }
 
     // jobs.forEach(async (job) => {
     for (const job of jobs) {
       job.state = await job.getState();
-      console.log(
-        `JOB | jobQueued | @@@ ENQUEUED` +
-          ` | JID: ${job.id}` +
-          ` | STATE: ${job.state}` +
-          ` | OP: ${job.data.op}` +
-          ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}`
-      );
+
       if (
         jobConfig &&
         (job.state === "active" || job.state === "stalled") &&
@@ -115,15 +104,30 @@ const jobQueued = async (jobConfig) => {
         job.data.oauthID === jobConfig.oauthID
       ) {
         console.log(
-          `JOB | jobQueued | @@@ QUEUED | -*- Q HIT` +
+          `JOB | jobQueued | @@@ QUEUED  ` +
             ` | JID: ${job.id}` +
             ` | STATE: ${job.state}` +
             ` | OP: ${job.data.op}` +
-            ` | OAUTHID: ${job.data.oauthID}` +
-            ` | EPOCHS: ${job.data.epochs}`
+            ` | EPOCHS: ${job.data.epochs}` +
+            ` | OAUTHID: ${job.data.oauthID}`
+        );
+        console.log(
+          `JOB | jobQueued | =============================================================================`
         );
         return job;
       }
+
+      console.log(
+        `JOB | jobQueued | @@@ ENQUEUED` +
+          ` | JID: ${job.id}` +
+          ` | STATE: ${job.state}` +
+          ` | OP: ${job.data.op}` +
+          ` | EPOCHS: ${job.data.epochs}` +
+          ` | OAUTHID: ${job.data.oauthID}`
+      );
+      console.log(
+        `JOB | jobQueued | =============================================================================`
+      );
     }
 
     return false;
@@ -137,11 +141,7 @@ const jobQueued = async (jobConfig) => {
   try {
     global.dbConnection = await global.artyouDb.connect();
 
-    console.log(
-      `A47BE | ... CREATING WORKER QUEUE` +
-        ` | WORKER_QUEUE_LIMITER_MAX: ${WORKER_QUEUE_LIMITER_MAX}` +
-        ` | WORKER_QUEUE_LIMITER_DURATION: ${WORKER_QUEUE_LIMITER_DURATION}`
-    );
+    console.log(`A47BE | ... CREATING WORKER QUEUE`);
 
     await jobQueued();
 
@@ -150,34 +150,43 @@ const jobQueued = async (jobConfig) => {
       process.env.REDIS_URL
     );
 
-    workUpdateRecommendationsQueue.on("global:completed", (jobId, result) => {
-      console.log(
-        `A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`,
-        result
-      );
-    });
-    workUpdateRecommendationsQueue.on("global:failed", (jobId, result) => {
-      console.log(
-        `A47BE | UPDATE REC JOB ${jobId} | *** FAILDED | RESULT`,
-        result
-      );
-    });
-    workUpdateRecommendationsQueue.on("global:error", (jobId, result) => {
+    workUpdateRecommendationsQueue.on(
+      "global:completed",
+      async (jobId, result) => {
+        console.log(
+          `A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`,
+          result
+        );
+        await jobQueued();
+      }
+    );
+    workUpdateRecommendationsQueue.on(
+      "global:failed",
+      async (jobId, result) => {
+        console.log(
+          `A47BE | UPDATE REC JOB ${jobId} | *** FAILDED | RESULT`,
+          result
+        );
+        await jobQueued();
+      }
+    );
+    workUpdateRecommendationsQueue.on("global:error", async (jobId, result) => {
       console.log(
         `A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`,
         result
       );
+      await jobQueued();
     });
 
     await workUpdateRecommendationsQueue.clean(1000, "active");
     await workUpdateRecommendationsQueue.clean(1000, "completed");
     await workUpdateRecommendationsQueue.clean(1000, "failed");
+    await jobQueued();
   } catch (err) {
     console.log(`A47BE | *** ERROR DB + REDIS + WORKER QUEUE INIT | ERR:`, err);
   }
 })();
 
-// const indexRouter = require('./routes/index');
 const statsRouter = require("./routes/stats");
 const loginRouter = require("./routes/login");
 const artworksRouter = require("./routes/artworks");
@@ -278,25 +287,10 @@ app.use(
         console.log(`CORS FAIL`);
         return callback(new Error(msg), false);
       }
-      // console.log(`CORS OK`);
       return callback(null, true);
     },
   })
 );
-
-// const jwtCheck = jwt({
-//   secret: jwks.expressJwtSecret({
-//     cache: true,
-//     rateLimit: true,
-//     jwksRequestsPerMinute: 5,
-//     jwksUri: 'https://wild-disk-7982.us.auth0.com/.well-known/jwks.json'
-//   }),
-//   audience: 'https://artyou/api',
-//   issuer: 'https://wild-disk-7982.us.auth0.com/',
-//   algorithms: ['RS256']
-// });
-
-// app.use(jwtCheck);
 
 app.get("/authorized", function (req, res) {
   res.send("Secured Resource");
@@ -311,55 +305,6 @@ function count(req, res, next) {
   req.session.count = (req.session.count || 0) + 1;
   next();
 }
-
-// let nntUpdateRecommendationsReady = true;
-// const initUserRatingUpdateJobQueue = async () => {
-//   // eslint-disable-next-line no-useless-catch
-//   try {
-//     console.log(`initUserRatingUpdateJobQueue`);
-
-//     const triggerNetworkFitRatingsUpdateNumber =
-//       process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
-//     const allUsersRatingCount = getAllUsersRatingCount();
-//     const userIds = Object.keys(allUsersRatingCount);
-//     const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
-
-//     console.log({ allUsersRatingCount });
-
-//     for (const user_id of userIds) {
-//       if (
-//         nntUpdateRecommendationsReady &&
-//         allUsersRatingCount[user_id] >= triggerNetworkFitRatingsUpdateNumber
-//       ) {
-//         nntUpdateRecommendationsReady = false;
-
-//         const user = await global.artyouDb.User.findOne({
-//           _id: user_id,
-//         });
-
-//         console.log(
-//           `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
-//         );
-
-//         const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
-//           op: "UPDATE_RECS",
-//           oauthID: user.id,
-//           epochs: epochs,
-//         });
-
-//         console.log(`NTR | JOB ADDED`);
-//         console.log({ jobUpdateRecs });
-
-//         resetUserRatingCount(user_id);
-//         nntUpdateRecommendationsReady = true;
-//       }
-//     }
-
-//     return;
-//   } catch (err) {
-//     throw err;
-//   }
-// };
 
 app.use(logger("dev"));
 app.use(cookieParser());
@@ -438,6 +383,7 @@ app.post("/authenticated", async (req, res) => {
         console.log(
           `APP | +++ ADDED JOB  | UPDATE_RECS | JID: ${jobAddResults.id} | ${userDoc.oauthID} | ${EPOCHS} EPOCHS`
         );
+        await jobQueued();
       } else if (!workUpdateRecommendationsQueue) {
         console.log(
           `APP | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS`
@@ -446,6 +392,7 @@ app.post("/authenticated", async (req, res) => {
         console.log(
           `APP | !!! SKIP ENQUEUED | JID: ${queuedJob.id} | STATE: ${queuedJob.state} | UPDATE_RECS | ${queuedJob.data.oauthID} | ${queuedJob.data.epochs} EPOCHS`
         );
+        await jobQueued();
       }
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
@@ -457,7 +404,6 @@ app.post("/authenticated", async (req, res) => {
     }
   } catch (err) {
     console.log(`APP | *** POST AUTH ERROR: ${err}`);
-    // res.sendStatus(503);
   }
 });
 
@@ -516,23 +462,6 @@ app.get("/auth_config.json", (req, res) => {
   res.sendFile(join(__dirname, "auth_config.json"));
 });
 
-// app.head("/simple-cors", (req, res) => {
-//   console.info("HEAD /simple-cors");
-//   res.sendStatus(204);
-// });
-// app.get("/simple-cors", (req, res) => {
-//   console.info("GET /simple-cors");
-//   res.json({
-//     text: "Simple CORS requests are working. [GET]"
-//   });
-// });
-// app.post("/simple-cors", (req, res) => {
-//   console.info("POST /simple-cors");
-//   res.json({
-//     text: "Simple CORS requests are working. [POST]"
-//   });
-// });
-
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
@@ -549,10 +478,4 @@ app.use(function (err, req, res) {
   res.render("error");
 });
 
-// if (DYNO === "web.1" || DYNO === "NO_DYNO") {
-//   console.log(`${DYNO} | initUserRatingUpdateJobQueue`);
-//   setInterval(async () => {
-//     await initUserRatingUpdateJobQueue();
-//   }, ONE_MINUTE);
-// }
 module.exports = app;

@@ -52,7 +52,7 @@ const statsObj = {};
 statsObj.nnt = {};
 statsObj.nnt.ready = false;
 
-const throng = require("throng");
+// const throng = require("throng");
 const Queue = require("bull");
 
 const NeuralNetworkTools = require("./lib/nnTools.js");
@@ -165,9 +165,9 @@ const start = () => {
   });
 };
 
-console.log(
-  `${PF} | WORKER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`
-);
+// console.log(
+//   `${PF} | WORKER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`
+// );
 setTimeout(() => {
-  throng({ workers, start });
+  start();
 }, WORKER_START_TIMEOUT);

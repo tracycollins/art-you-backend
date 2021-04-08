@@ -221,7 +221,7 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
           ` | _ID: ${artwork._id}` +
           ` | ${artwork.ratings.length} RATINGS` +
           ` | RATING USER: ${
-            artwork.ratingUser ? artwork.ratingUser.user.id : "none"
+            artwork.ratingUser ? artwork.ratingUser.user.name : "none"
           }` +
           ` | REC USER: ${
             artwork.recommendationUser
