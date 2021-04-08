@@ -11,6 +11,9 @@ if (process.env.ARTYOU_ENV_VARS_FILE) {
   console.log(`A47BE | !!! ENV CONFIG NOT SET: ARTYOU_ENV_VARS_FILE`);
   console.log(`A47BE | !!! ENV CONFIG NOT LOADED`);
 }
+
+const PF = `APP`;
+
 const DYNO = process.env.DYNO || "NO_DYNO";
 
 console.log(`DYNO: ${DYNO}`);
@@ -79,13 +82,13 @@ const JOB_RUNNING_STATES = [
 const jobQueued = async (jobConfig) => {
   if (!workUpdateRecommendationsQueue) {
     console.log(
-      `JOB | jobQueued | !!! workUpdateRecommendationsQueue NOT READY`
+      `${PF} | JOB | jobQueued | !!! workUpdateRecommendationsQueue NOT READY`
     );
     return false;
   }
   try {
     console.log(
-      `JOB | jobQueued | =============================================================================`
+      `${PF} | JOB | jobQueued | =============================================================================`
     );
     const jobs = await workUpdateRecommendationsQueue.getJobs(
       JOB_STATES,
@@ -95,10 +98,10 @@ const jobQueued = async (jobConfig) => {
 
     if (jobs.length === 0) {
       console.log(
-        `JOB | jobQueued | --- NO JOBS IN QUEUE workUpdateRecommendationsQueue`
+        `${PF} | JOB | jobQueued | --- NO JOBS IN QUEUE workUpdateRecommendationsQueue`
       );
       console.log(
-        `JOB | jobQueued | =============================================================================`
+        `${PF} | JOB | jobQueued | =============================================================================`
       );
       return false;
     }
@@ -109,12 +112,12 @@ const jobQueued = async (jobConfig) => {
 
       if (
         jobConfig &&
-        !JOB_RUNNING_STATES.includes(job.state) &&
+        JOB_RUNNING_STATES.includes(job.state) &&
         job.data.op === jobConfig.op &&
         job.data.oauthID === jobConfig.oauthID
       ) {
         console.log(
-          `JOB | jobQueued | @@@ QUEUED  ` +
+          `${PF} | JOB | jobQueued | !!! QUEUE HIT` +
             ` | JID: ${job.id}` +
             ` | STATE: ${job.state}` +
             ` | OP: ${job.data.op}` +
@@ -122,13 +125,13 @@ const jobQueued = async (jobConfig) => {
             ` | OAUTHID: ${job.data.oauthID}`
         );
         console.log(
-          `JOB | jobQueued | =============================================================================`
+          `${PF} | JOB | jobQueued | =============================================================================`
         );
         return job;
       }
 
       console.log(
-        `JOB | jobQueued | @@@ ENQUEUED` +
+        `${PF} | JOB | jobQueued | @@@ ENQUEUED` +
           ` | JID: ${job.id}` +
           ` | STATE: ${job.state}` +
           ` | OP: ${job.data.op}` +
@@ -136,13 +139,13 @@ const jobQueued = async (jobConfig) => {
           ` | OAUTHID: ${job.data.oauthID}`
       );
       console.log(
-        `JOB | jobQueued | =============================================================================`
+        `${PF} | JOB | jobQueued | =============================================================================`
       );
     }
 
     return false;
   } catch (err) {
-    console.log(`JOB | jobQueued ERROR: ${err}`);
+    console.log(`${PF} | JOB | jobQueued ERROR: ${err}`);
     throw err;
   }
 };

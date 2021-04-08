@@ -1,7 +1,7 @@
 // const throng = require("throng");
-const Queue = require("bull");
-
 const PF = `WATCH_${process.pid}`;
+
+const Queue = require("bull");
 
 console.log({ PF });
 
@@ -107,14 +107,14 @@ const JOB_RUNNING_STATES = [
 
 const jobQueued = async (jobConfig) => {
   if (!workQueue) {
-    console.log(`JOB | jobQueued | !!! workQueue NOT READY`);
+    console.log(`${PF} | JOB | jobQueued | !!! workQueue NOT READY`);
     return false;
   }
   try {
     const jobs = await workQueue.getJobs(JOB_STATES, 0, 100);
 
     if (jobs.length === 0) {
-      console.log(`JOB | jobQueued | --- NO JOBS IN QUEUE workQueue`);
+      console.log(`${PF} | JOB | jobQueued | --- NO JOBS IN QUEUE workQueue`);
       return false;
     }
 
@@ -122,7 +122,7 @@ const jobQueued = async (jobConfig) => {
     for (const job of jobs) {
       job.state = await job.getState();
       console.log(
-        `JOB | jobQueued | @@@ ENQUEUED` +
+        `${PF} | JOB | jobQueued | @@@ ENQUEUED` +
           ` | JID: ${job.id}` +
           ` | STATE: ${job.state}` +
           ` | OP: ${job.data.op}` +
@@ -131,12 +131,12 @@ const jobQueued = async (jobConfig) => {
       );
       if (
         jobConfig &&
-        !JOB_RUNNING_STATES.includes(job.state) &&
+        JOB_RUNNING_STATES.includes(job.state) &&
         job.data.op === jobConfig.op &&
         job.data.oauthID === jobConfig.oauthID
       ) {
         console.log(
-          `JOB | jobQueued | @@@ QUEUED | -*- Q HIT` +
+          `${PF} | JOB | jobQueued | !!! QUEUE HIT` +
             ` | JID: ${job.id}` +
             ` | STATE: ${job.state}` +
             ` | OP: ${job.data.op}` +
@@ -149,7 +149,7 @@ const jobQueued = async (jobConfig) => {
 
     return false;
   } catch (err) {
-    console.log(`JOB | jobQueued ERROR: ${err}`);
+    console.log(`${PF} | JOB | jobQueued ERROR: ${err}`);
     throw err;
   }
 };
