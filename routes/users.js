@@ -109,7 +109,7 @@ router.post("/update", async (req, res) => {
       "userUrl",
       "instagramUsername",
       "twitterUsername",
-      "facebookUrl",
+      "facebookUsername",
     ];
 
     for (const key of userUpdateKeys) {
