@@ -21,7 +21,8 @@ const userNormalizeProps = (user) => {
         normalizedUser.firstName = user.given_name;
         break;
       case "nickname":
-        normalizedUser.nickName = user.nickname;
+      case "nickName":
+        normalizedUser.nickname = user[prop];
         break;
       default:
     }
