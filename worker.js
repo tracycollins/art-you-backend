@@ -110,8 +110,10 @@ const updateUserUnrated = async (p) => {
     console.log(`${PF} | updateUserUnrated`, p.data);
     await waitFor(statsObj.usr.ready);
     const results = await usr.getUnratedArtworks(p.data);
-    console.log(`${PF} | END updateUserUnrated`, results);
-    return { results: results, timestamp: nnt.getTimeStamp() };
+    console.log(
+      `${PF} | END updateUserUnrated | ${results.unrated.length} UNRATED`
+    );
+    return results;
   } catch (err) {
     console.log(`${PF} | ERROR updateUserUnrated`, err);
     throw err;
@@ -131,9 +133,7 @@ const initUpdateRecsQueue = async () => {
           ` | PID: ${process.pid}` +
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
-          ` | OAUTHID: ${job.data.oauthID}` +
-          ` | FORCE FIT: ${job.data.forceFit}` +
-          ` | EPOCHS: ${job.data.epochs}`
+          ` | OAUTHID: ${job.data.oauthID}`
       );
       const results = await updateUserRecommendations(job);
       console.log(
@@ -142,7 +142,7 @@ const initUpdateRecsQueue = async () => {
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
           ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}`
+          ` | ${results.unrated.length} UNRATED`
       );
       results.stats = statsObj;
       return results;
@@ -153,7 +153,6 @@ const initUpdateRecsQueue = async () => {
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
           ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}` +
           ` | ERR: ${err}`
       );
       return {
@@ -195,22 +194,20 @@ const initUpdateUnratedQueue = async () => {
   updateUnratedQueue.process(maxJobsPerWorker, async (job) => {
     try {
       console.log(
-        `${PF} | ->- WORKER | JOB START | UPDATE UNRATED` +
+        `${PF} | ->- WORKER | JOB START` +
           ` | PID: ${process.pid}` +
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
-          ` | OAUTHID: ${job.data.oauthID}` +
-          ` | FORCE FIT: ${job.data.forceFit}` +
-          ` | EPOCHS: ${job.data.epochs}`
+          ` | OAUTHID: ${job.data.oauthID}`
       );
       const results = await updateUserUnrated(job);
       console.log(
-        `${PF} | +++ WORKER | JOB COMPLETE | UPDATE UNRATED` +
+        `${PF} | +++ WORKER | JOB COMPLETE` +
           ` | PID: ${process.pid}` +
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
           ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}`
+          ` | ${results.unrated.length} UNRATED`
       );
       results.stats = statsObj;
       return results;
@@ -221,7 +218,6 @@ const initUpdateUnratedQueue = async () => {
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
           ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}` +
           ` | ERR: ${err}`
       );
       return {

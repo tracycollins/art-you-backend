@@ -117,8 +117,8 @@ const jobQueued = async ({ queue, jobOptions }) => {
             ` | JID: ${job.id}` +
             ` | STATE: ${job.state}` +
             ` | OP: ${job.data.op}` +
-            ` | EPOCHS: ${job.data.epochs}` +
-            ` | OAUTHID: ${job.data.oauthID}`
+            ` | OAUTHID: ${job.data.oauthID}` +
+            ` | EPOCHS: ${job.data.epochs}`
         );
         console.log(
           `${PF} | JOB | jobQueued | =============================================================================`
@@ -131,8 +131,8 @@ const jobQueued = async ({ queue, jobOptions }) => {
           ` | JID: ${job.id}` +
           ` | STATE: ${job.state}` +
           ` | OP: ${job.data.op}` +
-          ` | EPOCHS: ${job.data.epochs}` +
-          ` | OAUTHID: ${job.data.oauthID}`
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | EPOCHS: ${job.data.epochs}`
       );
       console.log(
         `${PF} | JOB | jobQueued | =============================================================================`
@@ -186,8 +186,7 @@ const initUpdateUnratedQueue = async () => {
 
   workUpdateUnratedQueue.on("global:completed", async (jobId, result) => {
     console.log(
-      `A47BE | UPDATE UNRATED JOB ${jobId} | COMPLETE | RESULT`,
-      result
+      `A47BE | UPDATE UNRATED JOB ${jobId} | COMPLETE | ${result.length} UNRATED`
     );
     await jobQueued({ queue: workUpdateUnratedQueue });
   });
