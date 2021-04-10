@@ -21,7 +21,7 @@ usr.on("ready", async (appName) => {
       lean: true,
     });
 
-    console.log(`${response.results.length} RESULTS`);
+    console.log(`${response.unrated.length} UNRATED`);
     process.exit();
   } catch (err) {
     console.error(err);

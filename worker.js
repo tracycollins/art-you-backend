@@ -191,7 +191,7 @@ const initUpdateRecsQueue = async () => {
 const initUpdateUnratedQueue = async () => {
   const updateUnratedQueue = new Queue("updateUnrated", process.env.REDIS_URL);
 
-  updateUnratedQueue.process(maxJobsPerWorker, async (job) => {
+  updateUnratedQueue.process(maxJobsPerWorker, async (job, done) => {
     try {
       console.log(
         `${PF} | ->- WORKER | JOB START` +
@@ -210,7 +210,7 @@ const initUpdateUnratedQueue = async () => {
           ` | ${results.unrated.length} UNRATED`
       );
       results.stats = statsObj;
-      return results;
+      done(null, { unrated: results.unrated.length });
     } catch (err) {
       console.log(
         `${PF} | *** WORKER | *** JOB ERROR | UPDATE UNRATED` +
@@ -220,11 +220,14 @@ const initUpdateUnratedQueue = async () => {
           ` | OAUTHID: ${job.data.oauthID}` +
           ` | ERR: ${err}`
       );
-      return {
-        op: job.op,
-        stats: statsObj,
-        err: err,
-      };
+      done(
+        {
+          op: job.op,
+          stats: statsObj,
+          err: err,
+        },
+        null
+      );
     }
   });
 

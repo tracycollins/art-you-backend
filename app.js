@@ -185,14 +185,15 @@ const initUpdateUnratedQueue = async () => {
   workUpdateUnratedQueue = new Queue("updateUnrated", process.env.REDIS_URL);
 
   workUpdateUnratedQueue.on("global:completed", async (jobId, result) => {
+    console.log({ result });
     console.log(
-      `A47BE | UPDATE UNRATED JOB ${jobId} | COMPLETE | ${result.unrated.length} UNRATED`
+      `A47BE | UPDATE UNRATED JOB ${jobId} | COMPLETE | ${result.unrated} UNRATED`
     );
     await jobQueued({ queue: workUpdateUnratedQueue });
   });
   workUpdateUnratedQueue.on("global:failed", async (jobId, result) => {
     console.log(
-      `A47BE | UPDATE UNRATED JOB ${jobId} | *** FAILDED | RESULT`,
+      `A47BE | UPDATE UNRATED JOB ${jobId} | *** FAILED | RESULT`,
       result
     );
     await jobQueued({ queue: workUpdateUnratedQueue });
