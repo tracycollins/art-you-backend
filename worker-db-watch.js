@@ -157,16 +157,23 @@ const jobQueued = async (jobConfig) => {
 let nntUpdateRecommendationsReady = true;
 const initUserRatingUpdateJobQueue = async () => {
   // eslint-disable-next-line no-useless-catch
-  try {
-    const triggerNetworkFitRatingsUpdateNumber =
-      process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
-    const allUsersRatingCount = getAllUsersRatingCount();
-    const userIds = Object.keys(allUsersRatingCount);
-    const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
 
+  const triggerNetworkFitRatingsUpdateNumber =
+    process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
+  const allUsersRatingCount = getAllUsersRatingCount();
+  const userIds = Object.keys(allUsersRatingCount);
+  const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
+
+  try {
     console.log(
-      `${PF} | initUserRatingUpdateJobQueue | ${userIds.length} USERS`
+      `${PF}` +
+        ` | initUserRatingUpdateJobQueue` +
+        ` | nntUpdateRecommendationsReady: ${nntUpdateRecommendationsReady}` +
+        ` | triggerNetworkFitRatingsUpdateNumber: ${triggerNetworkFitRatingsUpdateNumber}` +
+        ` | ${userIds.length} USERS`
     );
+
+    console.log({ allUsersRatingCount });
 
     for (const user_id of userIds) {
       if (
@@ -232,8 +239,17 @@ const initUserRatingUpdateJobQueue = async () => {
       }
     }
 
-    return;
+    // return;
   } catch (err) {
+    console.log(
+      `${PF}` +
+        ` | *** initUserRatingUpdateJobQueue ERROR: ${err}` +
+        ` | nntUpdateRecommendationsReady: ${nntUpdateRecommendationsReady}` +
+        ` | triggerNetworkFitRatingsUpdateNumber: ${triggerNetworkFitRatingsUpdateNumber}` +
+        ` | ${userIds.length} USERS`
+    );
+
+    nntUpdateRecommendationsReady = false;
     throw err;
   }
 };
