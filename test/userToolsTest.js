@@ -14,7 +14,8 @@ usr.on("ready", async (appName) => {
 
     const response = await usr.getUnratedArtworks({
       model: "Artwork",
-      user_id: "60483532b8c09b0015454be7",
+      // user_id: "60483532b8c09b0015454be7",
+      oauthID: "auth0|603d4c2f5692430070c0cd28",
       populate: "ratings",
       // limit: 10,
       lean: true,

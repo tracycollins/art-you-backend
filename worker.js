@@ -27,21 +27,21 @@ console.log(
     ` | maxJobsPerWorker: ${maxJobsPerWorker}`
 );
 
-let waitInterval = false;
+// let waitInterval = false;
 
 process.on("SIGTERM", () => {
   console.log(`${PF} | ${process.pid} received a SIGTERM signal`);
-  if (waitInterval) {
-    clearInterval(waitInterval);
-  }
+  // if (waitInterval) {
+  //   clearInterval(waitInterval);
+  // }
   process.exit(0);
 });
 
 process.on("SIGINT", () => {
   console.log(`${PF} | ${process.pid} has been interrupted`);
-  if (waitInterval) {
-    clearInterval(waitInterval);
-  }
+  // if (waitInterval) {
+  //   clearInterval(waitInterval);
+  // }
   process.exit(0);
 });
 
@@ -51,8 +51,9 @@ configuration.verbose = false;
 const statsObj = {};
 statsObj.nnt = {};
 statsObj.nnt.ready = false;
+statsObj.usr = {};
+statsObj.usr.ready = false;
 
-// const throng = require("throng");
 const Queue = require("bull");
 
 const NeuralNetworkTools = require("./lib/nnTools.js");
@@ -65,17 +66,25 @@ nnt.on("ready", async (appName) => {
   );
 });
 
-function waitFor() {
+const UserTools = require("./lib/userTools.js");
+const usr = new UserTools(`${PF}_USR`);
+
+usr.on("ready", async (appName) => {
+  statsObj.usr.ready = true;
+  console.log(
+    `${PF} | READY | APP NAME: ${appName} | READY: ${statsObj.usr.ready}`
+  );
+});
+
+function waitFor(signal) {
   return new Promise(function (resolve) {
-    console.log(`${PF} | WAIT | statsObj.nnt.ready: ${statsObj.nnt.ready}`);
-    if (statsObj.nnt.ready) {
+    console.log(`${PF} | WAIT | SIGNAL: ${signal}`);
+    if (signal) {
       return resolve();
     }
-    waitInterval = setInterval(() => {
-      if (statsObj.nnt.ready) {
-        console.log(
-          `${PF} | END WAIT | statsObj.nnt.ready: ${statsObj.nnt.ready}`
-        );
+    const waitInterval = setInterval(() => {
+      if (signal) {
+        console.log(`${PF} | END WAIT | SIGNAL: ${signal}`);
         clearInterval(waitInterval);
         resolve();
       }
@@ -96,16 +105,29 @@ const updateUserRecommendations = async (p) => {
   }
 };
 
-const start = () => {
-  console.log(`${PF} | ... WAIT | WORKER | PID: ${process.pid} START`);
-  console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
+const updateUserUnrated = async (p) => {
+  try {
+    console.log(`${PF} | updateUserUnrated`, p.data);
+    await waitFor(statsObj.usr.ready);
+    const results = await usr.getUnratedArtworks(p.data);
+    console.log(`${PF} | END updateUserUnrated`, results);
+    return { results: results, timestamp: nnt.getTimeStamp() };
+  } catch (err) {
+    console.log(`${PF} | ERROR updateUserUnrated`, err);
+    throw err;
+  }
+};
 
-  const workQueue = new Queue("updateRecommendations", process.env.REDIS_URL);
+const initUpdateRecsQueue = async () => {
+  const updateRecommendationsQueue = new Queue(
+    "updateRecommendations",
+    process.env.REDIS_URL
+  );
 
-  workQueue.process(maxJobsPerWorker, async (job) => {
+  updateRecommendationsQueue.process(maxJobsPerWorker, async (job) => {
     try {
       console.log(
-        `${PF} | ->- WORKER | JOB START` +
+        `${PF} | ->- WORKER | JOB START | UPDATE RECS` +
           ` | PID: ${process.pid}` +
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
@@ -115,7 +137,7 @@ const start = () => {
       );
       const results = await updateUserRecommendations(job);
       console.log(
-        `${PF} | +++ WORKER | JOB COMPLETE` +
+        `${PF} | +++ WORKER | JOB COMPLETE | UPDATE RECS` +
           ` | PID: ${process.pid}` +
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
@@ -126,7 +148,7 @@ const start = () => {
       return results;
     } catch (err) {
       console.log(
-        `${PF} | *** WORKER | *** JOB ERROR` +
+        `${PF} | *** WORKER | *** JOB ERROR | UPDATE RECS` +
           ` | PID: ${process.pid}` +
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
@@ -142,27 +164,105 @@ const start = () => {
     }
   });
 
-  workQueue.on("waiting", function (jobId) {
+  updateRecommendationsQueue.on("waiting", function (jobId) {
     console.log(
-      `${PF} | ... WORKER | PID: ${process.pid} | JOB WAITING: ${jobId}`
+      `${PF} | ... WORKER | UPDATE RECS | PID: ${process.pid} | JOB WAITING: ${jobId}`
     );
   });
 
-  workQueue.on("resumed", function (job, err) {
+  updateRecommendationsQueue.on("resumed", function (job, err) {
     console.log(
-      `${PF} | --- WORKER | PID: ${process.pid} | JOB RESUMED: ${job.id}`
+      `${PF} | --- WORKER | UPDATE RECS | PID: ${process.pid} | JOB RESUMED: ${job.id}`
     );
   });
-  workQueue.on("failed", function (job, err) {
+  updateRecommendationsQueue.on("failed", function (job, err) {
     console.log(
-      `${PF} | XXX WORKER | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
+      `${PF} | XXX WORKER | UPDATE RECS | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
     );
   });
-  workQueue.on("stalled", function (job) {
+  updateRecommendationsQueue.on("stalled", function (job) {
     console.log(
-      `${PF} | ??? WORKER | PID: ${process.pid} | JOB STALLED: ${job.id}`
+      `${PF} | ??? WORKER | UPDATE RECS | PID: ${process.pid} | JOB STALLED: ${job.id}`
     );
   });
+
+  return;
+};
+
+const initUpdateUnratedQueue = async () => {
+  const updateUnratedQueue = new Queue("updateUnrated", process.env.REDIS_URL);
+
+  updateUnratedQueue.process(maxJobsPerWorker, async (job) => {
+    try {
+      console.log(
+        `${PF} | ->- WORKER | JOB START | UPDATE UNRATED` +
+          ` | PID: ${process.pid}` +
+          ` | JID: ${job.id}` +
+          ` | OP: ${job.data.op}` +
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | FORCE FIT: ${job.data.forceFit}` +
+          ` | EPOCHS: ${job.data.epochs}`
+      );
+      const results = await updateUserUnrated(job);
+      console.log(
+        `${PF} | +++ WORKER | JOB COMPLETE | UPDATE UNRATED` +
+          ` | PID: ${process.pid}` +
+          ` | JID: ${job.id}` +
+          ` | OP: ${job.data.op}` +
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | EPOCHS: ${job.data.epochs}`
+      );
+      results.stats = statsObj;
+      return results;
+    } catch (err) {
+      console.log(
+        `${PF} | *** WORKER | *** JOB ERROR | UPDATE UNRATED` +
+          ` | PID: ${process.pid}` +
+          ` | JID: ${job.id}` +
+          ` | OP: ${job.data.op}` +
+          ` | OAUTHID: ${job.data.oauthID}` +
+          ` | EPOCHS: ${job.data.epochs}` +
+          ` | ERR: ${err}`
+      );
+      return {
+        op: job.op,
+        stats: statsObj,
+        err: err,
+      };
+    }
+  });
+
+  updateUnratedQueue.on("waiting", function (jobId) {
+    console.log(
+      `${PF} | ... WORKER | UPDATE UNRATED | PID: ${process.pid} | JOB WAITING: ${jobId}`
+    );
+  });
+
+  updateUnratedQueue.on("resumed", function (job, err) {
+    console.log(
+      `${PF} | --- WORKER | UPDATE UNRATED | PID: ${process.pid} | JOB RESUMED: ${job.id}`
+    );
+  });
+  updateUnratedQueue.on("failed", function (job, err) {
+    console.log(
+      `${PF} | XXX WORKER | UPDATE UNRATED | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
+    );
+  });
+  updateUnratedQueue.on("stalled", function (job) {
+    console.log(
+      `${PF} | ??? WORKER | UPDATE UNRATED | PID: ${process.pid} | JOB STALLED: ${job.id}`
+    );
+  });
+
+  return;
+};
+
+const start = async () => {
+  console.log(`${PF} | ... WAIT | WORKER | PID: ${process.pid} START`);
+  console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
+
+  await initUpdateRecsQueue();
+  await initUpdateUnratedQueue();
 };
 
 // console.log(
