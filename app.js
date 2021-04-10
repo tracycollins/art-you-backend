@@ -186,7 +186,7 @@ const initUpdateUnratedQueue = async () => {
 
   workUpdateUnratedQueue.on("global:completed", async (jobId, result) => {
     console.log(
-      `A47BE | UPDATE UNRATED JOB ${jobId} | COMPLETE | ${result.length} UNRATED`
+      `A47BE | UPDATE UNRATED JOB ${jobId} | COMPLETE | ${result.unrated.length} UNRATED`
     );
     await jobQueued({ queue: workUpdateUnratedQueue });
   });
