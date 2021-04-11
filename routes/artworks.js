@@ -71,24 +71,39 @@ router.get(
       console.log(
         `GET ${model} | URL: ${req.url} | CURSOR | SORT (subDoc): ${subDoc}` +
           ` | FILTER BY USER _ID: ${user_id}` +
-          ` | CURSOR: _id: ${cursor._id} sort: ${sort} value: ${value}`
+          ` | CURSOR: _id: ${cursor._id} | sort: ${sort} | value: ${value}`
       );
+      console.log({ match });
 
       const paginationOptions = {};
       paginationOptions.query = match;
 
       if (sort && sort !== "none") {
-        paginationOptions.sort = [sort, -1];
+        if (sort === "rate") {
+          paginationOptions.sort = ["ratingUser.rate", -1];
+        } else if (sort === "score") {
+          paginationOptions.sort = ["recommendationUser.score", -1];
+        } else {
+          paginationOptions.sort = [sort, -1];
+        }
       }
 
-      if (cursor !== undefined && cursor._id !== "0") {
+      if (cursor !== undefined && cursor._id !== "0" && cursor._id !== 0) {
         paginationOptions.nextKey = {};
         paginationOptions.nextKey._id = cursor._id;
         if (sort && sort !== "none") {
           paginationOptions.nextKey[sort] = cursor[sort];
-          paginationOptions.sort = [sort, -1];
+          if (sort === "rate") {
+            paginationOptions.sort = ["ratingUser.rate", -1];
+          } else if (sort === "score") {
+            paginationOptions.sort = ["recommendationUser.score", -1];
+          } else {
+            paginationOptions.sort = [sort, -1];
+          }
         }
       }
+
+      console.log({ paginationOptions });
 
       const paginationResults = global.artyouDb.generatePaginationQuery(
         paginationOptions
@@ -105,14 +120,19 @@ router.get(
 
       sortByOptions.limit = limit;
       sortByOptions.subDoc = subDoc || "none";
-      sortByOptions.sort = sort && sort !== "none" ? { [sort]: -1 } : "none";
+      if (sort === "rate") {
+        sortByOptions.sort = { "ratingUser.rate": -1 };
+      }
 
-      // docs can be ratings or recommendations
-      const docs = await global.artyouDb.sortBySubDocUserPaginate(
+      if (sort === "recommendation") {
+        sortByOptions.sort = { "recommendationUser.score": -1 };
+      }
+
+      const artworks = await global.artyouDb.sortBySubDocUserPaginate(
         sortByOptions
       );
 
-      const nextKey = paginationResults.nextKeyFn(docs);
+      const nextKey = paginationResults.nextKeyFn(artworks);
 
       if (nextKey) {
         console.log(
@@ -123,42 +143,40 @@ router.get(
             ` | NEXT SORT: ${nextKey.sort} ` +
             ` | NEXT RATE: ${nextKey.rate} ` +
             ` | NEXT SCORE: ${nextKey.score}` +
-            ` | TOP ${docs.length} DOCs`
+            ` | TOP ${artworks.length} DOCs`
         );
+        console.log({ nextKey });
       } else {
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER _ID: ${user_id} | SUBDOC: ${subDoc} | NEXT KEY: ${nextKey} | TOP ${docs.length} DOCs`
+          `FOUND ${model} BY USER _ID: ${user_id} | SUBDOC: ${subDoc} | NEXT KEY: ${nextKey} | TOP ${artworks.length} ARTWORKS`
         );
       }
 
-      let artworks = [];
+      console.log({ user_id });
+      const updatedArtwork = artworks.map((artwork) => {
+        artwork.ratings = artwork.ratings || [];
+        artwork.recommendations = artwork.recommendations || [];
+        artwork.ratingUser = artwork.ratings.find(
+          (rating) =>
+            rating.user && rating.user._id && rating.user._id === user_id
+        );
+        artwork.recommendationUser = artwork.recommendations.find(
+          (rec) => rec.user && rec.user._id && rec.user._id === user_id
+        );
+        return artwork;
+      });
 
-      if (subDoc !== "none" && subDoc && subDoc !== "unrated") {
-        artworks = docs.map((doc) => {
-          const art = Object.assign({}, doc.artwork);
-          art.ratings = art.ratings || [];
-          art.recommendations = art.recommendations || [];
-          art.ratingUser =
-            subDoc === "rating"
-              ? doc
-              : art.ratings.find(
-                  (rating) =>
-                    rating.user === user_id || rating.user._id === user_id
-                );
-          art.recommendationUser =
-            subDoc === "recommendation"
-              ? doc
-              : art.recommendations.find(
-                  (rec) => (rec.user === user_id || rec.user._id) === user_id
-                );
-          return art;
-        });
-      } else {
-        artworks = docs.map((artwork) => artwork);
-      }
+      const responseNextKey = {};
+      responseNextKey._id = nextKey._id;
+      responseNextKey.rate = nextKey.ratingUser
+        ? nextKey.ratingUser.rate
+        : nextKey.rate;
+      responseNextKey.score = nextKey.recommendationUser
+        ? nextKey.recommendationUser.score
+        : nextKey.score;
 
-      res.json({ artworks: artworks, nextKey: nextKey });
+      res.json({ artworks: updatedArtwork, nextKey: responseNextKey });
     } catch (err) {
       console.error(
         `GET | ${model} | OAUTHID: ${req.params.userid} ERROR: ${err}`
