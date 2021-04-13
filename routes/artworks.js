@@ -32,8 +32,6 @@ router.get("/cursor/:cursor", async (req, res) => {
     res.status(400).send(message);
   }
 });
-
-// if subdoc === 'unrated' => sort and value can be null and can be ignored
 router.get(
   "/user/:userid/cursor/:cursorid/(:subdoc)?(.:sort.:value)?",
   async (req, res) => {

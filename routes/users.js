@@ -141,6 +141,48 @@ router.post("/update", async (req, res) => {
   }
 });
 
+router.post("/upload", async (req, res) => {
+  try {
+    const { user, fileName, type, dataType, data } = req.body;
+
+    console.log(
+      `${PF} | POST` +
+        ` | UPLOAD FILE | User` +
+        ` | ID: ${user.id}` +
+        ` | _ID: ${user._id}` +
+        ` | SUB: ${user.sub}` +
+        ` | FILE: ${fileName}` +
+        ` | TYPE: ${type}` +
+        ` | DATA TYPE: ${dataType}` +
+        ` | DATA SIZE: ${data.byteLength}`
+    );
+
+    console.log({ data });
+
+    const userDoc = await global.artyouDb.User.findOne({
+      oauthID: user.oauthID,
+    }).populate("image");
+
+    // await userDoc.save();
+
+    console.log(
+      `UPLOADED FILE | User` +
+        ` | ID: ${userDoc.id}` +
+        ` | _ID: ${userDoc._id}` +
+        ` | SUB: ${userDoc.sub}`
+    );
+
+    res.json({ status: "OK", fileName, type, dataType, user: userDoc });
+  } catch (err) {
+    console.error(
+      `POST | UPLOAD FILE | User | ID: ${req.body.user.id} ERROR: ${err}`
+    );
+    res
+      .status(400)
+      .send(`GET | User | ID: ${req.body.user.id} | ERROR: ${err}`);
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
     console.log(`${model} | GET`);
