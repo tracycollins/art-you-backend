@@ -1,10 +1,10 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable dot-notation */
 const express = require("express");
+const ObjectID = require("mongodb").ObjectID;
 const router = express.Router({
   strict: true,
 });
-const ObjectID = require("mongodb").ObjectID;
 
 router.get("/cursor/:cursor", async (req, res) => {
   try {
@@ -13,9 +13,9 @@ router.get("/cursor/:cursor", async (req, res) => {
     const limit = 20;
     console.log(`ARTISTS | GET CURSOR: ${cursor} | LIMIT: ${limit}`);
 
-    const query = cursor !== "0" ? { _id: { $gt: cursor } } : {};
+    const query = cursor !== "0" ? { id: { $gt: cursor } } : {};
 
-    const artists = await global.artyouDb.Artist.find(query)
+    const artists = await global.artyouDb.Artist.find({ id: { $gt: cursor } })
       .sort()
       .limit(limit)
       .populate("image")
@@ -23,18 +23,37 @@ router.get("/cursor/:cursor", async (req, res) => {
 
     const nextKey = {};
 
-    nextKey._id = artists.length > 0 ? artists[artists.length - 1]._id : 0;
+    if (artists.length < limit) {
+      console.log(
+        // eslint-disable-next-line no-underscore-dangle
+        `XXX END XXXX | FOUND ${artists.length} ARTISTS`
+      );
+      res.json({ artists: artists });
+    } else {
+      const lastArtist = artists[artists.length - 1];
+      nextKey.id = lastArtist.id;
+      nextKey.rate = lastArtist.ratingUser ? lastArtist.ratingUser.rate : null;
+      nextKey.score = lastArtist.recommendationUser
+        ? lastArtist.recommendationUser.score
+        : null;
+      nextKey.ratingAverage = lastArtist.ratingAverage;
 
-    console.log(`ARTISTS | GET | ${artists.length} ARTISTS | LIMIT: ${limit}`);
-
-    res.json({ artists, nextKey });
+      console.log(
+        `FOUND Artists` +
+          ` | NEXT ID: ${nextKey.id}` +
+          ` | NEXT RATE: ${nextKey.rate} ` +
+          ` | NEXT SCORE: ${nextKey.score}` +
+          ` | ${artists.length} ARTISTS`
+      );
+      res.json({ artists: artists, nextKey: nextKey });
+    }
   } catch (err) {
     const message = `GET | ARTISTS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
     console.error(message);
     res.status(400).send(message);
   }
 });
-// "/user/:userid/cursor/:cursorid/(:subdoc)?(.:sort.:value)?",
+
 router.get("/user/:userid/id/:artistId/(:artworks)?", async (req, res) => {
   try {
     const userDoc =

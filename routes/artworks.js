@@ -1,6 +1,5 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable dot-notation */
-const model = "Artwork";
 const express = require("express");
 const ObjectID = require("mongodb").ObjectID;
 const router = express.Router({
@@ -417,7 +416,7 @@ router.get("/artist/:id", async (req, res) => {
   try {
     console.log(`Artwork | GET ARTWORK BY ARTIST ${req.params.id}`);
 
-    const artistDoc = await global.artyouDb[model].findOne({
+    const artistDoc = await global.artyouDb.Artwork.findOne({
       id: req.params.id,
     });
 
@@ -448,8 +447,7 @@ router.get("/", async (req, res) => {
   try {
     console.log(`Artwork | GET`);
 
-    const docs = await global.artyouDb[model]
-      .find({})
+    const docs = await global.artyouDb.Artwork.find({})
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
       .populate({ path: "ratings", populate: { path: "user" } })
