@@ -46,144 +46,87 @@ router.get(
         : false;
 
       const user_id = userDoc ? userDoc._id.toString() : false;
-      const cursorid = req.params.cursorid;
+      const cursorid = req.params.cursorid !== "0" ? req.params.cursorid : null;
       const subDoc = req.params.subdoc || "none"; // rating, recommendation, unrated
       const sort = req.params.sort || "none"; // name of field :'rate', 'score'
-      let match = sort && sort !== "none" ? { "user._id": user_id } : {};
-      const value = req.params.value || false; // field value: rate, score
+      const value = req.params.value || false; // field value: rate, score, ratingAverage
       const limit = process.env.PAGE_SIZE || 20;
-
-      const cursor = {};
-      cursor._id = cursorid;
-
-      // if (sort) {
-      if (sort && sort !== "none") {
-        cursor[sort] = parseInt(value);
-      }
 
       if (subDoc === "unrated") {
         if (user_id !== 0) {
           console.log(`GET | UNRATED | FOUND USER | _ID: ${user_id}`);
-          match = {};
         }
       }
 
       console.log(
-        `GET ${model} | URL: ${req.url} | CURSOR | SORT (subDoc): ${subDoc}` +
+        `GET Artwork | URL: ${req.url} | CURSOR | SORT (subDoc): ${subDoc}` +
           ` | FILTER BY USER _ID: ${user_id}` +
-          ` | CURSOR: _id: ${cursor._id} | sort: ${sort} | value: ${value}`
-      );
-      console.log({ match });
-
-      const paginationOptions = {};
-      paginationOptions.query = match;
-
-      if (sort && sort !== "none") {
-        if (sort === "rate") {
-          paginationOptions.sort = ["ratingUser.rate", -1];
-        } else if (sort === "score") {
-          paginationOptions.sort = ["recommendationUser.score", -1];
-        } else {
-          paginationOptions.sort = [sort, -1];
-        }
-      }
-
-      if (cursor !== undefined && cursor._id !== "0" && cursor._id !== 0) {
-        paginationOptions.nextKey = {};
-        paginationOptions.nextKey._id = cursor._id;
-        if (sort && sort !== "none") {
-          paginationOptions.nextKey[sort] = cursor[sort];
-          if (sort === "rate") {
-            paginationOptions.sort = ["ratingUser.rate", -1];
-          } else if (sort === "score") {
-            paginationOptions.sort = ["recommendationUser.score", -1];
-          } else {
-            paginationOptions.sort = [sort, -1];
-          }
-        }
-      }
-
-      console.log({ paginationOptions });
-
-      const paginationResults = global.artyouDb.generatePaginationQuery(
-        paginationOptions
+          ` | CURSOR_ID: _id: ${cursorid} | value: ${value}`
       );
 
-      const sortByOptions = {};
-      sortByOptions.user_id = user_id ? ObjectID(user_id) : null;
-      // console.log(
-      //   `USER ID ${sortByOptions.user_id} | IS ObjectID: ${ObjectID.isValid(
-      //     sortByOptions.user_id
-      //   )}`
-      // );
-      sortByOptions.match = paginationResults.paginatedQuery;
-
-      sortByOptions.limit = limit;
-      sortByOptions.subDoc = subDoc || "none";
-      if (sort === "rate") {
-        sortByOptions.sort = { "ratingUser.rate": -1 };
-      }
-
-      if (sort === "recommendation") {
-        sortByOptions.sort = { "recommendationUser.score": -1 };
-      }
+      const sortByOptions = {
+        user_id,
+        subDoc,
+        limit,
+        sort,
+        minDocId: cursorid,
+        maxDocId: cursorid,
+        minValue: value,
+        maxValue: value,
+      };
 
       const artworks = await global.artyouDb.sortBySubDocUserPaginate(
         sortByOptions
       );
 
-      const nextKey = paginationResults.nextKeyFn(artworks);
+      let nextKey = {};
 
-      if (nextKey) {
+      if (artworks.length < limit) {
         console.log(
           // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER _ID: ${user_id}` +
+          `XXX END XXXX | FOUND Artwork BY USER _ID: ${user_id}` +
             ` | SUBDOC: ${subDoc}` +
-            ` | NEXT ID: ${nextKey._id}` +
-            ` | NEXT SORT: ${nextKey.sort} ` +
+            ` | ${artworks.length} ARTWORKs`
+        );
+        res.json({ artworks: artworks });
+      } else {
+        const lastArtwork = artworks[artworks.length - 1];
+        switch (subDoc) {
+          case "rating":
+            nextKey.id = lastArtwork.ratingUser.id;
+            break;
+          case "recommendation":
+            nextKey.id = lastArtwork.recommendationUser.id;
+            break;
+          default:
+            nextKey.id = lastArtwork.id;
+        }
+        nextKey.rate = lastArtwork.ratingUser
+          ? lastArtwork.ratingUser.rate
+          : null;
+        nextKey.score = lastArtwork.recommendationUser
+          ? lastArtwork.recommendationUser.score
+          : null;
+        nextKey.ratingAverage = lastArtwork.ratingAverage;
+        console.log(
+          `FOUND Artwork BY USER _ID: ${user_id}` +
+            ` | SUBDOC: ${subDoc}` +
+            ` | NEXT ID: ${nextKey.id}` +
             ` | NEXT RATE: ${nextKey.rate} ` +
             ` | NEXT SCORE: ${nextKey.score}` +
-            ` | TOP ${artworks.length} DOCs`
+            ` | ${artworks.length} ARTWORKs`
         );
-        console.log({ nextKey });
-      } else {
-        console.log(
-          // eslint-disable-next-line no-underscore-dangle
-          `FOUND ${model} BY USER _ID: ${user_id} | SUBDOC: ${subDoc} | NEXT KEY: ${nextKey} | TOP ${artworks.length} ARTWORKS`
-        );
+        res.json({ artworks: artworks, nextKey: nextKey });
       }
 
-      console.log({ user_id });
-      const updatedArtwork = artworks.map((artwork) => {
-        artwork.ratings = artwork.ratings || [];
-        artwork.recommendations = artwork.recommendations || [];
-        artwork.ratingUser = artwork.ratings.find(
-          (rating) =>
-            rating.user && rating.user._id && rating.user._id === user_id
-        );
-        artwork.recommendationUser = artwork.recommendations.find(
-          (rec) => rec.user && rec.user._id && rec.user._id === user_id
-        );
-        return artwork;
-      });
-
-      const responseNextKey = {};
-      responseNextKey._id = nextKey._id;
-      responseNextKey.rate = nextKey.ratingUser
-        ? nextKey.ratingUser.rate
-        : nextKey.rate;
-      responseNextKey.score = nextKey.recommendationUser
-        ? nextKey.recommendationUser.score
-        : nextKey.score;
-
-      res.json({ artworks: updatedArtwork, nextKey: responseNextKey });
+      //
     } catch (err) {
       console.error(
-        `GET | ${model} | OAUTHID: ${req.params.userid} ERROR: ${err}`
+        `GET | Artwork | OAUTHID: ${req.params.userid} ERROR: ${err}`
       );
       res
         .status(400)
-        .send(`GET | ${model} | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
+        .send(`GET | Artwork | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
     }
   }
 );
@@ -201,7 +144,7 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
     const artworkId = req.params.artworkId || false;
 
     console.log(
-      `GET ${model} | URL: ${req.url}` +
+      `GET Artwork | URL: ${req.url}` +
         ` | USER _ID: ${user_id}` +
         ` | ARTWORK ID: ${artworkId}`
     );
@@ -256,11 +199,11 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
     }
   } catch (err) {
     console.error(
-      `GET | ${model} | OAUTHID: ${req.params.userid} ERROR: ${err}`
+      `GET | Artwork | OAUTHID: ${req.params.userid} ERROR: ${err}`
     );
     res
       .status(400)
-      .send(`GET | ${model} | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
+      .send(`GET | Artwork | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
   }
 });
 
@@ -269,7 +212,7 @@ router.get("/top-recs/user/:id", async (req, res) => {
     const limit = process.env.UNRATED_LIMIT || 20;
 
     console.log(
-      `GET ${model} | TOP RECS | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
+      `GET Artwork | TOP RECS | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
     );
 
     const recs = await global.artyouDb.Recommendation.aggregate([
@@ -328,7 +271,7 @@ router.get("/top-recs/user/:id", async (req, res) => {
     ]);
 
     console.log(
-      `FOUND ${model} BY USER OAUTHID: ${req.params.id} | TOP ${recs.length} RECs`
+      `FOUND Artwork BY USER OAUTHID: ${req.params.id} | TOP ${recs.length} RECs`
     );
 
     const artworks = recs.map((rec) => {
@@ -339,17 +282,17 @@ router.get("/top-recs/user/:id", async (req, res) => {
 
     res.json(artworks);
   } catch (err) {
-    console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
+    console.error(`GET | Artwork | OAUTHID: ${req.body.id} ERROR: ${err}`);
     res
       .status(400)
-      .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+      .send(`GET | Artwork | OAUTHID: ${req.body.id} | ERROR: ${err}`);
   }
 });
 
 router.get("/:artworkid/user/:userid", async (req, res) => {
   try {
     console.log(
-      `${model} | GET ARTWORK BY ID ${req.params.artworkid} | POP RATING/REC BY USER ID: ${req.params.userid}`
+      `Artwork | GET ARTWORK BY ID ${req.params.artworkid} | POP RATING/REC BY USER ID: ${req.params.userid}`
     );
 
     const userDoc = await global.artyouDb.User.findOne({
@@ -357,7 +300,7 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
     }).lean();
 
     console.log(
-      `${model} | GET ARTWORK BY ID | USER ID: ${userDoc.name} | ARTWORK ID: ${req.params.artworkid}`
+      `Artwork | GET ARTWORK BY ID | USER ID: ${userDoc.name} | ARTWORK ID: ${req.params.artworkid}`
     );
 
     const query = {};
@@ -398,15 +341,15 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
       res.json([]);
     }
   } catch (err) {
-    console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`);
+    console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
+    res.status(400).send(`GET | Artwork | ID: ${req.body.id} | ERROR: ${err}`);
   }
 });
 
 router.get("/user/:userid", async (req, res) => {
   try {
     console.log(
-      `${model} | GET ARTWORKS | POP RATING/REC BY USER ID: ${req.params.userid}`
+      `Artwork | GET ARTWORKS | POP RATING/REC BY USER ID: ${req.params.userid}`
     );
 
     const userDoc = await global.artyouDb.User.findOne({
@@ -443,15 +386,15 @@ router.get("/user/:userid", async (req, res) => {
 
     res.json(docs);
   } catch (err) {
-    console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`);
+    console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
+    res.status(400).send(`GET | Artwork | ID: ${req.body.id} | ERROR: ${err}`);
   }
 });
 
 router.get("/:id", async (req, res) => {
   const query = {};
 
-  console.log(`GET ${model} | ID: ${req.params.id}`);
+  console.log(`GET Artwork | ID: ${req.params.id}`);
   query.id = parseInt(req.params.id);
 
   const doc = await global.artyouDb.Artwork.findOne(query)
@@ -463,7 +406,7 @@ router.get("/:id", async (req, res) => {
     .lean();
 
   console.log(
-    `FOUND ${model} | ${doc.id} | ${doc.artist.displayName} | ${doc.image.url}`
+    `FOUND Artwork | ${doc.id} | ${doc.artist.displayName} | ${doc.image.url}`
   );
 
   res.json(doc);
@@ -472,7 +415,7 @@ router.get("/:id", async (req, res) => {
 // get artworks by artist
 router.get("/artist/:id", async (req, res) => {
   try {
-    console.log(`${model} | GET ARTWORK BY ARTIST ${req.params.id}`);
+    console.log(`Artwork | GET ARTWORK BY ARTIST ${req.params.id}`);
 
     const artistDoc = await global.artyouDb[model].findOne({
       id: req.params.id,
@@ -489,21 +432,21 @@ router.get("/artist/:id", async (req, res) => {
         .populate({ path: "tags", populate: { path: "user" } })
         .lean();
 
-      console.log(`FOUND ${docs.length} ${model}s`);
+      console.log(`FOUND ${docs.length} Artworks`);
       res.json(docs);
     } else {
       console.log(`ARTIST NOT FOUND | ARTIST ID: ${req.params.id}`);
       res.json([]);
     }
   } catch (err) {
-    console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`);
+    console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
+    res.status(400).send(`GET | Artwork | ID: ${req.body.id} | ERROR: ${err}`);
   }
 });
 
 router.get("/", async (req, res) => {
   try {
-    console.log(`${model} | GET`);
+    console.log(`Artwork | GET`);
 
     const docs = await global.artyouDb[model]
       .find({})
@@ -514,11 +457,11 @@ router.get("/", async (req, res) => {
       .populate({ path: "tags", populate: { path: "user" } })
       .lean();
 
-    console.log(`FOUND ${docs.length} ${model}s`);
+    console.log(`FOUND ${docs.length} Artworks`);
     res.json(docs);
   } catch (err) {
-    console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`);
+    console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
+    res.status(400).send(`GET | Artwork | ID: ${req.body.id} | ERROR: ${err}`);
   }
 });
 
