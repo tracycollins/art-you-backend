@@ -1,10 +1,38 @@
 /* eslint-disable no-underscore-dangle */
+const fs = require("fs-extra");
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const upload = multer({ dest: "/tmp/art47/uploads/profile/" });
+const S3Client = require("../lib/awsS3Client.js");
+const awsS3Client = new S3Client();
 
 const model = "User";
 
 const PF = "USR";
+const imageFile = `user_profile_image.jpg`;
+const bucketName = "art47-users";
+
+const s3putImage = async (p) => {
+  try {
+    const params = p || {};
+
+    const fileContent = fs.readFileSync(params.path);
+
+    const objectParams = {
+      Bucket: params.bucketName,
+      Key: params.keyName,
+      Body: fileContent,
+    };
+
+    const results = await awsS3Client.putObject(objectParams);
+
+    return results;
+  } catch (err) {
+    console.log(`DB | SEED | *** s3putImage ERROR: ${err}`);
+    throw err;
+  }
+};
 
 const userNormalizeProps = (user) => {
   const normalizedUser = Object.assign({}, user);
@@ -141,47 +169,115 @@ router.post("/update", async (req, res) => {
   }
 });
 
-router.post("/upload", async (req, res) => {
-  try {
-    const { user, fileName, type, dataType, data } = req.body;
+router.post(
+  "/upload",
+  upload.single("profileImage"),
+  async function (req, res, next) {
+    const { oauthID } = req.body;
+
+    const userDoc = await global.artyouDb.User.findOne({ oauthID }).populate(
+      "image"
+    );
+
+    console.log({ userDoc });
 
     console.log(
       `${PF} | POST` +
-        ` | UPLOAD FILE | User` +
-        ` | ID: ${user.id}` +
-        ` | _ID: ${user._id}` +
-        ` | SUB: ${user.sub}` +
-        ` | FILE: ${fileName}` +
-        ` | TYPE: ${type}` +
-        ` | DATA TYPE: ${dataType}` +
-        ` | DATA SIZE: ${data.byteLength}`
+        ` | UPLOAD FILE | User: ${userDoc.oauthID}` +
+        `\n${PF} | USER IMAGE: ${userDoc.image ? userDoc.image.url : null}` +
+        `\n${PF} | FILE ORG NAME: ${req.file.originalname}` +
+        `\n${PF} | FILE NAME: ${req.file.filename}` +
+        `\n${PF} | FILE PATH: ${req.file.path}` +
+        `\n${PF} | FILE DEST: ${req.file.destination}` +
+        `\n${PF} | FILE MIME TYPE: ${req.file.mimetype}` +
+        `\n${PF} | FILE ENC: ${req.file.encoding}` +
+        `\n${PF} | FILE SIZE: ${req.file.size}`
     );
 
-    console.log({ data });
+    const keyName = `${userDoc.oauthID}/images/${imageFile}`;
+    const imagePath = req.file.path;
 
-    const userDoc = await global.artyouDb.User.findOne({
-      oauthID: user.oauthID,
-    }).populate("image");
+    await s3putImage({
+      bucketName: bucketName,
+      keyName: keyName,
+      path: imagePath,
+    });
 
-    // await userDoc.save();
+    const imageUrl = `https://${bucketName}.s3.amazonaws.com/${keyName}`;
+    const imageTitle = userDoc.userName || "user profile image";
 
-    console.log(
-      `UPLOADED FILE | User` +
-        ` | ID: ${userDoc.id}` +
-        ` | _ID: ${userDoc._id}` +
-        ` | SUB: ${userDoc.sub}`
-    );
+    const image = new global.artyouDb.Image({
+      title: imageTitle,
+      url: imageUrl,
+      fileName: imageFile,
+    });
 
-    res.json({ status: "OK", fileName, type, dataType, user: userDoc });
-  } catch (err) {
-    console.error(
-      `POST | UPLOAD FILE | User | ID: ${req.body.user.id} ERROR: ${err}`
-    );
-    res
-      .status(400)
-      .send(`GET | User | ID: ${req.body.user.id} | ERROR: ${err}`);
+    userDoc.image = await image.save();
+    await userDoc.save();
+
+    const userJson = userDoc.toObject();
+
+    // NEED TO SET UP TRANSFER OF IMAGE TO S3 or GOOGLE, and modify user.image
+
+    res.json({ user: userDoc });
+
+    // req.file is the `avatar` file
+    // req.body will hold the text fields, if there were any
   }
-});
+);
+
+// router.post("/upload", async (req, res) => {
+//   try {
+//     // const {
+//     //   user,
+//     //   fileSize,
+//     //   fileName,
+//     //   filePath,
+//     //   type,
+//     //   dataType,
+//     //   data,
+//     // } = req.body;
+
+//     console.log(req.body);
+
+//     // console.log(
+//     //   `${PF} | POST` +
+//     //     ` | UPLOAD FILE | User` +
+//     //     ` | ID: ${user.id}` +
+//     //     ` | _ID: ${user._id}` +
+//     //     ` | SUB: ${user.sub}` +
+//     //     ` | TYPE: ${type}` +
+//     //     ` | FILE: ${fileName}` +
+//     //     ` | DATA TYPE: ${dataType}` +
+//     //     ` | FILE PATH: ${filePath}` +
+//     //     ` | FILE SIZE: ${fileSize}`
+//     // );
+
+//     // console.log({ data });
+
+//     // const userDoc = await global.artyouDb.User.findOne({
+//     //   oauthID: user.oauthID,
+//     // }).populate("image");
+
+//     // // await userDoc.save();
+
+//     // console.log(
+//     //   `UPLOADED FILE | User` +
+//     //     ` | ID: ${userDoc.id}` +
+//     //     ` | _ID: ${userDoc._id}` +
+//     //     ` | SUB: ${userDoc.sub}`
+//     // );
+
+//     res.json({ status: "OK");
+//   } catch (err) {
+//     console.error(
+//       `POST | UPLOAD FILE | User | ID: ${req.body.user.id} ERROR: ${err}`
+//     );
+//     res
+//       .status(400)
+//       .send(`GET | User | ID: ${req.body.user.id} | ERROR: ${err}`);
+//   }
+// });
 
 router.get("/", async (req, res) => {
   try {
