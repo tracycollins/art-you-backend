@@ -71,6 +71,8 @@ router.get("/:id", async (req, res) => {
       .lean();
 
     if (user) {
+      user.rated = await global.artyouDb.Rating.count({ user: user });
+
       console.log(
         `APP | ===========================================================================`
       );
@@ -123,6 +125,10 @@ router.post("/update", async (req, res) => {
     if (!userDoc) {
       throw new Error(`USER NOT FOUND | _ID: ${req.body._id}`);
     }
+
+    userDoc.rated = await global.artyouDb.Rating.countDocuments({
+      user: userDoc,
+    });
 
     const userUpdateKeys = [
       "userName",

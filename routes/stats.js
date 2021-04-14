@@ -8,8 +8,9 @@ const statsObj = {};
 const statusModels = ["Artist", "Artwork", "Rating", "User", "Recommendation"];
 
 for (const model of statusModels) {
-  statsObj[model] = {};
-  statsObj[model].total = 0;
+  const keyName = `${model.toLowerCase()}s`;
+  statsObj[keyName] = {};
+  statsObj[keyName].total = 0;
 }
 
 router.get("/", async (req, res) => {
@@ -18,13 +19,14 @@ router.get("/", async (req, res) => {
 
     if (global.artyouDb !== undefined) {
       for (const model of statusModels) {
-        statsObj[model].total = await global.artyouDb[
+        const keyName = `${model.toLowerCase()}s`;
+        statsObj[keyName].total = await global.artyouDb[
           model
         ].estimatedDocumentCount();
       }
     }
 
-    res.json(statsObj);
+    res.json({ stats: statsObj });
   } catch (err) {
     console.error(`GET | STATS | ID: ${req.body.id} ERROR: ${err}`);
     res.status(400).send(`GET | STATS | ID: ${req.body.id} | ERROR: ${err}`);

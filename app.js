@@ -386,6 +386,11 @@ app.post("/authenticated", async (req, res) => {
 
         await userDoc.save();
       } else {
+        userDoc.rated = await global.artyouDb.Rating.countDocuments({
+          user: userDoc,
+        });
+        await userDoc.save();
+
         console.log(
           `APP | authenticated | USER FOUND | oauthID: ${userDoc.oauthID} | NAME: ${userDoc.name}`
         );
