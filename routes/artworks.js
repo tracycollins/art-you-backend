@@ -32,6 +32,7 @@ router.get("/cursor/:cursor", async (req, res) => {
     res.status(400).send(message);
   }
 });
+
 router.get(
   "/user/:userid/cursor/:cursorid/(:subdoc)?(.:sort.:value)?",
   async (req, res) => {
@@ -204,86 +205,114 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
   }
 });
 
-router.get("/top-recs/user/:id", async (req, res) => {
+router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
   try {
-    const limit = process.env.UNRATED_LIMIT || 20;
+    const limit = process.env.UNRATED_LIMIT || 10;
 
     console.log(
-      `GET Artwork | TOP RECS | FILTER BY USER OAUTHID: ${req.params.id} | LIMIT: ${limit}`
+      `GET Artwork | USER TOP RECS | USER ID: ${req.params.userid} | UNRATED FLAG: ${req.params.unrated} | LIMIT: ${limit}`
     );
 
-    const recs = await global.artyouDb.Recommendation.aggregate([
-      {
-        $lookup: {
-          from: "users",
-          localField: "user",
-          foreignField: "_id",
-          as: "user",
-        },
-      },
-      {
-        $unwind: {
-          path: "$user",
-        },
-      },
-      {
-        $match: {
-          "user.oauthID": req.params.id,
-        },
-      },
-      {
-        $sort: {
-          score: -1,
-        },
-      },
-      {
-        $limit: 10,
-      },
-      {
-        $lookup: {
-          from: "artworks",
-          localField: "artwork",
-          foreignField: "_id",
-          as: "artwork",
-        },
-      },
-      {
-        $unwind: {
-          path: "$artwork",
-        },
-      },
-      {
-        $lookup: {
-          from: "images",
-          localField: "artwork.image",
-          foreignField: "_id",
-          as: "artwork.image",
-        },
-      },
-      {
-        $unwind: {
-          path: "$artwork.image",
-        },
-      },
-    ]);
+    const user = req.params.userid
+      ? await global.artyouDb.User.findOne({
+          id: req.params.userid,
+        })
+          .populate({ path: "artist", populate: { path: "image" } })
+          .select("_id unrated")
+          .lean()
+      : false;
+
+    if (!user) {
+      console.log(
+        `GET Artwork | !!! USER TOP UNRATED RECS | USER ID: ${req.params.userid} NOT FOUND`
+      );
+      return res.status(404);
+    }
 
     console.log(
-      `FOUND Artwork BY USER OAUTHID: ${req.params.id} | TOP ${recs.length} RECs`
+      `GET Artwork | USER TOP UNRATED RECS | USER ID: ${
+        req.params.userid
+      } | UNRATED: ${user.unrated ? user.unrated.length : 0}`
     );
 
-    const artworks = recs.map((rec) => {
-      const art = Object.assign({}, rec.artwork);
-      art.recommendationUser = { score: rec.score };
-      return art;
-    });
+    if (user.unrated && user.unrated.length === 0) {
+      console.log(
+        `GET Artwork | --- USER TOP UNRATED RECS | USER ID: ${req.params.userid} | NO UNRATED FOUND`
+      );
+      return res.json({ artworks: [] });
+    }
 
-    res.json(artworks);
+    const sortByOptions = {
+      user_id: user._id,
+      subDoc: "unrated",
+      sort: "top",
+    };
+
+    const artworks = await global.artyouDb.sortBySubDocUserPaginate(
+      sortByOptions
+    );
+
+    res.json({ artworks });
   } catch (err) {
     console.error(`GET | Artwork | OAUTHID: ${req.body.id} ERROR: ${err}`);
     res
       .status(400)
       .send(`GET | Artwork | OAUTHID: ${req.body.id} | ERROR: ${err}`);
   }
+  // const recs = await global.artyouDb.Recommendation.aggregate([
+  //   {
+  //     $lookup: {
+  //       from: "users",
+  //       localField: "user",
+  //       foreignField: "_id",
+  //       as: "user",
+  //     },
+  //   },
+  //   {
+  //     $unwind: {
+  //       path: "$user",
+  //     },
+  //   },
+  //   {
+  //     $match: {
+  //       "user.oauthID": req.params.id,
+  //     },
+  //   },
+  //   {
+  //     $sort: {
+  //       score: -1,
+  //     },
+  //   },
+  //   {
+  //     $limit: 10,
+  //   },
+  //   {
+  //     $lookup: {
+  //       from: "artworks",
+  //       localField: "artwork",
+  //       foreignField: "_id",
+  //       as: "artwork",
+  //     },
+  //   },
+  //   {
+  //     $unwind: {
+  //       path: "$artwork",
+  //     },
+  //   },
+  //   {
+  //     $lookup: {
+  //       from: "images",
+  //       localField: "artwork.image",
+  //       foreignField: "_id",
+  //       as: "artwork.image",
+  //     },
+  //   },
+  //   {
+  //     $unwind: {
+  //       path: "$artwork.image",
+  //     },
+  //   },
+  // ]);
 });
 
 router.get("/:artworkid/user/:userid", async (req, res) => {
