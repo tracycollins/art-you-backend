@@ -1017,9 +1017,9 @@
     yargs "^16.0.3"
 
 "@threeceelabs/mongoose-artyou@^1.3.36":
-  version "1.5.8"
-  resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-artyou/-/mongoose-artyou-1.5.8.tgz#57a751e6afe51929ff9faaa7e6567d87d1fe87b9"
-  integrity sha512-WCTInRJMRRwTAwyDTFagVh2p2/GX7OU/UxcLzDvh18zag8uBSwnCjtsaliSY6rXOaxK0+jQofAmk3kPcMf2zsg==
+  version "1.5.9"
+  resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-artyou/-/mongoose-artyou-1.5.9.tgz#201710ff392036e9701d58b6593a3998557e32e6"
+  integrity sha512-+NMRoTtW2OcAnlO0SdE3Ovymdai83zx8FJ9C88Zr301jjx/Or8VDfTdrtgl8amTYzNYmF41vhlJUD6QoxKT2mA==
   dependencies:
     "@aws-sdk/client-s3" "^3.11.0"
     async "^3.2.0"
