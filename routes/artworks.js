@@ -207,7 +207,7 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
 
 router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
   try {
-    const limit = process.env.UNRATED_LIMIT || 10;
+    const limit = process.env.UNRATED_LIMIT || 9;
 
     console.log(
       `GET Artwork | USER TOP RECS | USER ID: ${req.params.userid} | UNRATED FLAG: ${req.params.unrated} | LIMIT: ${limit}`
@@ -246,6 +246,7 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
       user_id: user._id,
       subDoc: "unrated",
       sort: "top",
+      limit,
     };
 
     const artworks = await global.artyouDb.sortBySubDocUserPaginate(
