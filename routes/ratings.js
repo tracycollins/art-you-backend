@@ -197,12 +197,14 @@ router.post("/create", async (req, res) => {
       _id: ratingDoc._id,
     });
 
+    dbUser.unrated.pull(dbArtwork._id);
+    await dbUser.save();
+
     dbArtwork.updateOne();
     // eslint-disable-next-line no-underscore-dangle
     dbArtwork.ratings.addToSet(ratingUpdated._id);
 
     await dbArtwork.save();
-    // updateUserRatingCount(dbUser);
 
     console.log(
       `SAVED | Rating` +
@@ -213,11 +215,12 @@ router.post("/create", async (req, res) => {
         ` | ARTWORK: ${dbArtwork.id}`
     );
 
+    const user = dbUser.toObject();
     const rating = ratingDoc.toObject();
     const artwork = dbArtwork.toObject();
     artwork.ratingUser = rating;
 
-    res.json({ rating, artwork });
+    res.json({ user, rating, artwork });
   } catch (err) {
     console.error(
       `POST | CREATE | ${model} | USER: ${req.body.user.sub} | ARTWORK: ${req.body.artwork.id} | ERROR: ${err}`

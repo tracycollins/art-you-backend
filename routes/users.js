@@ -144,6 +144,7 @@ router.post("/update", async (req, res) => {
       "instagramUsername",
       "twitterUsername",
       "facebookUsername",
+      "unrated",
     ];
 
     for (const key of userUpdateKeys) {
