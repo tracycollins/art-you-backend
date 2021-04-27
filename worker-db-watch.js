@@ -5,7 +5,7 @@ const Queue = require("bull");
 
 console.log({ PF });
 
-global.artyouDb = require("@threeceelabs/mongoose-artyou");
+global.art47db = require("@threeceelabs/mongoose-art47");
 global.dbConnection = false;
 
 const {
@@ -182,7 +182,7 @@ const initUserRatingUpdateJobQueue = async () => {
       ) {
         nntUpdateRecommendationsReady = false;
 
-        const user = await global.artyouDb.User.findOne({
+        const user = await global.art47db.User.findOne({
           _id: user_id,
         });
 
@@ -295,7 +295,7 @@ initUserRatingUpdateJobQueueInterval = setInterval(async () => {
 
 (async () => {
   try {
-    global.dbConnection = await global.artyouDb.connect();
+    global.dbConnection = await global.art47db.connect();
     start();
   } catch (err) {
     console.log(`${PF} | *** ERROR DB INIT | ERR:`, err);

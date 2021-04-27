@@ -1,14 +1,14 @@
 const dotenv = require("dotenv");
 
-if (process.env.ARTYOU_ENV_VARS_FILE) {
-  const envConfig = dotenv.config({ path: process.env.ARTYOU_ENV_VARS_FILE });
+if (process.env.ART47_ENV_VARS_FILE) {
+  const envConfig = dotenv.config({ path: process.env.ART47_ENV_VARS_FILE });
   if (envConfig.error) {
     throw envConfig.error;
   }
   console.log("A47BE | +++ ENV CONFIG LOADED");
   console.log({ envConfig });
 } else {
-  console.log(`A47BE | !!! ENV CONFIG NOT SET: ARTYOU_ENV_VARS_FILE`);
+  console.log(`A47BE | !!! ENV CONFIG NOT SET: ART47_ENV_VARS_FILE`);
   console.log(`A47BE | !!! ENV CONFIG NOT LOADED`);
 }
 
@@ -57,7 +57,7 @@ const logger = require("morgan");
 let workUpdateRecommendationsQueue;
 let workUpdateUnratedQueue;
 
-global.artyouDb = require("@threeceelabs/mongoose-artyou");
+global.art47db = require("@threeceelabs/mongoose-art47");
 global.dbConnection = false;
 
 const JOB_STATES = [
@@ -215,7 +215,7 @@ const initUpdateUnratedQueue = async () => {
 
 (async () => {
   try {
-    global.dbConnection = await global.artyouDb.connect();
+    global.dbConnection = await global.art47db.connect();
 
     console.log(`A47BE | ... CREATING WORKER UPDATE RECS QUEUE`);
 
@@ -246,7 +246,7 @@ s3c.on("ready", async (appName) => {
 s3c.on("connect", async (appName) => {
   console.log(`S3C | DB CONNECTED | APP NAME: ${appName}`);
 
-  const bucketName = "art-you";
+  const bucketName = "art47";
   const keyName = "hello_world.txt";
   const body = "Hello World!";
 
@@ -305,7 +305,7 @@ var allowedOrigins = [
   "https://art47.org",
   "http://localhost:5000",
   "http://localhost:3000",
-  "https://threecee-art-you-frontend.herokuapp.com",
+  "https://threecee-art47-frontend.herokuapp.com",
   "https://art47-frontend.herokuapp.com",
 ];
 
@@ -338,7 +338,7 @@ app.get("/authorized", function (req, res) {
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
 
-app.use(cookieSession({ secret: process.env.ARTYOU_COOKIE_SESSION_SECRET }));
+app.use(cookieSession({ secret: process.env.ART47_COOKIE_SESSION_SECRET }));
 
 function count(req, res, next) {
   req.session.count = (req.session.count || 0) + 1;
@@ -365,7 +365,7 @@ app.post("/authenticated", async (req, res) => {
     console.info(`POST /authenticated`, req.body);
 
     if (req.body && req.body.sub) {
-      let userDoc = await global.artyouDb.User.findOne({
+      let userDoc = await global.art47db.User.findOne({
         oauthID: req.body.sub,
       }).populate("image");
 
@@ -373,20 +373,20 @@ app.post("/authenticated", async (req, res) => {
         console.log(
           `APP | authenticated | ??? USER NOT FOUND | oauthID: ${req.body.sub}`
         );
-        userDoc = new global.artyouDb.User({
+        userDoc = new global.art47db.User({
           id: req.body.sub,
           oauthID: req.body.sub,
           email: req.body.email,
           name: req.body.name,
         });
 
-        userDoc.image = new global.artyouDb.Image({
+        userDoc.image = new global.art47db.Image({
           url: req.body.picture,
         });
 
         await userDoc.save();
       } else {
-        userDoc.rated = await global.artyouDb.Rating.countDocuments({
+        userDoc.rated = await global.art47db.Rating.countDocuments({
           user: userDoc,
         });
         await userDoc.save();

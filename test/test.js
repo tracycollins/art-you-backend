@@ -72,7 +72,7 @@ describe("userTools", function () {
 
 //   describe("put and get", async function () {
 //     it("object", async function () {
-//       const bucketName = "art-you";
+//       const bucketName = "art47";
 //       const keyName = "hello_world.txt";
 //       const body = "Hello World!";
 
@@ -124,9 +124,9 @@ describe("userTools", function () {
 //       try {
 //         const results = await imt.transformImage({
 //           imageFilePath:
-//             "/Volumes/RAID1/projects/art-you-frontend/public/artwork/images/artists/threecee/maskedThreeCee.jpg",
+//             "/Volumes/RAID1/projects/art47-frontend/public/artwork/images/artists/threecee/maskedThreeCee.jpg",
 //           imageOutputFilePath:
-//             "/Volumes/RAID1/projects/art-you-frontend/public/artwork/images/artists/threecee/maskedThreeCee-small.jpg",
+//             "/Volumes/RAID1/projects/art47-frontend/public/artwork/images/artists/threecee/maskedThreeCee-small.jpg",
 //         });
 //         console.log({ results });
 //       } catch (err) {

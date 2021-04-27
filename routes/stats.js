@@ -17,10 +17,10 @@ router.get("/", async (req, res) => {
   try {
     console.log(`STATS | GET`);
 
-    if (global.artyouDb !== undefined) {
+    if (global.art47db !== undefined) {
       for (const model of statusModels) {
         const keyName = `${model.toLowerCase()}s`;
-        statsObj[keyName].total = await global.artyouDb[
+        statsObj[keyName].total = await global.art47db[
           model
         ].estimatedDocumentCount();
       }

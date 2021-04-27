@@ -15,7 +15,7 @@ router.get("/cursor/:cursor", async (req, res) => {
 
     const query = cursor !== "0" ? { id: { $gt: cursor } } : {};
 
-    const artists = await global.artyouDb.Artist.find({ id: { $gt: cursor } })
+    const artists = await global.art47db.Artist.find({ id: { $gt: cursor } })
       .sort()
       .limit(limit)
       .populate("image")
@@ -58,7 +58,7 @@ router.get("/user/:userid/id/:artistId/(:artworks)?", async (req, res) => {
   try {
     const userDoc =
       req.params.userid !== "0"
-        ? await global.artyouDb.User.findOne({
+        ? await global.art47db.User.findOne({
             id: req.params.userid,
           }).select("_id")
         : false;
@@ -78,12 +78,12 @@ router.get("/user/:userid/id/:artistId/(:artworks)?", async (req, res) => {
 
     if (artworksFlag) {
       console.log("POPULATE artworks");
-      artist = await global.artyouDb.Artist.findOne({ id: artistId })
+      artist = await global.art47db.Artist.findOne({ id: artistId })
         .populate("image")
         .populate("artworks")
         .lean();
     } else {
-      artist = await global.artyouDb.Artist.findOne({ id: artistId })
+      artist = await global.art47db.Artist.findOne({ id: artistId })
         .populate("image")
         .lean();
     }
@@ -105,7 +105,7 @@ router.get("/", async (req, res) => {
   try {
     console.log(`ARTISTS | GET`);
 
-    const docs = await global.artyouDb.Artist.find({})
+    const docs = await global.art47db.Artist.find({})
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
       .populate({ path: "ratings", populate: { path: "user" } })

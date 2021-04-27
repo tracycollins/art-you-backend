@@ -65,13 +65,13 @@ router.get("/:id", async (req, res) => {
     console.log(`GET ${model} | ID: ${req.params.id}`);
     query.id = req.params.id;
 
-    const user = await global.artyouDb.User.findOne(query)
+    const user = await global.art47db.User.findOne(query)
       .populate("image")
       .populate("tags")
       .lean();
 
     if (user) {
-      user.rated = await global.artyouDb.Rating.count({ user: user });
+      user.rated = await global.art47db.Rating.count({ user: user });
 
       console.log(
         `APP | ===========================================================================`
@@ -120,13 +120,13 @@ router.post("/update", async (req, res) => {
 
     console.log({ query });
 
-    const userDoc = await global.artyouDb.User.findOne(query).populate("image");
+    const userDoc = await global.art47db.User.findOne(query).populate("image");
 
     if (!userDoc) {
       throw new Error(`USER NOT FOUND | _ID: ${req.body._id}`);
     }
 
-    userDoc.rated = await global.artyouDb.Rating.countDocuments({
+    userDoc.rated = await global.art47db.Rating.countDocuments({
       user: userDoc,
     });
 
@@ -182,7 +182,7 @@ router.post(
   async function (req, res, next) {
     const { oauthID } = req.body;
 
-    const userDoc = await global.artyouDb.User.findOne({ oauthID }).populate(
+    const userDoc = await global.art47db.User.findOne({ oauthID }).populate(
       "image"
     );
 
@@ -213,7 +213,7 @@ router.post(
     const imageUrl = `https://${bucketName}.s3.amazonaws.com/${keyName}`;
     const imageTitle = userDoc.userName || "user profile image";
 
-    const image = new global.artyouDb.Image({
+    const image = new global.art47db.Image({
       title: imageTitle,
       url: imageUrl,
       fileName: imageFile,
@@ -262,7 +262,7 @@ router.post(
 
 //     // console.log({ data });
 
-//     // const userDoc = await global.artyouDb.User.findOne({
+//     // const userDoc = await global.art47db.User.findOne({
 //     //   oauthID: user.oauthID,
 //     // }).populate("image");
 
@@ -289,7 +289,7 @@ router.post(
 router.get("/", async (req, res) => {
   try {
     console.log(`${model} | GET`);
-    const docs = await global.artyouDb.User.find({})
+    const docs = await global.art47db.User.find({})
       .populate("image")
       .populate("tags")
       .lean();

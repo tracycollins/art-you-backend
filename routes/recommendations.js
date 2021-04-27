@@ -6,7 +6,7 @@ router.get("/user/:id", async (req, res) => {
   try {
     console.log(`GET ${model} | FILTER: USER OAUTHID: ${req.params.id}`);
 
-    const docs = await global.artyouDb[model].aggregate([
+    const docs = await global.art47db[model].aggregate([
       {
         $lookup: {
           from: "users",
@@ -67,7 +67,7 @@ router.get("/:id", async (req, res) => {
   console.log(`GET ${model} | ID: ${req.params.id}`);
   query.id = req.params.id;
 
-  const doc = await global.artyouDb[model]
+  const doc = await global.art47db[model]
     .findOne(query)
     .populate({ path: "artwork", populate: { path: "artist" } })
     .populate("user")
@@ -80,7 +80,7 @@ router.get("/:id", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     console.log(`${model} | GET`);
-    const docs = await global.artyouDb[model]
+    const docs = await global.art47db[model]
       .find({})
       .populate("artwork")
       .populate("user")

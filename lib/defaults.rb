@@ -1,15 +1,15 @@
 module Defaults
 
   ARTISTS_DIRECTORY = "#{Rails.root}/public/artwork/artists"
-  ARTISTS_BUCKET_NAME = "art-you-artists"
+  ARTISTS_BUCKET_NAME = "art47-artists"
 
-  ARTWORKS_BUCKET_NAME = "art-you-artworks"
+  ARTWORKS_BUCKET_NAME = "art47-artworks"
   USERS_DIRECTORY = "#{Rails.root}/public/users"
   
   NETWORK_TYPE = "TENSOR_FLOW"
   NETWORK_ID = "nn_DEFAULT_type_#{NETWORK_TYPE}"
   NETWORK_FILENAME = "neuralnetwork_#{NETWORK_TYPE}.net"
-  NETWORKS_BUCKET_NAME = "art-you-networks"
+  NETWORKS_BUCKET_NAME = "art47-networks"
   NETWORK_DIRECTORY = "#{Rails.root}/neuralnetworks"
   NETWORK_NUM_INPUTS = 400
   NETWORK_HIDDEN_NEURONS = [ 100 ]

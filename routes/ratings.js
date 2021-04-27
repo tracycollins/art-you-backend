@@ -71,7 +71,7 @@ router.get("/user/:id", async (req, res) => {
   try {
     console.log(`GET ${model} | FILTER: USER OAUTHID: ${req.params.id}`);
 
-    const docs = await global.artyouDb[model].aggregate([
+    const docs = await global.art47db[model].aggregate([
       {
         $lookup: {
           from: "users",
@@ -112,7 +112,7 @@ router.get("/:id", async (req, res) => {
     console.log(`GET ${model} | ID: ${req.params.id}`);
     query.id = req.params.id;
 
-    const doc = await global.artyouDb[model]
+    const doc = await global.art47db[model]
       .findOne(query)
       .populate({ path: "artwork", populate: { path: "artist" } })
       .populate("user")
@@ -134,7 +134,7 @@ router.post("/create", async (req, res) => {
       } | ARTWORK ID: ${req.body.artwork.id} | RATE: ${req.body.rate}`
     );
 
-    const dbUser = await global.artyouDb.User.findOne({
+    const dbUser = await global.art47db.User.findOne({
       _id: req.body.user._id,
     });
 
@@ -149,7 +149,7 @@ router.post("/create", async (req, res) => {
       `--> FOUND USER | USER ID ${dbUser.id} _ID: ${dbUser._id} NAME: ${dbUser.name}`
     );
 
-    const dbArtwork = await global.artyouDb.Artwork.findOne({
+    const dbArtwork = await global.art47db.Artwork.findOne({
       id: req.body.artwork.id,
     });
 
@@ -168,7 +168,7 @@ router.post("/create", async (req, res) => {
       rate: parseFloat(req.body.rate),
     };
 
-    let ratingDoc = await global.artyouDb.Rating.findOne({
+    let ratingDoc = await global.art47db.Rating.findOne({
       user: dbUser,
       artwork: dbArtwork,
     })
@@ -179,7 +179,7 @@ router.post("/create", async (req, res) => {
       console.log(
         `==> NEW | Rating | | RATE: ${ratingObj.rate} | USER: ${dbUser.id} | ARTWORK: ${dbArtwork.id}`
       );
-      ratingDoc = new global.artyouDb.Rating(ratingObj)
+      ratingDoc = new global.art47db.Rating(ratingObj)
         .populate({ path: "artwork", populate: { path: "artist" } })
         .populate("user");
       console.log(
@@ -193,7 +193,7 @@ router.post("/create", async (req, res) => {
     }
 
     await ratingDoc.save();
-    const ratingUpdated = await global.artyouDb.Rating.findOne({
+    const ratingUpdated = await global.art47db.Rating.findOne({
       _id: ratingDoc._id,
     });
 
@@ -245,7 +245,7 @@ router.post("/update", async (req, res) => {
         ` | RATE: ${req.body.rate}`
     );
 
-    const ratingDoc = await global.artyouDb[model]
+    const ratingDoc = await global.art47db[model]
       .findOne({ id: req.body.id })
       .populate({ path: "artwork", populate: { path: "artist" } })
       .populate("user");
@@ -274,7 +274,7 @@ router.post("/update", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     console.log(`${model} | GET`);
-    const docs = await global.artyouDb[model]
+    const docs = await global.art47db[model]
       .find({})
       .populate("artwork")
       .populate("user")

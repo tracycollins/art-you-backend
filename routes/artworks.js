@@ -13,7 +13,7 @@ router.get("/cursor/:cursor/", async (req, res) => {
     const limit = 20;
     console.log(`ARTWORKS | GET CURSOR: ${cursor} | LIMIT: ${limit}`);
 
-    const docs = await global.artyouDb.Artwork.find({ id: { $gt: cursor } })
+    const docs = await global.art47db.Artwork.find({ id: { $gt: cursor } })
       .sort()
       .limit(limit)
       .populate("image")
@@ -38,7 +38,7 @@ router.get(
   async (req, res) => {
     try {
       const userDoc = req.params.userid
-        ? await global.artyouDb.User.findOne({
+        ? await global.art47db.User.findOne({
             id: req.params.userid,
           }).select("_id")
         : false;
@@ -73,7 +73,7 @@ router.get(
         maxValue: value,
       };
 
-      const artworks = await global.artyouDb.sortBySubDocUserPaginate(
+      const artworks = await global.art47db.sortBySubDocUserPaginate(
         sortByOptions
       );
 
@@ -133,7 +133,7 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
   try {
     const userDoc =
       req.params.userid !== "0"
-        ? await global.artyouDb.User.findOne({
+        ? await global.art47db.User.findOne({
             id: req.params.userid,
           }).select("_id")
         : false;
@@ -148,7 +148,7 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
     );
 
     // docs can be ratings or recommendations
-    const artwork = await global.artyouDb.Artwork.findOne({ id: artworkId })
+    const artwork = await global.art47db.Artwork.findOne({ id: artworkId })
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
       .populate({ path: "ratings", populate: { path: "user" } })
@@ -156,11 +156,11 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
       .populate({ path: "tags", populate: { path: "user" } })
       .lean();
 
-    const ratingDoc = await global.artyouDb.Rating.findOne({
+    const ratingDoc = await global.art47db.Rating.findOne({
       user: userDoc,
       artwork: artwork,
     }).lean();
-    const recommendationDoc = await global.artyouDb.Recommendation.findOne({
+    const recommendationDoc = await global.art47db.Recommendation.findOne({
       user: userDoc,
       artwork: artwork,
     }).lean();
@@ -214,7 +214,7 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
     );
 
     const user = req.params.userid
-      ? await global.artyouDb.User.findOne({
+      ? await global.art47db.User.findOne({
           id: req.params.userid,
         })
           .populate({ path: "artist", populate: { path: "image" } })
@@ -249,7 +249,7 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
       limit,
     };
 
-    const artworks = await global.artyouDb.sortBySubDocUserPaginate(
+    const artworks = await global.art47db.sortBySubDocUserPaginate(
       sortByOptions
     );
 
@@ -268,7 +268,7 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
       `Artwork | GET ARTWORK BY ID ${req.params.artworkid} | POP RATING/REC BY USER ID: ${req.params.userid}`
     );
 
-    const userDoc = await global.artyouDb.User.findOne({
+    const userDoc = await global.art47db.User.findOne({
       id: req.params.userid,
     }).lean();
 
@@ -279,7 +279,7 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
     const query = {};
     query.id = parseInt(req.params.artworkid);
 
-    const artworkDoc = await global.artyouDb.Artwork.findOne(query)
+    const artworkDoc = await global.art47db.Artwork.findOne(query)
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
       .populate({ path: "ratings", populate: { path: "user" } })
@@ -288,11 +288,11 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
       .lean()
       .exec();
 
-    const ratingDoc = await global.artyouDb.Rating.findOne({
+    const ratingDoc = await global.art47db.Rating.findOne({
       user: userDoc,
       artwork: artworkDoc,
     }).lean();
-    const recommendationDoc = await global.artyouDb.Recommendation.findOne({
+    const recommendationDoc = await global.art47db.Recommendation.findOne({
       user: userDoc,
       artwork: artworkDoc,
     }).lean();
@@ -325,11 +325,11 @@ router.get("/user/:userid", async (req, res) => {
       `Artwork | GET ARTWORKS | POP RATING/REC BY USER ID: ${req.params.userid}`
     );
 
-    const userDoc = await global.artyouDb.User.findOne({
+    const userDoc = await global.art47db.User.findOne({
       id: req.params.userid,
     }).lean();
 
-    const artworkDocs = await global.artyouDb.Artwork.find({})
+    const artworkDocs = await global.art47db.Artwork.find({})
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
       .populate({ path: "ratings", populate: { path: "user" } })
@@ -370,7 +370,7 @@ router.get("/:id", async (req, res) => {
   console.log(`GET Artwork | ID: ${req.params.id}`);
   query.id = parseInt(req.params.id);
 
-  const doc = await global.artyouDb.Artwork.findOne(query)
+  const doc = await global.art47db.Artwork.findOne(query)
     .populate("image")
     .populate({ path: "artist", populate: { path: "image" } })
     .populate({ path: "ratings", populate: { path: "user" } })
@@ -390,12 +390,12 @@ router.get("/artist/:id", async (req, res) => {
   try {
     console.log(`Artwork | GET ARTWORK BY ARTIST ${req.params.id}`);
 
-    const artistDoc = await global.artyouDb.Artwork.findOne({
+    const artistDoc = await global.art47db.Artwork.findOne({
       id: req.params.id,
     });
 
     if (artistDoc) {
-      const docs = await global.artyouDb.Artwork.find({
+      const docs = await global.art47db.Artwork.find({
         artist: artistDoc,
       })
         .populate("image")
@@ -421,7 +421,7 @@ router.get("/", async (req, res) => {
   try {
     console.log(`Artwork | GET`);
 
-    const docs = await global.artyouDb.Artwork.find({})
+    const docs = await global.art47db.Artwork.find({})
       .populate("image")
       .populate({ path: "artist", populate: { path: "image" } })
       .populate({ path: "ratings", populate: { path: "user" } })
