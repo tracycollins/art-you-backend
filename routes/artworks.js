@@ -2,6 +2,7 @@
 /* eslint-disable dot-notation */
 const express = require("express");
 const ObjectID = require("mongodb").ObjectID;
+const escape = require("escape-html");
 const router = express.Router({
   strict: true,
 });
