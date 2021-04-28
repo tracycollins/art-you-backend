@@ -1016,9 +1016,9 @@
     regenerator-runtime "^0.13.5"
     yargs "^16.0.3"
 
-"@threeceelabs/mongoose-art47@^4.1.0":
+"@threeceelabs/mongoose-art47@^4.1.1":
   version "4.1.1"
-  resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-art47/-/mongoose-art47-4.1.1.tgz#a6dfd1539807eb2b5431290e81af21a6c53c010c"
+  resolved "https://registry.npmjs.org/@threeceelabs/mongoose-art47/-/mongoose-art47-4.1.1.tgz#a6dfd1539807eb2b5431290e81af21a6c53c010c"
   integrity sha512-XpmVnLbunuAjrwZN3VYbaTC0nqkHH5AsxF5M05wXKIkKHOZjuzruvKV+Ij4RQV2rFPJuZZIcWXPS6iKg1HbR+g==
   dependencies:
     "@aws-sdk/client-s3" "^3.11.0"
