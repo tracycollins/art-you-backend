@@ -1017,9 +1017,9 @@
     yargs "^16.0.3"
 
 "@threeceelabs/mongoose-art47@^4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-art47/-/mongoose-art47-4.0.1.tgz#64f1b5cf2f609442edc9cf5cdd0bc03454b8333b"
-  integrity sha512-SveD2iEE1FjIdtIf9IzJu9Dopabuj6O5ANt5dLPyIZLsh21pxj7bdH66AqnoQS/PCXg0xUKaP9CRJHl02Azmaw==
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-art47/-/mongoose-art47-4.1.0.tgz#611a98026e304e65a7137c1120b803349a5cb6d0"
+  integrity sha512-cZpubBdaTmr2y7r8d7SSYtzH9VYnEKggtis9njJGCH0KOgkw+px+qxgP5h4JtHUSZDpn0RwDAqaiCW88qgbgrg==
   dependencies:
     "@aws-sdk/client-s3" "^3.11.0"
     async "^3.2.0"
