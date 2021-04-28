@@ -87,7 +87,7 @@ router.get("/:id", async (req, res) => {
       res.sendStatus(404);
     }
   } catch (err) {
-    console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
+    console.error(`GET | ${model} | ID: ${escape(req.body.id)} ERROR: ${err}`);
     res
       .status(400)
       .send(`GET | ${model} | ID: ${escape(req.body.id)} | ERROR: ${err}`);
@@ -174,7 +174,9 @@ router.post("/update", async (req, res) => {
 
     res.json(userUpdatedJson);
   } catch (err) {
-    console.error(`POST | UPDATE | User | ID: ${req.body.id} ERROR: ${err}`);
+    console.error(
+      `POST | UPDATE | User | ID: ${escape(req.body.id)} ERROR: ${err}`
+    );
     res
       .status(400)
       .send(`GET | User | ID: ${escape(req.body.id)} | ERROR: ${err}`);
@@ -244,7 +246,7 @@ router.get("/", async (req, res) => {
     console.log(`FOUND ${docs.length} ${model}s`);
     res.json(docs);
   } catch (err) {
-    console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
+    console.error(`GET | ${model} | ID: ${escape(req.body.id)} ERROR: ${err}`);
     res
       .status(400)
       .send(`GET | ${model} | ID: ${escape(req.body.id)} | ERROR: ${err}`);
