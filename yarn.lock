@@ -1016,28 +1016,6 @@
     regenerator-runtime "^0.13.5"
     yargs "^16.0.3"
 
-"@threeceelabs/mongoose-art47@^2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-art47/-/mongoose-art47-2.0.1.tgz#6c2819aec5a23a93714a8ed5ba862aea9411f953"
-  integrity sha512-S+5vcrHXEVxsly6SW8j/v588Vx3zPJfvbA1DDfzv+23jCnEVALjm6Snj80UAuV7gFLhHadhsv6ixamvdVtfW6Q==
-  dependencies:
-    "@aws-sdk/client-s3" "^3.11.0"
-    async "^3.2.0"
-    fs-extra "^9.1.0"
-    jsonfile "^6.1.0"
-    lodash "^4.17.21"
-    mocha "^8.3.2"
-    moment "^2.29.1"
-    mongodb "^3.6.6"
-    mongoose "^5.12.3"
-    mongoose-sequence "^5.3.1"
-    mongoose-simple-random "^0.4.1"
-    object-path "^0.11.5"
-    object-treeify "^2.0.0"
-    p-retry "^4.5.0"
-    treeify "^1.1.0"
-    walker "^1.0.7"
-
 "@tootallnate/once@1":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
