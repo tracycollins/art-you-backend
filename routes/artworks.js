@@ -28,9 +28,11 @@ router.get("/cursor/:cursor/", async (req, res) => {
 
     res.json(docs);
   } catch (err) {
-    const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${escape(
-      req.params.userid
-    )} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
+    const message = `GET | ARTWORKS | ID: ${escape(
+      req.body.id
+    )} | USER ID: ${escape(req.params.userid)} | CURSOR: ${
+      req.params.cursor
+    } | ERROR: ${err}`;
     console.error(message);
     res.status(400).send(message);
   }
@@ -272,7 +274,9 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
 
     res.json({ artworks });
   } catch (err) {
-    console.error(`GET | Artwork | OAUTHID: ${req.body.id} ERROR: ${err}`);
+    console.error(
+      `GET | Artwork | OAUTHID: ${escape(req.body.id)} ERROR: ${err}`
+    );
     res
       .status(400)
       .send(`GET | Artwork | OAUTHID: ${escape(req.body.id)} | ERROR: ${err}`);
@@ -335,7 +339,7 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
       res.json([]);
     }
   } catch (err) {
-    console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
+    console.error(`GET | Artwork | ID: ${escape(req.body.id)} ERROR: ${err}`);
     res
       .status(400)
       .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
@@ -384,7 +388,7 @@ router.get("/user/:userid", async (req, res) => {
 
     res.json(docs);
   } catch (err) {
-    console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
+    console.error(`GET | Artwork | ID: ${escape(req.body.id)} ERROR: ${err}`);
     res
       .status(400)
       .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
@@ -439,7 +443,7 @@ router.get("/artist/:id", async (req, res) => {
       res.json([]);
     }
   } catch (err) {
-    console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
+    console.error(`GET | Artwork | ID: ${escape(req.body.id)} ERROR: ${err}`);
     res
       .status(400)
       .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
@@ -461,7 +465,7 @@ router.get("/", async (req, res) => {
     console.log(`FOUND ${docs.length} Artworks`);
     res.json(docs);
   } catch (err) {
-    console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
+    console.error(`GET | Artwork | ID: ${escape(req.body.id)} ERROR: ${err}`);
     res
       .status(400)
       .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
