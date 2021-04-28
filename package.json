@@ -53,6 +53,5 @@
   "description": "art47 backend",
   "main": "app.js",
   "author": "Tracy Collins",
-  "license": "ISC",
   "repository": "https://github.com/tracycollins/art47-backend.git"
 }
