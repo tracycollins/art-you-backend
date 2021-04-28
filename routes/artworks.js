@@ -28,7 +28,9 @@ router.get("/cursor/:cursor/", async (req, res) => {
 
     res.json(docs);
   } catch (err) {
-    const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
+    const message = `GET | ARTWORKS | ID: ${req.body.id} | USER ID: ${escape(
+      req.params.userid
+    )} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
     console.error(message);
     res.status(400).send(message);
   }
@@ -121,11 +123,15 @@ router.get(
       //
     } catch (err) {
       console.error(
-        `GET | Artwork | OAUTHID: ${req.params.userid} ERROR: ${err}`
+        `GET | Artwork | OAUTHID: ${escape(req.params.userid)} ERROR: ${err}`
       );
       res
         .status(400)
-        .send(`GET | Artwork | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
+        .send(
+          `GET | Artwork | OAUTHID: ${escape(
+            req.params.userid
+          )} | ERROR: ${err}`
+        );
     }
   }
 );
@@ -192,17 +198,21 @@ router.get("/user/:userid/id/:artworkId/", async (req, res) => {
       res.json({ artwork });
     } else {
       console.log(
-        `ARTWORK OR USER NOT FOUND | ARTWORK ID: ${req.params.artworkid} | USER ID: ${req.params.userid}`
+        `ARTWORK OR USER NOT FOUND | ARTWORK ID: ${
+          req.params.artworkid
+        } | USER ID: ${escape(req.params.userid)}`
       );
       res.json();
     }
   } catch (err) {
     console.error(
-      `GET | Artwork | OAUTHID: ${req.params.userid} ERROR: ${err}`
+      `GET | Artwork | OAUTHID: ${escape(req.params.userid)} ERROR: ${err}`
     );
     res
       .status(400)
-      .send(`GET | Artwork | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
+      .send(
+        `GET | Artwork | OAUTHID: ${escape(req.params.userid)} | ERROR: ${err}`
+      );
   }
 });
 
@@ -211,7 +221,9 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
     const limit = process.env.UNRATED_LIMIT || 9;
 
     console.log(
-      `GET Artwork | USER TOP RECS | USER ID: ${req.params.userid} | UNRATED FLAG: ${req.params.unrated} | LIMIT: ${limit}`
+      `GET Artwork | USER TOP RECS | USER ID: ${escape(
+        req.params.userid
+      )} | UNRATED FLAG: ${req.params.unrated} | LIMIT: ${limit}`
     );
 
     const user = req.params.userid
@@ -225,7 +237,9 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
 
     if (!user) {
       console.log(
-        `GET Artwork | !!! USER TOP UNRATED RECS | USER ID: ${req.params.userid} NOT FOUND`
+        `GET Artwork | !!! USER TOP UNRATED RECS | USER ID: ${escape(
+          req.params.userid
+        )} NOT FOUND`
       );
       return res.status(404);
     }
@@ -238,7 +252,9 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
 
     if (user.unrated && user.unrated.length === 0) {
       console.log(
-        `GET Artwork | --- USER TOP UNRATED RECS | USER ID: ${req.params.userid} | NO UNRATED FOUND`
+        `GET Artwork | --- USER TOP UNRATED RECS | USER ID: ${escape(
+          req.params.userid
+        )} | NO UNRATED FOUND`
       );
       return res.json({ artworks: [] });
     }
@@ -266,7 +282,9 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
 router.get("/:artworkid/user/:userid", async (req, res) => {
   try {
     console.log(
-      `Artwork | GET ARTWORK BY ID ${req.params.artworkid} | POP RATING/REC BY USER ID: ${req.params.userid}`
+      `Artwork | GET ARTWORK BY ID ${
+        req.params.artworkid
+      } | POP RATING/REC BY USER ID: ${escape(req.params.userid)}`
     );
 
     const userDoc = await global.art47db.User.findOne({
@@ -310,7 +328,9 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
       res.json(artworkDoc);
     } else {
       console.log(
-        `ARTWORK OR USER NOT FOUND | ARTWORK ID: ${req.params.artworkid} | USER ID: ${req.params.userid}`
+        `ARTWORK OR USER NOT FOUND | ARTWORK ID: ${
+          req.params.artworkid
+        } | USER ID: ${escape(req.params.userid)}`
       );
       res.json([]);
     }
@@ -325,7 +345,9 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
 router.get("/user/:userid", async (req, res) => {
   try {
     console.log(
-      `Artwork | GET ARTWORKS | POP RATING/REC BY USER ID: ${req.params.userid}`
+      `Artwork | GET ARTWORKS | POP RATING/REC BY USER ID: ${escape(
+        req.params.userid
+      )}`
     );
 
     const userDoc = await global.art47db.User.findOne({
