@@ -1,4 +1,5 @@
 const dotenv = require("dotenv");
+const csrf = require("csurf");
 
 if (process.env.ART47_ENV_VARS_FILE) {
   const envConfig = dotenv.config({ path: process.env.ART47_ENV_VARS_FILE });
@@ -347,6 +348,7 @@ function count(req, res, next) {
 
 app.use(logger("dev"));
 app.use(cookieParser());
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use(count);
 
@@ -491,6 +493,8 @@ app.post("/authenticated", async (req, res) => {
     console.log(`APP | *** POST AUTH ERROR: ${err}`);
   }
 });
+
+app.use(csrf({ cookie: true }));
 
 app.use("/stats", statsRouter);
 app.use("/login", loginRouter);
