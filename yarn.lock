@@ -1016,7 +1016,7 @@
     regenerator-runtime "^0.13.5"
     yargs "^16.0.3"
 
-"@threeceelabs/mongoose-art47@^4.0.1":
+"@threeceelabs/mongoose-art47@^4.1.0":
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-art47/-/mongoose-art47-4.1.0.tgz#611a98026e304e65a7137c1120b803349a5cb6d0"
   integrity sha512-cZpubBdaTmr2y7r8d7SSYtzH9VYnEKggtis9njJGCH0KOgkw+px+qxgP5h4JtHUSZDpn0RwDAqaiCW88qgbgrg==
