@@ -1016,10 +1016,10 @@
     regenerator-runtime "^0.13.5"
     yargs "^16.0.3"
 
-"@threeceelabs/mongoose-art47@^4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-art47/-/mongoose-art47-4.0.0.tgz#a80f874981453961745b51f56b1b5ea13005e27c"
-  integrity sha512-9P2N/4cfsIt7e57uPjC1bUs9xZgjlzHzs6jySjWu2dNNzfqhBmQDdz/PNE+X+PqFs18SllXkavjvtrK3H6AlEw==
+"@threeceelabs/mongoose-art47@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@threeceelabs/mongoose-art47/-/mongoose-art47-4.0.1.tgz#64f1b5cf2f609442edc9cf5cdd0bc03454b8333b"
+  integrity sha512-SveD2iEE1FjIdtIf9IzJu9Dopabuj6O5ANt5dLPyIZLsh21pxj7bdH66AqnoQS/PCXg0xUKaP9CRJHl02Azmaw==
   dependencies:
     "@aws-sdk/client-s3" "^3.11.0"
     async "^3.2.0"
