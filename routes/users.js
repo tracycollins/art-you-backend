@@ -1,6 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 const fs = require("fs-extra");
 const express = require("express");
+const escape = require("escape-html");
 const router = express.Router();
 const multer = require("multer");
 const upload = multer({ dest: "/tmp/art47/uploads/profile/" });
@@ -225,66 +226,9 @@ router.post(
     const userJson = userDoc.toObject();
 
     // NEED TO SET UP TRANSFER OF IMAGE TO S3 or GOOGLE, and modify user.image
-
     res.json({ user: userDoc });
-
-    // req.file is the `avatar` file
-    // req.body will hold the text fields, if there were any
   }
 );
-
-// router.post("/upload", async (req, res) => {
-//   try {
-//     // const {
-//     //   user,
-//     //   fileSize,
-//     //   fileName,
-//     //   filePath,
-//     //   type,
-//     //   dataType,
-//     //   data,
-//     // } = req.body;
-
-//     console.log(req.body);
-
-//     // console.log(
-//     //   `${PF} | POST` +
-//     //     ` | UPLOAD FILE | User` +
-//     //     ` | ID: ${user.id}` +
-//     //     ` | _ID: ${user._id}` +
-//     //     ` | SUB: ${user.sub}` +
-//     //     ` | TYPE: ${type}` +
-//     //     ` | FILE: ${fileName}` +
-//     //     ` | DATA TYPE: ${dataType}` +
-//     //     ` | FILE PATH: ${filePath}` +
-//     //     ` | FILE SIZE: ${fileSize}`
-//     // );
-
-//     // console.log({ data });
-
-//     // const userDoc = await global.art47db.User.findOne({
-//     //   oauthID: user.oauthID,
-//     // }).populate("image");
-
-//     // // await userDoc.save();
-
-//     // console.log(
-//     //   `UPLOADED FILE | User` +
-//     //     ` | ID: ${userDoc.id}` +
-//     //     ` | _ID: ${userDoc._id}` +
-//     //     ` | SUB: ${userDoc.sub}`
-//     // );
-
-//     res.json({ status: "OK");
-//   } catch (err) {
-//     console.error(
-//       `POST | UPLOAD FILE | User | ID: ${req.body.user.id} ERROR: ${err}`
-//     );
-//     res
-//       .status(400)
-//       .send(`GET | User | ID: ${req.body.user.id} | ERROR: ${err}`);
-//   }
-// });
 
 router.get("/", async (req, res) => {
   try {
@@ -297,7 +241,9 @@ router.get("/", async (req, res) => {
     res.json(docs);
   } catch (err) {
     console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | ${model} | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
