@@ -258,7 +258,7 @@ router.get("/user/:userid/recs/top/(:unrated)?", async (req, res) => {
     console.error(`GET | Artwork | OAUTHID: ${req.body.id} ERROR: ${err}`);
     res
       .status(400)
-      .send(`GET | Artwork | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+      .send(`GET | Artwork | OAUTHID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -315,7 +315,9 @@ router.get("/:artworkid/user/:userid", async (req, res) => {
     }
   } catch (err) {
     console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | Artwork | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -360,7 +362,9 @@ router.get("/user/:userid", async (req, res) => {
     res.json(docs);
   } catch (err) {
     console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | Artwork | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -413,7 +417,9 @@ router.get("/artist/:id", async (req, res) => {
     }
   } catch (err) {
     console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | Artwork | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -433,7 +439,9 @@ router.get("/", async (req, res) => {
     res.json(docs);
   } catch (err) {
     console.error(`GET | Artwork | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | Artwork | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 

@@ -30,7 +30,6 @@ router.head("/", cors(corsOptionsDelegate), (req, res) => {
 
 router.get("/", cors(corsOptionsDelegate), (req, res) => {
   console.info("GET /");
-  // res.render('login', { title: 'art:you | login', visits: req.session.count});
   res.json({
     text: "Simple CORS requests are working. [GET]",
   });

@@ -29,7 +29,9 @@ router.get("/", async (req, res) => {
     res.json({ stats: statsObj });
   } catch (err) {
     console.error(`GET | STATS | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | STATS | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | STATS | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 

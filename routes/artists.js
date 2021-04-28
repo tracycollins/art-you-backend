@@ -117,7 +117,9 @@ router.get("/", async (req, res) => {
     res.json(docs);
   } catch (err) {
     console.error(`GET | Artist | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | Artist | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | Artist | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 

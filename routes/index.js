@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const cors = require('cors');
+const cors = require("cors");
 
 router.head("/", cors(), (req, res) => {
   console.info("HEAD /");
@@ -8,20 +8,15 @@ router.head("/", cors(), (req, res) => {
 });
 router.get("/", cors(), (req, res) => {
   console.info("GET /");
-  // res.render('index', { title: 'home', visits: req.session.count});
   res.json({
-    text: "Simple CORS requests are working. [GET]"
+    text: "Simple CORS requests are working. [GET]",
   });
 });
 router.post("/", cors(), (req, res) => {
   console.info("POST /");
   res.json({
-    text: "Simple CORS requests are working. [POST]"
+    text: "Simple CORS requests are working. [POST]",
   });
 });
-
-// router.get('/', function(req, res) {
-//   res.render('index', { title: 'home', visits: req.session.count});
-// });
 
 module.exports = router;

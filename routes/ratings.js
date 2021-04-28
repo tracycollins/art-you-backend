@@ -1,10 +1,8 @@
 /* eslint-disable no-underscore-dangle */
-// const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 
 const model = "Rating";
 const express = require("express");
 const router = express.Router();
-// const Queue = require("bull");
 const NeuralNetworkTools = require("../lib/nnTools.js");
 const nnt = new NeuralNetworkTools("NTR");
 
@@ -15,57 +13,6 @@ nnt.on("ready", async (appName) => {
 nnt.on("connect", async (appName) => {
   console.log(`NTR | RATINGS | DB CONNECTED | APP NAME: ${appName}`);
 });
-
-// const workUpdateRecommendationsQueue = new Queue(
-//   "updateRecommendations",
-//   REDIS_URL
-// );
-
-// const triggerNetworkFitRatingsUpdateNumber = 10;
-
-// const userRatingUpdateCounterHashmap = {};
-// let nntUpdateRecommendationsReady = true;
-
-// const updateUserRatingCount = async (user) => {
-//   userRatingUpdateCounterHashmap[user.id] = userRatingUpdateCounterHashmap[
-//     user.id
-//   ]
-//     ? (userRatingUpdateCounterHashmap[user.id] += 1)
-//     : (userRatingUpdateCounterHashmap[user.id] = 1);
-
-//   if (
-//     nntUpdateRecommendationsReady &&
-//     userRatingUpdateCounterHashmap[user.id] >=
-//       triggerNetworkFitRatingsUpdateNumber
-//   ) {
-//     try {
-//       nntUpdateRecommendationsReady = false;
-//       const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
-
-//       console.log(
-//         `NTR | ADDING JOB TO WORKER QUEUE | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS`
-//       );
-
-//       const jobUpdateRecs = await workUpdateRecommendationsQueue.add({
-//         op: "UPDATE_RECS",
-//         oauthID: user.id,
-//         epochs: epochs,
-//       });
-
-//       console.log(`NTR | JOB ADDED`);
-//       console.log({ jobUpdateRecs });
-
-//       userRatingUpdateCounterHashmap[user.id] = 0;
-//       nntUpdateRecommendationsReady = true;
-//     } catch (err) {
-//       nntUpdateRecommendationsReady = true;
-//       console.log(
-//         `NTR | RATINGS | *** updateRecommendationsChild ERROR: ${err}`
-//       );
-//     }
-//   }
-//   return userRatingUpdateCounterHashmap[user.id];
-// };
 
 router.get("/user/:id", async (req, res) => {
   try {
@@ -101,7 +48,7 @@ router.get("/user/:id", async (req, res) => {
     console.error(`GET | ${model} | OAUTHID: ${req.body.id} ERROR: ${err}`);
     res
       .status(400)
-      .send(`GET | ${model} | OAUTHID: ${req.body.id} | ERROR: ${err}`);
+      .send(`GET | ${model} | OAUTHID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -122,7 +69,9 @@ router.get("/:id", async (req, res) => {
     res.json(doc);
   } catch (err) {
     console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | ${model} | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -252,8 +201,6 @@ router.post("/update", async (req, res) => {
     ratingDoc.rate = req.body.rate;
     await ratingDoc.save();
 
-    // updateUserRatingCount(ratingDoc.user);
-
     console.log(
       `UPDATED | Rating` +
         ` | ID: ${ratingDoc.id}` +
@@ -267,7 +214,9 @@ router.post("/update", async (req, res) => {
     console.error(
       `POST | UPDATE | ${model} | ID: ${req.body.id} ERROR: ${err}`
     );
-    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | ${model} | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -283,7 +232,9 @@ router.get("/", async (req, res) => {
     res.json(docs);
   } catch (err) {
     console.error(`GET | ${model} | ID: ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`GET | ${model} | ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`GET | ${model} | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
