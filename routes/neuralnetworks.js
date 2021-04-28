@@ -1,4 +1,5 @@
 const express = require("express");
+const escape = require("escape-html");
 const router = express.Router();
 
 router.param("id", async (req, res, next, id) => {
@@ -17,7 +18,6 @@ router.param("id", async (req, res, next, id) => {
     console.error(`NN | ${req.method} | NN ID: ${id} | ERROR: ${err}`);
     next(err);
   }
-  // next()
 });
 
 router.get("/:id", async (req, res) => {
@@ -40,7 +40,9 @@ router.post("/:id", async (req, res) => {
     res.json(newNnDoc);
   } catch (err) {
     console.error(`NN | POST | ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`POST ERROR | NN ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`POST ERROR | NN ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -64,7 +66,9 @@ router.patch("/:id", async (req, res) => {
     }
   } catch (err) {
     console.error(`NN | PATCH | ${req.body.id} ERROR: ${err}`);
-    res.status(400).send(`PATCH ERROR | NN ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`PATCH ERROR | NN ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
@@ -75,7 +79,9 @@ router.get("/", async (req, res) => {
     res.json(nnArray);
   } catch (err) {
     console.error(`NN | GET | ERROR: ${err}`);
-    res.status(400).send(`PATCH ERROR | NN ID: ${req.body.id} | ERROR: ${err}`);
+    res
+      .status(400)
+      .send(`PATCH ERROR | NN ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
 
