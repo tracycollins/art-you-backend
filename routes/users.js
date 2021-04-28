@@ -126,7 +126,7 @@ router.post("/update", async (req, res) => {
     const userDoc = await global.art47db.User.findOne(query).populate("image");
 
     if (!userDoc) {
-      throw new Error(`USER NOT FOUND | _ID: ${req.body._id}`);
+      throw new Error(`USER NOT FOUND | _ID: ${escape(req.body._id)}`);
     }
 
     userDoc.rated = await global.art47db.Rating.countDocuments({
