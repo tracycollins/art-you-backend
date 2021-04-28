@@ -1,7 +1,7 @@
 {
-  "name": "@threeceelabs/art47-backend-nodejs",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@threeceelabs/art47-backend",
+  "version": "1.0.1",
+  "private": false,
   "scripts": {
     "start": "node ./bin/www",
     "test": "mocha"
@@ -47,8 +47,9 @@
     "faker": "^5.5.3",
     "should": "^13.2.3"
   },
-  "description": "art47 backend in node.js",
+  "description": "art47 backend",
   "main": "app.js",
   "author": "Tracy Collins",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": "https://github.com/tracycollins/art47-backend.git"
 }
