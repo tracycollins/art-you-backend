@@ -1,6 +1,6 @@
 {
   "name": "@threeceelabs/art47-backend",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "private": false,
   "scripts": {
     "start": "node ./bin/www",
