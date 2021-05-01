@@ -48,7 +48,9 @@ router.get("/cursor/:cursor", async (req, res) => {
       res.json({ artists: artists, nextKey: nextKey });
     }
   } catch (err) {
-    const message = `GET | ARTISTS | ID: ${req.body.id} | USER ID: ${req.params.userid} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
+    const message = `GET | ARTISTS | ID: ${req.body.id} | USER ID: ${escape(
+      req.params.userid
+    )} | CURSOR: ${req.params.cursor} | ERROR: ${err}`;
     console.error(message);
     res.status(400).send(message);
   }
@@ -94,10 +96,14 @@ router.get("/user/:userid/id/:artistId/(:artworks)?", async (req, res) => {
 
     res.json({ artist: artist });
   } catch (err) {
-    console.error(`GET | Artist | OAUTHID: ${req.params.userid} ERROR: ${err}`);
+    console.error(
+      `GET | Artist | OAUTHID: ${escape(req.params.userid)} ERROR: ${err}`
+    );
     res
       .status(400)
-      .send(`GET | Artist | OAUTHID: ${req.params.userid} | ERROR: ${err}`);
+      .send(
+        `GET | Artist | OAUTHID: ${escape(req.params.userid)} | ERROR: ${err}`
+      );
   }
 });
 

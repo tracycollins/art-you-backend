@@ -348,6 +348,7 @@ function count(req, res, next) {
 
 app.use(logger("dev"));
 app.use(cookieParser());
+// app.use(csrf({ cookie: true }));
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(count);
@@ -493,8 +494,6 @@ app.post("/authenticated", async (req, res) => {
     console.log(`APP | *** POST AUTH ERROR: ${err}`);
   }
 });
-
-app.use(csrf({ cookie: true }));
 
 app.use("/stats", statsRouter);
 app.use("/login", loginRouter);
