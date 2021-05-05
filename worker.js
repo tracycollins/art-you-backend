@@ -141,9 +141,9 @@ const initUpdateRecsQueue = async () => {
           ` | PID: ${process.pid}` +
           ` | JID: ${job.id}` +
           ` | OP: ${job.data.op}` +
-          ` | OAUTHID: ${job.data.oauthID}` +
-          ` | ${results.unrated.length} UNRATED`
+          ` | OAUTHID: ${job.data.oauthID}`
       );
+      console.log({ results });
       results.stats = statsObj;
       return results;
     } catch (err) {
@@ -209,8 +209,13 @@ const initUpdateUnratedQueue = async () => {
           ` | OAUTHID: ${job.data.oauthID}` +
           ` | ${results.unrated.length} UNRATED`
       );
+      // console.log({ results });
       results.stats = statsObj;
-      done(null, { unrated: results.unrated.length });
+      done(null, {
+        op: job.op,
+        stats: statsObj,
+        unrated: results.unrated.length,
+      });
     } catch (err) {
       console.log(
         `${PF} | *** WORKER | *** JOB ERROR | UPDATE UNRATED` +
