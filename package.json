@@ -15,7 +15,7 @@
   "dependencies": {
     "@google-cloud/storage": "^5.8.4",
     "@google-cloud/vision": "^2.3.1",
-    "@tensorflow/tfjs-node": "^3.5.0",
+    "@tensorflow/tfjs-node": "^3.6.1",
     "@threeceelabs/mongoose-art47": "^4.1.1",
     "aws-sdk": "^2.894.0",
     "bull": "^3.22.4",
