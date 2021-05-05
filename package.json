@@ -44,6 +44,7 @@
     "multer": "^1.4.2",
     "object.defaults": "^1.1.0",
     "random-int": "^3.0.0",
+    "seedrandom": "^3.0.5",
     "sharp": "^0.28.1",
     "throng": "^5.0.0",
     "treeify": "^1.1.0"
