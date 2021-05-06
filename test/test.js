@@ -7,53 +7,54 @@ const moment = require("moment");
 
 // const ImageTools = require("../lib/imageTools.js");
 
-const UserTools = require("../lib/userTools.js");
+// const UserTools = require("../lib/userTools.js");
 
-// const NeuralNetworkTools = require("../lib/nnTools.js");
-// let nnt;
+const NeuralNetworkTools = require("../lib/nnTools.js");
+let nnt = new NeuralNetworkTools();
 
-// nnt.on("ready", async (appName) => {
-//   console.log(`NNT | READY | APP NAME: ${appName}`);
-//   await nnt.createInputs();
-//   console.log(`NNT | >>> START NETWORK TEST`);
-//   //   await nnt.runNetworkTest();
-// });
-
-describe("userTools", function () {
-  let usr;
-
-  before(function (done) {
-    usr = new UserTools("TUSR");
-
-    usr.on("ready", (appName) => {
-      try {
-        console.log(`USR | READY | APP NAME: ${appName}`);
-        done();
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  });
-
-  after(function (done) {
-    console.log(`TESTS COMPLETE`);
-    process.exit();
-  });
-
-  describe("unratedArtworksByUser", function () {
-    it("47 artworks", async function () {
-      const response = await usr.getUnratedArtworks({
-        model: "Artwork",
-        user_id: "60483532b8c09b0015454be7",
-        populate: "ratings",
-        // limit: 10,
-        lean: true,
-      });
-      console.log({ response });
-      response.results.length.should.equal(47);
-    });
-  });
+nnt.on("ready", async (appName) => {
+  console.log(`NNT | READY | APP NAME: ${appName}`);
+  await nnt.createInputs();
+  // console.log(`NNT | >>>  NETWORK TEST`);
+  await nnt.createInputSet({ image: { width: 64, height: 64, channels: 3 } });
+  await nnt.createNetwork();
 });
+
+// describe("userTools", function () {
+//   let usr;
+
+//   before(function (done) {
+//     usr = new UserTools("TUSR");
+
+//     usr.on("ready", (appName) => {
+//       try {
+//         console.log(`USR | READY | APP NAME: ${appName}`);
+//         done();
+//       } catch (err) {
+//         console.error(err);
+//       }
+//     });
+//   });
+
+//   after(function (done) {
+//     console.log(`TESTS COMPLETE`);
+//     process.exit();
+//   });
+
+//   describe("unratedArtworksByUser", function () {
+//     it("47 artworks", async function () {
+//       const response = await usr.getUnratedArtworks({
+//         model: "Artwork",
+//         user_id: "60483532b8c09b0015454be7",
+//         populate: "ratings",
+//         // limit: 10,
+//         lean: true,
+//       });
+//       console.log({ response });
+//       response.results.length.should.equal(47);
+//     });
+//   });
+// });
 
 // describe("s3", function () {
 //   let client;
