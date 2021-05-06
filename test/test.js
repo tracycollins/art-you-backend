@@ -20,7 +20,9 @@ nnt.on("ready", async (appName) => {
   //   image: { width: 64, height: 64, channels: 3 },
   // });
   // console.log({ inputsDoc });
+  // const nnDoc = await nnt.createUserNetwork({ epochs: 100, maxCount: 5 });
   const nnDoc = await nnt.createUserNetwork();
+  process.exit();
 });
 
 // describe("userTools", function () {
