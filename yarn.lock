@@ -1316,9 +1316,9 @@ at-least-node@^1.0.0:
   integrity sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==
 
 aws-sdk@^2.894.0:
-  version "2.901.0"
-  resolved "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.901.0.tgz#96b387778cf2b3537383fba04994e815f1fab4d4"
-  integrity sha512-prmUjg4mjguamnwaXMdm/g1xtnT9515cjSaV/MhBsMUVzhe66EX7dLwiA7Jo8qUlwFMyCVIcp/2T+6KwJ9sQgQ==
+  version "2.902.0"
+  resolved "https://registry.npmjs.org/aws-sdk/-/aws-sdk-2.902.0.tgz#6e71f02b02ccbecf88e8e3c7f24e940ebdc6655e"
+  integrity sha512-tbX2DaaPwQyETCdYVImp7euTyF0bXLKUmicaD64Xb2v/firEG4t+yRFADiQ/ZetkmvOPN8O3jqXIAz6I6EbnuA==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"
@@ -1738,9 +1738,9 @@ cookies@0.8.0:
     keygrip "~1.1.0"
 
 core-js@3:
-  version "3.11.3"
-  resolved "https://registry.npmjs.org/core-js/-/core-js-3.11.3.tgz#2835b1f4d10f6d0400bf820cfe6fe64ad067dd3f"
-  integrity sha512-DFEW9BllWw781Op5KdYGtXfj3s9Cmykzt16bY6elaVuqXHCUwF/5pv0H3IJ7/I3BGjK7OeU+GrjD1ChCkBJPuA==
+  version "3.12.0"
+  resolved "https://registry.npmjs.org/core-js/-/core-js-3.12.0.tgz#62bac86f7d7f087d40dba3e90a211c2c3c8559ea"
+  integrity sha512-SaMnchL//WwU2Ot1hhkPflE8gzo7uq1FGvUJ8GKmi3TOU7rGTHIU+eir1WGf6qOtTyxdfdcp10yPdGZ59sQ3hw==
 
 core-util-is@~1.0.0:
   version "1.0.2"
@@ -2391,10 +2391,22 @@ glob-parent@~5.1.0:
   dependencies:
     is-glob "^4.0.1"
 
-glob@7.1.6, glob@^7.1.3:
+glob@7.1.6:
   version "7.1.6"
   resolved "https://registry.npmjs.org/glob/-/glob-7.1.6.tgz#141f33b81a7c2492e125594307480c46679278a6"
   integrity sha512-LwaxwyZ72Lk7vZINtNNrywX0ZuLyStrdDtabefZKAY5ZGJhVtgdznluResxNmPitE0SAO+O26sWTHeKSI2wMBA==
+  dependencies:
+    fs.realpath "^1.0.0"
+    inflight "^1.0.4"
+    inherits "2"
+    minimatch "^3.0.4"
+    once "^1.3.0"
+    path-is-absolute "^1.0.0"
+
+glob@^7.1.3:
+  version "7.1.7"
+  resolved "https://registry.npmjs.org/glob/-/glob-7.1.7.tgz#3b193e9233f01d42d0b3f78294bbeeb418f94a90"
+  integrity sha512-OvD9ENzPLbegENnYP5UUfJIirTg4+XwMWGaQfQTY0JenxNvvIKP3U3/tAQSPIu/lHxXYSZmpXlUHeqAIdKzBLQ==
   dependencies:
     fs.realpath "^1.0.0"
     inflight "^1.0.4"
