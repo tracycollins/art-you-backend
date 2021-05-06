@@ -14,10 +14,13 @@ let nnt = new NeuralNetworkTools();
 
 nnt.on("ready", async (appName) => {
   console.log(`NNT | READY | APP NAME: ${appName}`);
-  await nnt.createInputs();
-  // console.log(`NNT | >>>  NETWORK TEST`);
-  await nnt.createInputSet({ image: { width: 64, height: 64, channels: 3 } });
-  await nnt.createNetwork();
+  // await nnt.createInputs();
+  // // console.log(`NNT | >>>  NETWORK TEST`);
+  // const inputsDoc = await nnt.createInputSet({
+  //   image: { width: 64, height: 64, channels: 3 },
+  // });
+  // console.log({ inputsDoc });
+  const nnDoc = await nnt.createUserNetwork();
 });
 
 // describe("userTools", function () {
