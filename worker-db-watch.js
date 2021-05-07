@@ -114,15 +114,45 @@ const initUserRatingUpdateJobQueue = async () => {
           `${PF} | ADD JOB TO WATCHER Q | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
         );
 
-        const jobOptions = {
+        const updateRecsJobOptions = {
           op: "UPDATE_RECS",
           oauthID: user.oauthID,
           epochs: epochs,
           forceFit: FORCE_FIT,
         };
 
-        await agenda.now("recsUpdate", jobOptions);
+        try {
+          const job = await agenda.now("recsUpdate", updateRecsJobOptions);
 
+          console.log(
+            `${PF} | JOB START | OP: ${job.attrs.data.op}` +
+              ` | NAME: ${job.attrs.name}` +
+              ` | oauthID: ${job.attrs.data.oauthID}`
+          );
+
+          job.unique({
+            name: job.attrs.name,
+            "data.op": job.attrs.data.op,
+            "data.oauthID": job.attrs.data.oauthID,
+          });
+
+          await job.save();
+        } catch (err) {
+          if (err.code === 11000) {
+            console.log(
+              `${PF} | -X- JOB ALREADY RUNNING | OP: ${updateRecsJobOptions.op}` +
+                ` | NAME: recsUpdate` +
+                ` | oauthID: ${updateRecsJobOptions.oauthID}`
+            );
+          } else {
+            console.log(
+              `${PF} | *** JOB START ERROR | OP: ${updateRecsJobOptions.op}` +
+                ` | NAME: recsUpdate` +
+                ` | oauthID: ${updateRecsJobOptions.oauthID}`
+            );
+            console.log(err);
+          }
+        }
         nntUpdateRecommendationsReady = true;
       }
     }
