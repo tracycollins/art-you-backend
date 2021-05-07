@@ -29,10 +29,6 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
-// const ONE_SECOND = 1000;
-// const ONE_MINUTE = 60 * ONE_SECOND;
-// const ONE_HOUR = 60 * ONE_MINUTE;
-
 const EPOCHS = process.env.ART47_NN_FIT_EPOCHS
   ? parseInt(process.env.ART47_NN_FIT_EPOCHS)
   : 1000;
@@ -42,7 +38,12 @@ console.log(`A47BE | process.env.REDIS_URL: ${process.env.REDIS_URL}`);
 
 console.log(`A47BE | START WORKER UPDATE RECS QUEUE: updateRecommendations`);
 
-const Queue = require("bull");
+const dbName = "art47";
+const mongoConnectionString = `mongodb+srv://${process.env.MONGODB_ATLAS_USERNAME}:${process.env.MONGODB_ATLAS_PASSWORD}@cluster0.kv4my.mongodb.net/${dbName}?retryWrites=true&w=majority`;
+
+const Agenda = require("agenda");
+const agenda = new Agenda({ db: { address: mongoConnectionString } });
+
 const { join } = require("path");
 const createError = require("http-errors");
 const express = require("express");
@@ -61,167 +62,23 @@ let workUpdateUnratedQueue;
 global.art47db = require("@threeceelabs/mongoose-art47");
 global.dbConnection = false;
 
-const JOB_STATES = [
-  "completed",
-  "failed",
-  "delayed",
-  "active",
-  "waiting",
-  "paused",
-  "stalled",
-  "stuck",
-  "null",
-];
+agenda.on("ready", async (data) => {
+  console.log(`${PF} | AGENDA | READY`);
+  let numRemoved = await agenda.cancel({ name: "test" });
+  console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} TEST JOBS`);
+});
 
-const JOB_RUNNING_STATES = [
-  "delayed",
-  "active",
-  "waiting",
-  "paused",
-  "stalled",
-];
+agenda.on("start:recsUpdate", (job) => {
+  console.log(`${PF} | AGENDA | JOOB %s STARTING ...`, job.attrs.name);
+});
 
-const jobQueued = async ({ queue, jobOptions }) => {
-  // console.log({ queue });
-  if (!queue) {
-    console.log(`${PF} | JOB | jobQueued | !!! queue NOT READY`);
-    return false;
-  }
-  try {
-    console.log(
-      `${PF} | JOB | jobQueued | =============================================================================`
-    );
-    const jobs = await queue.getJobs(JOB_STATES, 0, 100);
-
-    if (jobs.length === 0) {
-      console.log(
-        `${PF} | JOB | jobQueued | --- NO JOBS IN QUEUE ${queue.name}`
-      );
-      console.log(
-        `${PF} | JOB | jobQueued | =============================================================================`
-      );
-      return false;
-    }
-
-    // jobs.forEach(async (job) => {
-    for (const job of jobs) {
-      job.state = await job.getState();
-
-      if (
-        jobOptions &&
-        JOB_RUNNING_STATES.includes(job.state) &&
-        job.data.op === jobOptions.op &&
-        job.data.oauthID === jobOptions.oauthID
-      ) {
-        console.log(
-          `${PF} | JOB | jobQueued | !!! QUEUE HIT` +
-            ` | JID: ${job.id}` +
-            ` | STATE: ${job.state}` +
-            ` | OP: ${job.data.op}` +
-            ` | OAUTHID: ${job.data.oauthID}` +
-            ` | EPOCHS: ${job.data.epochs}`
-        );
-        console.log(
-          `${PF} | JOB | jobQueued | =============================================================================`
-        );
-        return job;
-      }
-
-      console.log(
-        `${PF} | JOB | jobQueued | ${queue.name} | @@@ ENQUEUED` +
-          ` | JID: ${job.id}` +
-          ` | STATE: ${job.state}` +
-          ` | OP: ${job.data.op}` +
-          ` | OAUTHID: ${job.data.oauthID}` +
-          ` | EPOCHS: ${job.data.epochs}`
-      );
-      console.log(
-        `${PF} | JOB | jobQueued | =============================================================================`
-      );
-    }
-
-    return false;
-  } catch (err) {
-    console.log(`${PF} | JOB | jobQueued ERROR: ${err}`);
-    throw err;
-  }
-};
-
-const initUpdateRecsQueue = async () => {
-  workUpdateRecommendationsQueue = new Queue(
-    "updateRecommendations",
-    process.env.REDIS_URL
-  );
-
-  workUpdateRecommendationsQueue.on(
-    "global:completed",
-    async (jobId, result) => {
-      console.log(
-        `A47BE | UPDATE REC JOB ${jobId} | COMPLETE | RESULT`,
-        result
-      );
-      await jobQueued({ queue: workUpdateRecommendationsQueue });
-    }
-  );
-  workUpdateRecommendationsQueue.on("global:failed", async (jobId, result) => {
-    console.log(
-      `A47BE | UPDATE REC JOB ${jobId} | *** FAILDED | RESULT`,
-      result
-    );
-    await jobQueued({ queue: workUpdateRecommendationsQueue });
-  });
-  workUpdateRecommendationsQueue.on("global:error", async (jobId, result) => {
-    console.log(`A47BE | UPDATE REC JOB ${jobId} | *** ERROR | RESULT`, result);
-    await jobQueued({ queue: workUpdateRecommendationsQueue });
-  });
-
-  await workUpdateRecommendationsQueue.clean(1000, "active");
-  await workUpdateRecommendationsQueue.clean(1000, "completed");
-  await workUpdateRecommendationsQueue.clean(1000, "failed");
-  await jobQueued({ queue: workUpdateRecommendationsQueue });
-  return;
-};
-
-const initUpdateUnratedQueue = async () => {
-  workUpdateUnratedQueue = new Queue("updateUnrated", process.env.REDIS_URL);
-
-  workUpdateUnratedQueue.on("global:completed", async (jobId, result) => {
-    console.log({ result });
-    console.log(
-      `A47BE | UPDATE UNRATED JOB ${jobId} | COMPLETE | ${result.unrated} UNRATED`
-    );
-    await jobQueued({ queue: workUpdateUnratedQueue });
-  });
-  workUpdateUnratedQueue.on("global:failed", async (jobId, result) => {
-    console.log(
-      `A47BE | UPDATE UNRATED JOB ${jobId} | *** FAILED | RESULT`,
-      result
-    );
-    await jobQueued({ queue: workUpdateUnratedQueue });
-  });
-  workUpdateUnratedQueue.on("global:error", async (jobId, result) => {
-    console.log(
-      `A47BE | UPDATE UNRATED JOB ${jobId} | *** ERROR | RESULT`,
-      result
-    );
-    await jobQueued({ queue: workUpdateUnratedQueue });
-  });
-
-  await workUpdateUnratedQueue.clean(1000, "active");
-  await workUpdateUnratedQueue.clean(1000, "completed");
-  await workUpdateUnratedQueue.clean(1000, "failed");
-  await jobQueued({ queue: workUpdateUnratedQueue });
-  return;
-};
+agenda.on("complete:recsUpdate", (job) => {
+  console.log(`${PF} | AGENDA | JOB %s FINISHED`, job.attrs.name);
+});
 
 (async () => {
   try {
     global.dbConnection = await global.art47db.connect();
-
-    console.log(`A47BE | ... CREATING WORKER UPDATE RECS QUEUE`);
-
-    await initUpdateRecsQueue();
-    await initUpdateUnratedQueue();
   } catch (err) {
     console.log(`A47BE | *** ERROR DB + REDIS + WORKER QUEUE INIT | ERR:`, err);
   }
@@ -408,80 +265,7 @@ app.post("/authenticated", async (req, res) => {
         epochs: EPOCHS,
       };
 
-      console.log(
-        `APP | JOB | ... CHECK QUEUED | OP: ${updateRecsJobOptions.op} |  OAUTH ID: ${updateRecsJobOptions.oauthID} | ${EPOCHS} EPOCHS`
-      );
-
-      let queuedJob = false;
-
-      try {
-        queuedJob = await jobQueued({
-          queue: workUpdateRecommendationsQueue,
-          jobOptions: updateRecsJobOptions,
-        });
-      } catch (e) {
-        console.log(`APP | JOB | *** CHECK QUEUED ERROR: ${e}`);
-      }
-
-      if (workUpdateRecommendationsQueue && !queuedJob) {
-        console.log(
-          `APP | --> ADDING JOB | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS`
-        );
-        const jobAddResults = await workUpdateRecommendationsQueue.add(
-          updateRecsJobOptions
-        );
-        console.log(
-          `APP | +++ ADDED JOB  | UPDATE_RECS | JID: ${jobAddResults.id} | ${userDoc.oauthID} | ${EPOCHS} EPOCHS`
-        );
-        await jobQueued({ queue: workUpdateRecommendationsQueue });
-      } else if (!workUpdateRecommendationsQueue) {
-        console.log(
-          `APP | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_RECS | ${userDoc.oauthID} | ${EPOCHS} EPOCHS`
-        );
-      } else {
-        console.log(
-          `APP | !!! SKIP ENQUEUED | JID: ${queuedJob.id} | STATE: ${queuedJob.state} | UPDATE_RECS | ${queuedJob.data.oauthID} | ${queuedJob.data.epochs} EPOCHS`
-        );
-        await jobQueued({ queue: workUpdateRecommendationsQueue });
-      }
-
-      const updateUnratedJobOptions = {
-        op: "UPDATE_UNRATED",
-        oauthID: userDoc.oauthID,
-      };
-
-      try {
-        queuedJob = await jobQueued({
-          queue: workUpdateUnratedQueue,
-          jobOptions: updateUnratedJobOptions,
-        });
-      } catch (e) {
-        console.log(
-          `APP | JOB ${workUpdateUnratedQueue.name} | *** CHECK QUEUED ERROR: ${e}`
-        );
-      }
-
-      if (workUpdateUnratedQueue && !queuedJob) {
-        console.log(
-          `APP | --> ADDING JOB | UPDATE_UNRATED | ${userDoc.oauthID}`
-        );
-        const jobAddResults = await workUpdateUnratedQueue.add(
-          updateUnratedJobOptions
-        );
-        console.log(
-          `APP | +++ ADDED JOB  | UPDATE_UNRATED | JID: ${jobAddResults.id} | ${userDoc.oauthID}`
-        );
-        await jobQueued({ queue: workUpdateUnratedQueue });
-      } else if (!workUpdateUnratedQueue) {
-        console.log(
-          `APP | !!! SKIP ADD JOB --- WORKER Q NOT READY | UPDATE_UNRATED | ${userDoc.oauthID}`
-        );
-      } else {
-        console.log(
-          `APP | !!! SKIP ENQUEUED | JID: ${queuedJob.id} | STATE: ${queuedJob.state} | UPDATE_UNRATED | ${queuedJob.data.oauthID}`
-        );
-        await jobQueued({ queue: workUpdateUnratedQueue });
-      }
+      await agenda.now("recsUpdate", updateRecsJobOptions);
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
       res.json({

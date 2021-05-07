@@ -54,21 +54,21 @@ agenda.on("ready", async (data) => {
   console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} JOBS`);
   numRemoved = await agenda.cancel({ name: "recsUpdate" });
   console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} JOBS`);
-  console.log(
-    `${PF} | AGENDA | STARTING test JOB: every 10 secs | PID: ${process.pid}`
-  );
-  await agenda.every("10 seconds", "test", {
-    host: hostname,
-    pid: process.pid,
-    random: Math.random() * 100,
-  });
+  // console.log(
+  //   `${PF} | AGENDA | STARTING test JOB: every 10 secs | PID: ${process.pid}`
+  // );
+  // await agenda.every("10 seconds", "test", {
+  //   host: hostname,
+  //   pid: process.pid,
+  //   random: Math.random() * 100,
+  // });
 
-  await agenda.now("recsUpdate", {
-    op: "UPDATE_USER_RECS",
-    oauthID: randomOauthID,
-    networkId: false,
-    epochs: epochs,
-  });
+  // await agenda.now("recsUpdate", {
+  //   op: "UPDATE_USER_RECS",
+  //   oauthID: randomOauthID,
+  //   networkId: false,
+  //   epochs: epochs,
+  // });
 });
 
 agenda.on("start", (job) => {

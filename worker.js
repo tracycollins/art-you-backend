@@ -60,16 +60,30 @@ statsObj.usr.ready = false;
 const dbName = "art47";
 const mongoConnectionString = `mongodb+srv://${process.env.MONGODB_ATLAS_USERNAME}:${process.env.MONGODB_ATLAS_PASSWORD}@cluster0.kv4my.mongodb.net/${dbName}?retryWrites=true&w=majority`;
 
-// const Queue = require("bull");
 const Agenda = require("agenda");
 const agenda = new Agenda({ db: { address: mongoConnectionString } });
 
+agenda.on("ready", async () => {
+  console.log(`${PF} | AGENDA READY`);
+
+  const jobs = await agenda.jobs({});
+
+  if (jobs.length > 0) {
+    for (const job of jobs) {
+      console.log(`${PF} | AGENDA | JOB | ID: ${job.attrs._id}`);
+    }
+  } else {
+    console.log(`${PF} | AGENDA | NO JOBS`);
+  }
+  await initUpdateRecsQueue();
+});
+
 agenda.on("start:recsUpdate", (job) => {
-  console.log(`${PF} | Job %s starting`, job.attrs.name);
+  console.log(`${PF} | AGENDA | JOOB %s STARTING ...`, job.attrs.name);
 });
 
 agenda.on("complete:recsUpdate", (job) => {
-  console.log(`${PF} | Job %s finished`, job.attrs.name);
+  console.log(`${PF} | AGENDA | JOB %s FINISHED`, job.attrs.name);
 });
 
 const NeuralNetworkTools = require("./lib/nnTools.js");
@@ -111,7 +125,9 @@ function waitFor(signal) {
 const updateUserRecommendations = async (p) => {
   try {
     const params = p || {};
-    console.log(`${PF} | updateUserRecommendations | OP: ${params.op}`);
+    console.log(
+      `${PF} | updateUserRecommendations | OP: ${params.op} | OP: ${params.op}`
+    );
     await waitFor(statsObj.nnt.ready);
     const results = await nnt.updateRecommendations(params);
     console.log(`${PF} | END updateUserRecommendations`, results);
@@ -138,10 +154,7 @@ const updateUserUnrated = async (p) => {
 };
 
 const initUpdateRecsQueue = async () => {
-  // const updateRecommendationsQueue = new Queue(
-  //   "updateRecommendations",
-  //   process.env.REDIS_URL
-  // );
+  console.log(`${PF} | initUpdateRecsQueue`);
 
   const test = async (p) => {
     const params = p || {};
@@ -156,7 +169,6 @@ const initUpdateRecsQueue = async () => {
   });
 
   agenda.define("recsUpdate", async (job) => {
-    // console.log(`recsUpdate`,);
     console.log(
       `${PF} | ->- WORKER | JOB START | UPDATE RECS` +
         ` | PID: ${process.pid}` +
@@ -166,11 +178,15 @@ const initUpdateRecsQueue = async () => {
         ` | NNID: ${job.attrs.data.networkId}` +
         ` | EPOCHS: ${job.attrs.data.epochs}`
     );
-    const results = await updateUserRecommendations(job.attrs.data);
+    const results = await updateUserRecommendations({
+      ...job.attrs.data,
+      job: { id: job.attrs._id, name: job.attrs.name },
+    });
     console.log(
       `${PF} | +++ WORKER | JOB COMPLETE | UPDATE RECS` +
         ` | PID: ${process.pid}` +
-        ` | JID: ${job.attrs._id}`
+        ` | JID: ${job.attrs._id}` +
+        ` | JOB NAME: ${job.attrs.name}`
     );
     console.log({ results });
     results.stats = statsObj;
@@ -179,155 +195,9 @@ const initUpdateRecsQueue = async () => {
 
   return;
 };
-// updateRecommendationsQueue.process(maxJobsPerWorker, async (job) => {
-//   try {
-//     console.log(
-//       `${PF} | ->- WORKER | JOB START | UPDATE RECS` +
-//         ` | PID: ${process.pid}` +
-//         ` | JID: ${job.id}` +
-//         ` | OP: ${job.data.op}` +
-//         ` | OAUTHID: ${job.data.oauthID}`
-//     );
-//     const results = await updateUserRecommendations(job);
-//     console.log(
-//       `${PF} | +++ WORKER | JOB COMPLETE | UPDATE RECS` +
-//         ` | PID: ${process.pid}` +
-//         ` | JID: ${job.id}` +
-//         ` | OP: ${job.data.op}` +
-//         ` | OAUTHID: ${job.data.oauthID}`
-//     );
-//     console.log({ results });
-//     results.stats = statsObj;
-//     return results;
-//   } catch (err) {
-//     console.log(
-//       `${PF} | *** WORKER | *** JOB ERROR | UPDATE RECS` +
-//         ` | PID: ${process.pid}` +
-//         ` | JID: ${job.id}` +
-//         ` | OP: ${job.data.op}` +
-//         ` | OAUTHID: ${job.data.oauthID}` +
-//         ` | ERR: ${err}`
-//     );
-//     return {
-//       op: job.op,
-//       stats: statsObj,
-//       err: err,
-//     };
-//   }
-// });
-
-// updateRecommendationsQueue.on("waiting", function (jobId) {
-//   console.log(
-//     `${PF} | ... WORKER | UPDATE RECS | PID: ${process.pid} | JOB WAITING: ${jobId}`
-//   );
-// });
-
-// updateRecommendationsQueue.on("resumed", function (job, err) {
-//   console.log(
-//     `${PF} | --- WORKER | UPDATE RECS | PID: ${process.pid} | JOB RESUMED: ${job.id}`
-//   );
-// });
-// updateRecommendationsQueue.on("failed", function (job, err) {
-//   console.log(
-//     `${PF} | XXX WORKER | UPDATE RECS | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
-//   );
-// });
-// updateRecommendationsQueue.on("stalled", function (job) {
-//   console.log(
-//     `${PF} | ??? WORKER | UPDATE RECS | PID: ${process.pid} | JOB STALLED: ${job.id}`
-//   );
-// });
-
-// return;
-// };
-
-// const initUpdateUnratedQueue = async () => {
-//   const updateUnratedQueue = new Queue("updateUnrated", process.env.REDIS_URL);
-
-//   updateUnratedQueue.process(maxJobsPerWorker, async (job, done) => {
-//     try {
-//       console.log(
-//         `${PF} | ->- WORKER | JOB START` +
-//           ` | PID: ${process.pid}` +
-//           ` | JID: ${job.id}` +
-//           ` | OP: ${job.data.op}` +
-//           ` | OAUTHID: ${job.data.oauthID}`
-//       );
-//       const results = await updateUserUnrated(job);
-//       console.log(
-//         `${PF} | +++ WORKER | JOB COMPLETE` +
-//           ` | PID: ${process.pid}` +
-//           ` | JID: ${job.id}` +
-//           ` | OP: ${job.data.op}` +
-//           ` | OAUTHID: ${job.data.oauthID}` +
-//           ` | ${results.unrated.length} UNRATED`
-//       );
-//       results.stats = statsObj;
-//       done(null, {
-//         op: job.op,
-//         stats: statsObj,
-//         unrated: results.unrated.length,
-//       });
-//     } catch (err) {
-//       console.log(
-//         `${PF} | *** WORKER | *** JOB ERROR | UPDATE UNRATED` +
-//           ` | PID: ${process.pid}` +
-//           ` | JID: ${job.id}` +
-//           ` | OP: ${job.data.op}` +
-//           ` | OAUTHID: ${job.data.oauthID}` +
-//           ` | ERR: ${err}`
-//       );
-//       done(
-//         {
-//           op: job.op,
-//           stats: statsObj,
-//           err: err,
-//         },
-//         null
-//       );
-//     }
-//   });
-
-//   updateUnratedQueue.on("waiting", function (jobId) {
-//     console.log(
-//       `${PF} | ... WORKER | UPDATE UNRATED | PID: ${process.pid} | JOB WAITING: ${jobId}`
-//     );
-//   });
-
-//   updateUnratedQueue.on("resumed", function (job, err) {
-//     console.log(
-//       `${PF} | --- WORKER | UPDATE UNRATED | PID: ${process.pid} | JOB RESUMED: ${job.id}`
-//     );
-//   });
-//   updateUnratedQueue.on("failed", function (job, err) {
-//     console.log(
-//       `${PF} | XXX WORKER | UPDATE UNRATED | PID: ${process.pid} | JOB FAILED: ${job.id} | ERROR: ${err}`
-//     );
-//   });
-//   updateUnratedQueue.on("stalled", function (job) {
-//     console.log(
-//       `${PF} | ??? WORKER | UPDATE UNRATED | PID: ${process.pid} | JOB STALLED: ${job.id}`
-//     );
-//   });
-
-//   return;
-// };
-
-// const start = async () => {
-//   console.log(`${PF} | ... WAIT | WORKER | PID: ${process.pid} START`);
-//   console.log(`${PF} | +++ WORKER | PID: ${process.pid} START`);
-
-//   await initUpdateRecsQueue();
-//   await initUpdateUnratedQueue();
-// };
 
 const recsUpdateJob = agenda.create("recsUpdate", { op: "REC_UPDATE" });
 
 setTimeout(async () => {
-  // start();
-  await initUpdateRecsQueue();
   await agenda.start();
-  const jobs = await agenda.jobs({});
-  console.table(jobs);
-  // await agenda.every("10 seconds", "test", { random: Math.random() * 100 });
 }, WORKER_START_TIMEOUT);
