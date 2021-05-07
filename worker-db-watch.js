@@ -16,7 +16,7 @@ agenda.on("ready", async (data) => {
 });
 
 agenda.on("start:recsUpdate", (job) => {
-  console.log(`${PF} | AGENDA | JOOB %s STARTING ...`, job.attrs.name);
+  console.log(`${PF} | AGENDA | JOB %s STARTING ...`, job.attrs.name);
 });
 
 agenda.on("complete:recsUpdate", (job) => {

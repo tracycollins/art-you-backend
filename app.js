@@ -69,7 +69,7 @@ agenda.on("ready", async (data) => {
 });
 
 agenda.on("start:recsUpdate", (job) => {
-  console.log(`${PF} | AGENDA | JOOB %s STARTING ...`, job.attrs.name);
+  console.log(`${PF} | AGENDA | JOB %s STARTING ...`, job.attrs.name);
 });
 
 agenda.on("complete:recsUpdate", (job) => {
@@ -265,7 +265,30 @@ app.post("/authenticated", async (req, res) => {
         epochs: EPOCHS,
       };
 
-      await agenda.now("recsUpdate", updateRecsJobOptions);
+      try {
+        const job = await agenda.now("recsUpdate", updateRecsJobOptions);
+
+        console.log(
+          `APP | JOB START | OP: ${job.attrs.data.op}` +
+            ` | NAME: ${job.attrs.name}` +
+            ` | oauthID: ${job.attrs.data.oauthID}`
+        );
+
+        job.unique({
+          name: job.attrs.name,
+          "data.op": job.attrs.data.op,
+          "data.oauthID": job.attrs.data.oauthID,
+        });
+
+        await job.save();
+      } catch (err) {
+        console.log(
+          `APP | *** JOB START ERROR | OP: ${updateRecsJobOptions.op}` +
+            ` | NAME: recsUpdate` +
+            ` | oauthID: ${updateRecsJobOptions.oauthID}` +
+            ` | ERROR: ${err}`
+        );
+      }
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
       res.json({
