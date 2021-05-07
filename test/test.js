@@ -9,11 +9,24 @@ const moment = require("moment");
 
 // const UserTools = require("../lib/userTools.js");
 
+const os = require("os");
+let hostname = os.hostname();
+hostname = hostname.replace(/.tld/g, ""); // amtrak wifi
+hostname = hostname.replace(/.local/g, "");
+hostname = hostname.replace(/.home/g, "");
+hostname = hostname.replace(/.at.net/g, "");
+hostname = hostname.replace(/.fios-router.home/g, "");
+hostname = hostname.replace(/word0-instance-1/g, "google");
+hostname = hostname.replace(/word-1/g, "google");
+hostname = hostname.replace(/word/g, "google");
+
+const PF = `WKR_${hostname}_${process.pid}`;
+
 const NeuralNetworkTools = require("../lib/nnTools.js");
 let nnt = new NeuralNetworkTools();
 
 nnt.on("ready", async (appName) => {
-  console.log(`NNT | READY | APP NAME: ${appName}`);
+  console.log(`${PF} | NNT | READY | APP NAME: ${appName}`);
   // await nnt.createInputs();
   // // console.log(`NNT | >>>  NETWORK TEST`);
   // const inputsDoc = await nnt.createInputSet({
@@ -21,8 +34,69 @@ nnt.on("ready", async (appName) => {
   // });
   // console.log({ inputsDoc });
   // const nnDoc = await nnt.createUserNetwork({ epochs: 100, maxCount: 5 });
-  const nnDoc = await nnt.createUserNetwork();
-  process.exit();
+  // const nnDoc = await nnt.createUserNetwork();
+  // process.exit();
+});
+
+const dbName = "art47";
+const mongoConnectionString = `mongodb+srv://${process.env.MONGODB_ATLAS_USERNAME}:${process.env.MONGODB_ATLAS_PASSWORD}@cluster0.kv4my.mongodb.net/${dbName}?retryWrites=true&w=majority`;
+
+const Agenda = require("agenda");
+const agenda = new Agenda({ db: { address: mongoConnectionString } });
+
+const oauthIDarray = ["twitter|848591649575927810"];
+const randomOauthID = _.sample(oauthIDarray);
+const epochs = 247;
+
+agenda.on("ready", async (data) => {
+  console.log(`${PF} | AGENDA | READY`);
+  let numRemoved = await agenda.cancel({ name: "test" });
+  console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} JOBS`);
+  numRemoved = await agenda.cancel({ name: "recsUpdate" });
+  console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} JOBS`);
+  console.log(
+    `${PF} | AGENDA | STARTING test JOB: every 10 secs | PID: ${process.pid}`
+  );
+  await agenda.every("10 seconds", "test", {
+    host: hostname,
+    pid: process.pid,
+    random: Math.random() * 100,
+  });
+
+  await agenda.now("recsUpdate", {
+    op: "UPDATE_USER_RECS",
+    oauthID: randomOauthID,
+    networkId: false,
+    epochs: epochs,
+  });
+});
+
+agenda.on("start", (job) => {
+  console.log(`${PF} | Job %s starting`, job.attrs.name);
+});
+
+agenda.on("complete", (job) => {
+  console.log(`${PF} | Job %s finished`, job.attrs.name);
+});
+
+(async function () {
+  await agenda.start();
+})();
+
+process.on("SIGTERM", async () => {
+  console.log(`${PF} | TEST | ${process.pid} received a SIGTERM signal`);
+  const numRemoved = await agenda.cancel({ name: "test" });
+  console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} JOBS`);
+  await agenda.stop();
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  console.log(`${PF} | TEST | ${process.pid} has been interrupted`);
+  const numRemoved = await agenda.cancel({ name: "test" });
+  console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} JOBS`);
+  await agenda.stop();
+  process.exit(0);
 });
 
 // describe("userTools", function () {
