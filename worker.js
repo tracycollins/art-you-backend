@@ -27,21 +27,13 @@ console.log(
     ` | maxJobsPerWorker: ${maxJobsPerWorker}`
 );
 
-// let waitInterval = false;
-
 process.on("SIGTERM", () => {
   console.log(`${PF} | ${process.pid} received a SIGTERM signal`);
-  // if (waitInterval) {
-  //   clearInterval(waitInterval);
-  // }
   process.exit(0);
 });
 
 process.on("SIGINT", () => {
   console.log(`${PF} | ${process.pid} has been interrupted`);
-  // if (waitInterval) {
-  //   clearInterval(waitInterval);
-  // }
   process.exit(0);
 });
 
@@ -209,7 +201,6 @@ const initUpdateUnratedQueue = async () => {
           ` | OAUTHID: ${job.data.oauthID}` +
           ` | ${results.unrated.length} UNRATED`
       );
-      // console.log({ results });
       results.stats = statsObj;
       done(null, {
         op: job.op,
@@ -269,9 +260,6 @@ const start = async () => {
   await initUpdateUnratedQueue();
 };
 
-// console.log(
-//   `${PF} | WORKER | WAIT START TIMEOUT: ${WORKER_START_TIMEOUT / 1000} SEC`
-// );
 setTimeout(() => {
   start();
 }, WORKER_START_TIMEOUT);
