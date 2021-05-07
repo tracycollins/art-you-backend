@@ -282,12 +282,20 @@ app.post("/authenticated", async (req, res) => {
 
         await job.save();
       } catch (err) {
-        console.log(
-          `APP | *** JOB START ERROR | OP: ${updateRecsJobOptions.op}` +
-            ` | NAME: recsUpdate` +
-            ` | oauthID: ${updateRecsJobOptions.oauthID}` +
-            ` | ERROR: ${err}`
-        );
+        if (err.code === 11000) {
+          console.log(
+            `APP | -X- JOB ALREADY RUNNING | OP: ${updateRecsJobOptions.op}` +
+              ` | NAME: recsUpdate` +
+              ` | oauthID: ${updateRecsJobOptions.oauthID}`
+          );
+        } else {
+          console.log(
+            `APP | *** JOB START ERROR | OP: ${updateRecsJobOptions.op}` +
+              ` | NAME: recsUpdate` +
+              ` | oauthID: ${updateRecsJobOptions.oauthID}`
+          );
+          console.log(err);
+        }
       }
     } else {
       console.log("APP | ??? USER AUTHENTICATION SUB UNDEFINED");
