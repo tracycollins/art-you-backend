@@ -61,7 +61,11 @@ const dbName = "art47";
 const mongoConnectionString = `mongodb+srv://${process.env.MONGODB_ATLAS_USERNAME}:${process.env.MONGODB_ATLAS_PASSWORD}@cluster0.kv4my.mongodb.net/${dbName}?retryWrites=true&w=majority`;
 
 const Agenda = require("agenda");
-const agenda = new Agenda({ db: { address: mongoConnectionString } });
+const agenda = new Agenda({
+  db: { address: mongoConnectionString },
+  maxConcurrency: 1,
+  lockLimit: 1,
+});
 
 agenda.on("ready", async () => {
   console.log(`${PF} | AGENDA READY`);
