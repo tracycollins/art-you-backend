@@ -273,7 +273,7 @@ app.post("/authenticated", async (req, res) => {
           0
         );
 
-        console.log(`jobsInDb\n`, jobsInDb);
+        console.log(`jobsInDb.attrs\n`, jobsInDb.attrs);
 
         const job = await agenda.now("recsUpdate", updateRecsJobOptions);
 
