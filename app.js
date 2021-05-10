@@ -266,6 +266,8 @@ app.post("/authenticated", async (req, res) => {
       };
 
       try {
+        const job = await agenda.now("recsUpdate", updateRecsJobOptions);
+
         const jobsInDb = await agenda.jobs(
           { name: job.attrs.name },
           { data: job.attrs.data },
@@ -274,8 +276,6 @@ app.post("/authenticated", async (req, res) => {
         );
 
         console.log({ jobsInDb });
-
-        const job = await agenda.now("recsUpdate", updateRecsJobOptions);
 
         console.log(
           `APP | JOB START | OP: ${job.attrs.data.op}` +
