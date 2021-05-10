@@ -122,6 +122,15 @@ const initUserRatingUpdateJobQueue = async () => {
         };
 
         try {
+          const jobsInDb = await agenda.jobs(
+            { name: job.attrs.name },
+            { data: job.attrs.data },
+            3,
+            0
+          );
+
+          console.log({ jobsInDb });
+
           const job = await agenda.now("recsUpdate", updateRecsJobOptions);
 
           console.log(
