@@ -1,0 +1,14 @@
+{
+  "apps": [
+    {
+      "name": "worker",
+      "script": "worker.js",
+      "cwd": "/Volumes/RAID1/projects/art47-backend",
+      "autorestart": true,
+      "restart_delay": 300000,
+      "node_args": "--max-old-space-size=10240",
+      "env": {
+      }
+    }
+  ]
+}
