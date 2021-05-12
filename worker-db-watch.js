@@ -22,7 +22,28 @@ agenda.on("start:recsUpdate", (job) => {
 });
 
 agenda.on("complete:recsUpdate", (job) => {
-  console.log(`${PF} | AGENDA | JOB %s FINISHED`, job.attrs.name);
+  console.log(
+    `${PF} | AGENDA | JOB ${job.attrs.name} FINISHED | ratingCount: ${job.attrs.data.ratingCount}`
+  );
+  if (
+    job.attrs.data.ratingCount &&
+    allUsersRatingCount[job.attrs.data.oauthID]
+  ) {
+    if (
+      allUsersRatingCount[job.attrs.data.oauthID] >= job.attrs.data.ratingCount
+    ) {
+      allUsersRatingCount[job.attrs.data.oauthID] -= job.attrs.data.ratingCount;
+    } else {
+      delete allUsersRatingCount[job.attrs.data.oauthID];
+    }
+  }
+  console.log(
+    `${PF} | AGENDA | JOB ${
+      job.attrs.name
+    } FINISHED | RATING COUNT REMAINING: ${
+      allUsersRatingCount[job.attrs.data.oauthID]
+    }`
+  );
 });
 
 const {
@@ -87,7 +108,7 @@ const initUserRatingUpdateJobQueue = async () => {
   const triggerNetworkFitRatingsUpdateNumber =
     process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
   const allUsersRatingCount = getAllUsersRatingCount();
-  const userIds = Object.keys(allUsersRatingCount);
+  const oauthIDs = Object.keys(allUsersRatingCount);
   const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
 
   try {
@@ -96,24 +117,24 @@ const initUserRatingUpdateJobQueue = async () => {
         ` | initUserRatingUpdateJobQueue` +
         ` | nntUpdateRecommendationsReady: ${nntUpdateRecommendationsReady}` +
         ` | triggerNetworkFitRatingsUpdateNumber: ${triggerNetworkFitRatingsUpdateNumber}` +
-        ` | ${userIds.length} USERS`
+        ` | ${oauthIDs.length} USERS`
     );
 
     console.log({ allUsersRatingCount });
 
-    for (const user_id of userIds) {
+    for (const oauthID of oauthIDs) {
       if (
         nntUpdateRecommendationsReady &&
-        allUsersRatingCount[user_id] >= triggerNetworkFitRatingsUpdateNumber
+        allUsersRatingCount[oauthID] >= triggerNetworkFitRatingsUpdateNumber
       ) {
         nntUpdateRecommendationsReady = false;
 
         const user = await global.art47db.User.findOne({
-          _id: user_id,
+          oauthID: oauthID,
         });
 
         console.log(
-          `${PF} | ADD JOB TO WATCHER Q | UPDATE_RECS | OAUTH ID: ${user.id} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
+          `${PF} | ADD JOB TO WATCHER Q | UPDATE_RECS | OAUTH ID: ${user.oauthID} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
         );
 
         const updateRecsJobOptions = {
@@ -121,6 +142,7 @@ const initUserRatingUpdateJobQueue = async () => {
           oauthID: user.oauthID,
           epochs: epochs,
           forceFit: FORCE_FIT,
+          ratingCount: allUsersRatingCount[oauthID],
         };
 
         try {
@@ -199,7 +221,7 @@ const initUserRatingUpdateJobQueue = async () => {
         ` | *** initUserRatingUpdateJobQueue ERROR: ${err}` +
         ` | nntUpdateRecommendationsReady: ${nntUpdateRecommendationsReady}` +
         ` | triggerNetworkFitRatingsUpdateNumber: ${triggerNetworkFitRatingsUpdateNumber}` +
-        ` | ${userIds.length} USERS`
+        ` | ${oauthIDs.length} USERS`
     );
 
     nntUpdateRecommendationsReady = false;
