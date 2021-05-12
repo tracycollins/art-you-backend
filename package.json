@@ -1,6 +1,6 @@
 {
   "name": "@threeceelabs/art47-backend",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "engines": {
     "node": "14.x"
   },
