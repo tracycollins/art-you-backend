@@ -1,4 +1,6 @@
 const PF = `WATCH_${process.pid}`;
+const moment = require("moment");
+const defaultDateTimeFormat = "YYYYMMDD_HHmmss";
 
 console.log({ PF });
 
@@ -123,28 +125,55 @@ const initUserRatingUpdateJobQueue = async () => {
 
         try {
           const jobsInDb = await agenda.jobs(
-            { name: "recsUpdate" },
+            {
+              name: "recsUpdate",
+              "data.oauthID": updateRecsJobOptions.oauthID,
+              $or: [{ lockedAt: { $ne: null } }, { nextRunAt: { $ne: null } }],
+            },
             { lastRunAt: -1 },
             100,
             0
           );
 
-          console.log(`jobsInDb.attrs\n`, jobsInDb.attrs);
+          if (jobsInDb.length > 0) {
+            console.log(
+              `${PF} | !!! JOB ALREADY IN QUEUE` +
+                ` | NAME: recsUpdate` +
+                ` | OP: ${updateRecsJobOptions.op}` +
+                ` | oauthID: ${updateRecsJobOptions.oauthID}`
+            );
 
-          const job = await agenda.now("recsUpdate", updateRecsJobOptions);
-          console.log(
-            `${PF} | JOB START | OP: ${job.attrs.data.op}` +
-              ` | NAME: ${job.attrs.name}` +
-              ` | oauthID: ${job.attrs.data.oauthID}`
-          );
+            for (const job of jobsInDb) {
+              console.log(
+                `${PF} | !!! JOB ALREADY IN QUEUE` +
+                  ` | NAME: ${job.attrs.name}` +
+                  ` | ID: ${job.attrs._id}` +
+                  ` | OP: ${job.attrs.data.op}` +
+                  ` | oauthID: ${job.attrs.data.oauthID}` +
+                  ` | nextRunAt: ${moment(job.attrs.nextRunAt).format(
+                    defaultDateTimeFormat
+                  )}` +
+                  ` | lockedAt: ${moment(job.attrs.lockedAt).format(
+                    defaultDateTimeFormat
+                  )}`
+              );
+            }
+          } else {
+            const job = await agenda.now("recsUpdate", updateRecsJobOptions);
+            console.log(
+              `${PF} | JOB START | OP: ${job.attrs.data.op}` +
+                ` | NAME: ${job.attrs.name}` +
+                ` | oauthID: ${job.attrs.data.oauthID}`
+            );
 
-          job.unique({
-            name: job.attrs.name,
-            "data.op": job.attrs.data.op,
-            "data.oauthID": job.attrs.data.oauthID,
-          });
+            job.unique({
+              name: job.attrs.name,
+              "data.op": job.attrs.data.op,
+              "data.oauthID": job.attrs.data.oauthID,
+            });
 
-          await job.save();
+            await job.save();
+          }
         } catch (err) {
           if (err.code === 11000) {
             console.log(
