@@ -140,6 +140,7 @@ const initUserRatingUpdateJobQueue = async () => {
         const updateRecsJobOptions = {
           op: "UPDATE_RECS",
           oauthID: user.oauthID,
+          user_id: user._id,
           epochs: epochs,
           forceFit: FORCE_FIT,
           ratingCount: allUsersRatingCount[user._id],
