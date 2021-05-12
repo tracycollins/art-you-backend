@@ -12,6 +12,8 @@ hostname = hostname.replace(/word/g, "google");
 const PF = `WKR_${hostname}_${process.pid}`;
 
 const ONE_SECOND = 1000;
+const ONE_MINUTE = 60 * ONE_SECOND;
+const ONE_HOUR = 60 * ONE_MINUTE;
 
 const WORKER_START_TIMEOUT = process.env.WORKER_START_TIMEOUT
   ? parseInt(process.env.WORKER_START_TIMEOUT)
@@ -173,7 +175,7 @@ const initUpdateRecsQueue = async () => {
     return;
   });
 
-  agenda.define("recsUpdate", async (job) => {
+  agenda.define("recsUpdate", { lockLifetime: ONE_HOUR }, async (job) => {
     console.log(
       `${PF} | ->- WORKER | JOB START | UPDATE RECS` +
         ` | PID: ${process.pid}` +
