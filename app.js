@@ -1,5 +1,7 @@
 const dotenv = require("dotenv");
 const csrf = require("csurf");
+const moment = require("moment");
+const defaultDateTimeFormat = "YYYYMMDD_HHmmss";
 
 if (process.env.ART47_ENV_VARS_FILE) {
   const envConfig = dotenv.config({ path: process.env.ART47_ENV_VARS_FILE });
@@ -267,13 +269,41 @@ app.post("/authenticated", async (req, res) => {
 
       try {
         const jobsInDb = await agenda.jobs(
-          { name: "recsUpdate" },
+          {
+            name: "recsUpdate",
+            "data.oauthID": updateRecsJobOptions.oauthID,
+            $or: [{ lockedAt: { $ne: null } }, { nextRunAt: { $ne: null } }],
+          },
           { lastRunAt: -1 },
           100,
           0
         );
 
-        console.log(`jobsInDb.attrs\n`, jobsInDb.attrs);
+        if (jobsInDb.length > 0) {
+          console.log(
+            `APP | !!! JOB ALREADY IN QUEUE` +
+              ` | NAME: recsUpdate` +
+              ` | OP: ${updateRecsJobOptions.op}` +
+              ` | oauthID: ${updateRecsJobOptions.oauthID}`
+          );
+
+          for (const job of jobsInDb) {
+            console.log(
+              `APP | !!! JOB ALREADY IN QUEUE` +
+                ` | NAME: ${job.attrs.name}` +
+                ` | ID: ${job.attrs._id}` +
+                ` | OP: ${job.attrs.data.op}` +
+                ` | oauthID: ${job.attrs.data.oauthID}` +
+                ` | nextRunAt: ${moment(job.attrs.nextRunAt).format(
+                  defaultDateTimeFormat
+                )}` +
+                ` | lockedAt: ${moment(job.attrs.lockedAt).format(
+                  defaultDateTimeFormat
+                )}`
+            );
+          }
+          return;
+        }
 
         const job = await agenda.now("recsUpdate", updateRecsJobOptions);
 
@@ -285,6 +315,7 @@ app.post("/authenticated", async (req, res) => {
 
         job.unique({
           name: job.attrs.name,
+          lockedAt: { $nin: [null] },
           "data.op": job.attrs.data.op,
           "data.oauthID": job.attrs.data.oauthID,
         });
