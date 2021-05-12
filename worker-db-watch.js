@@ -23,7 +23,7 @@ agenda.on("start:recsUpdate", (job) => {
 
 agenda.on("complete:recsUpdate", (job) => {
   console.log(
-    `${PF} | AGENDA | JOB ${job.attrs.name} FINISHED | ratingCount: ${job.attrs.data.ratingCount}`
+    `${PF} | AGENDA | JOB ${job.attrs.name} FINISHED | RATING COUNT: ${job.attrs.data.ratingCount}`
   );
   if (
     job.attrs.data.ratingCount &&
