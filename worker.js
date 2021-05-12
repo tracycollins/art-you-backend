@@ -62,6 +62,7 @@ const mongoConnectionString = `mongodb+srv://${process.env.MONGODB_ATLAS_USERNAM
 
 const Agenda = require("agenda");
 const agenda = new Agenda({
+  name: PF,
   db: { address: mongoConnectionString },
   maxConcurrency: 1,
   lockLimit: 1,

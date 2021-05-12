@@ -3,6 +3,8 @@
     {
       "name": "worker",
       "script": "worker.js",
+      "instances": 2,
+      "exec_moode": "cluster",
       "cwd": "/Volumes/RAID1/projects/art47-backend",
       "autorestart": true,
       "restart_delay": 300000,
