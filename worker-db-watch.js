@@ -17,11 +17,11 @@ agenda.on("ready", async (data) => {
   console.log(`${PF} | AGENDA | READY`);
 });
 
-agenda.on("start:recsUpdate", (job) => {
-  console.log(`${PF} | AGENDA | JOB %s STARTING ...`, job.attrs.name);
+agenda.on("start", (job) => {
+  console.log(`${PF} | AGENDA | JOB ${job.attrs.name} STARTING ...`);
 });
 
-agenda.on("complete:recsUpdate", (job) => {
+agenda.on("complete", (job) => {
   console.log(
     `${PF} | AGENDA | JOB ${job.attrs.name} FINISHED | RATING COUNT: ${job.attrs.data.ratingCount}`
   );
