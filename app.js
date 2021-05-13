@@ -66,7 +66,7 @@ global.dbConnection = false;
 
 agenda.on("ready", async (data) => {
   console.log(`${PF} | AGENDA | READY`);
-  let numRemoved = await agenda.cancel({ name: "recsUpdate" });
+  let numRemoved = await agenda.cancel({ name: "test" });
   console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} TEST JOBS`);
 
   const jobsInDb = await agenda.jobs(
