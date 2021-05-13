@@ -142,7 +142,7 @@ const updateUserRecommendations = async (p) => {
     await waitFor(statsObj.nnt.ready);
     const results = await nnt.updateRecommendations(params);
     console.log(`${PF} | END updateUserRecommendations`, results);
-    return { results: results, timestamp: nnt.getTimeStamp() };
+    return { results: results, timestamp: nnt.getTimeStamp(0) };
   } catch (err) {
     console.log(`${PF} | ERROR updateUserRecommendations`, err);
     throw err;
