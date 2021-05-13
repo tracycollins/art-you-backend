@@ -171,17 +171,18 @@ async function initDbJobChangeStream() {
 
   jobChangeStream.on("change", function (change) {
     const job = change.fullDocument;
-    console.log({ job });
-    console.log(
-      `${PF} | agendaJobs | ${change.operationType}` +
-        ` | ${job._id}` +
-        ` | ${job.name}` +
-        ` | lastModifiedBy: ${job.lastModifiedBy}` +
-        ` | nextRunAt: ${getTimeStamp(job.nextRunAt)}` +
-        ` | lockedAt: ${getTimeStamp(job.lockedAt)}` +
-        ` | lastRunAt: ${getTimeStamp(job.lastRunAt)}` +
-        ` | lastFinishedAt: ${getTimeStamp(job.lastFinishedAt)}`
-    );
+    if (job) {
+      console.log(
+        `${PF} | agendaJobs | ${change.operationType}` +
+          ` | ${job._id}` +
+          ` | ${job.name}` +
+          ` | lastModifiedBy: ${job.lastModifiedBy}` +
+          ` | nextRunAt: ${getTimeStamp(job.nextRunAt)}` +
+          ` | lockedAt: ${getTimeStamp(job.lockedAt)}` +
+          ` | lastRunAt: ${getTimeStamp(job.lastRunAt)}` +
+          ` | lastFinishedAt: ${getTimeStamp(job.lastFinishedAt)}`
+      );
+    }
   });
 
   return;

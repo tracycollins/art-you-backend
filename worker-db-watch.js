@@ -162,7 +162,12 @@ const initUserRatingUpdateJobQueue = async () => {
         });
 
         console.log(
-          `${PF} | ADD JOB TO WATCHER Q | UPDATE_RECS | OAUTH ID: ${user.oauthID} | ${epochs} EPOCHS | FORCE FIT: ${FORCE_FIT}`
+          `${PF} | ADD JOB TO WATCHER Q` +
+            ` | UPDATE_RECS` +
+            ` | OAUTH ID: ${user.oauthID}` +
+            ` | ${epochs} EPOCHS` +
+            ` | ${allUsersRatingCount[user._id]} RATINGS` +
+            ` | FORCE FIT: ${FORCE_FIT}`
         );
 
         const updateRecsJobOptions = {
@@ -292,8 +297,6 @@ async function initDbJobChangeStream() {
   jobChangeStream.on("change", function (change) {
     const job = change.fullDocument;
     if (job) {
-      // console.log({ change });
-
       if (jobComplete(job) && job.ratingCount !== undefined) {
         console.log(
           `${PF} | AGENDA | JOB ${job.name} FINISHED | RATING COUNT: ${job.data.ratingCount}`
