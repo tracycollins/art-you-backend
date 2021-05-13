@@ -2,6 +2,17 @@ const dotenv = require("dotenv");
 const csrf = require("csurf");
 const moment = require("moment");
 const defaultDateTimeFormat = "YYYYMMDD_HHmmss";
+const os = require("os");
+let hostname = os.hostname();
+hostname = hostname.replace(/.tld/g, ""); // amtrak wifi
+hostname = hostname.replace(/.local/g, "");
+hostname = hostname.replace(/.home/g, "");
+hostname = hostname.replace(/.at.net/g, "");
+hostname = hostname.replace(/.fios-router.home/g, "");
+hostname = hostname.replace(/word0-instance-1/g, "google");
+hostname = hostname.replace(/word-1/g, "google");
+hostname = hostname.replace(/word/g, "google");
+const ONE_SECOND = 1000;
 
 if (process.env.ART47_ENV_VARS_FILE) {
   const envConfig = dotenv.config({ path: process.env.ART47_ENV_VARS_FILE });
@@ -69,6 +80,43 @@ agenda.on("ready", async (data) => {
   let numRemoved = await agenda.cancel({ name: "test" });
   console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} TEST JOBS`);
 
+  agenda.on("start", (job) => {
+    console.log(`${PF} | AGENDA | +++ JOB ${job.attrs.name} STARTING ...`);
+  });
+
+  agenda.on("fail", (err, job) => {
+    console.log(
+      `${PF} | AGENDA | *** JOB FAIL: ${job.attrs.name} | ERR: ${err}`
+    );
+  });
+
+  agenda.on("complete", (job) => {
+    console.log(
+      `${PF} | AGENDA | ### JOB ${job.attrs.name} COMPLETE | RATING COUNT: ${job.attrs.data.ratingCount}`
+    );
+    if (
+      job.attrs.data.ratingCount &&
+      allUsersRatingCount[job.attrs.data.user_id]
+    ) {
+      if (
+        allUsersRatingCount[job.attrs.data.user_id] >=
+        job.attrs.data.ratingCount
+      ) {
+        allUsersRatingCount[job.attrs.data.user_id] -=
+          job.attrs.data.ratingCount;
+      } else {
+        delete allUsersRatingCount[job.attrs.data.user_id];
+      }
+    }
+    console.log(
+      `${PF} | AGENDA | JOB ${
+        job.attrs.name
+      } FINISHED | RATING COUNT REMAINING: ${
+        allUsersRatingCount[job.attrs.data.user_id]
+      }`
+    );
+  });
+
   const jobsInDb = await agenda.jobs(
     {
       name: "recsUpdate",
@@ -92,46 +140,59 @@ agenda.on("ready", async (data) => {
         ` | oauthID: ${job.attrs.data.oauthID}`
     );
   }
+  const testJob = await agenda.now("test", {
+    host: hostname,
+    pid: process.pid,
+    period: Math.floor(Math.random() * 10 * ONE_SECOND),
+  });
 });
 
-agenda.on("start", (job) => {
-  console.log(`${PF} | AGENDA | +++ JOB ${job.attrs.name} STARTING ...`);
-});
+let jobChangeStream;
 
-agenda.on("fail", (err, job) => {
-  console.log(`${PF} | AGENDA | *** JOB FAIL: ${job.attrs.name} | ERR: ${err}`);
-});
+async function initDbJobChangeStream() {
+  console.log(`${PF} | initDbJobChangeStream`);
 
-agenda.on("complete", (job) => {
-  console.log(
-    `${PF} | AGENDA | ### JOB ${job.attrs.name} FINISHED | RATING COUNT: ${job.attrs.data.ratingCount}`
-  );
-  if (
-    job.attrs.data.ratingCount &&
-    allUsersRatingCount[job.attrs.data.user_id]
-  ) {
-    if (
-      allUsersRatingCount[job.attrs.data.user_id] >= job.attrs.data.ratingCount
-    ) {
-      allUsersRatingCount[job.attrs.data.user_id] -= job.attrs.data.ratingCount;
-    } else {
-      delete allUsersRatingCount[job.attrs.data.user_id];
-    }
-  }
-  console.log(
-    `${PF} | AGENDA | JOB ${
-      job.attrs.name
-    } FINISHED | RATING COUNT REMAINING: ${
-      allUsersRatingCount[job.attrs.data.user_id]
-    }`
-  );
-});
+  const jobCollection = global.dbConnection.collection("agendaJobs");
+
+  const jobChangeFilter = {
+    $match: {
+      $or: [
+        { operationType: "insert" },
+        { operationType: "delete" },
+        { operationType: "update" },
+        { operationType: "replace" },
+      ],
+    },
+  };
+
+  const jobChangeOptions = { fullDocument: "updateLookup" };
+
+  jobChangeStream = jobCollection.watch([jobChangeFilter], jobChangeOptions);
+
+  jobChangeStream.on("change", function (change) {
+    const job = change.fullDocument;
+    console.log({ job });
+    console.log(
+      `${PF} | agendaJobs | ${change.operationType}` +
+        ` | ${job._id}` +
+        ` | ${job.name}` +
+        ` | lastModifiedBy: ${job.lastModifiedBy}` +
+        ` | nextRunAt: ${getTimeStamp(job.nextRunAt)}` +
+        ` | lockedAt: ${getTimeStamp(job.lockedAt)}` +
+        ` | lastRunAt: ${getTimeStamp(job.lastRunAt)}` +
+        ` | lastFinishedAt: ${getTimeStamp(job.lastFinishedAt)}`
+    );
+  });
+
+  return;
+}
 
 (async () => {
   try {
     global.dbConnection = await global.art47db.connect();
+    await initDbJobChangeStream();
   } catch (err) {
-    console.log(`A47BE | *** ERROR DB + REDIS + WORKER QUEUE INIT | ERR:`, err);
+    console.log(`${PF} | *** ERROR DB INIT | ERR:`, err);
   }
 })();
 

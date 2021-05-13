@@ -27,14 +27,6 @@ const maxJobsPerWorker = process.env.WORKER_MAX_JOBS
 console.log(
   `${PF}` +
     ` | INIT` +
-    ` | process.env.WORKER_START_TIMEOUT: ${process.env.WORKER_START_TIMEOUT}` +
-    ` | process.env.REDIS_URL: ${process.env.REDIS_URL}` +
-    ` | process.env.WEB_CONCURRENCY: ${process.env.WEB_CONCURRENCY}` +
-    ` | process.env.WORKER_MAX_JOBS: ${process.env.WORKER_MAX_JOBS}`
-);
-console.log(
-  `${PF}` +
-    ` | INIT` +
     ` | WORKER_START_TIMEOUT: ${WORKER_START_TIMEOUT}` +
     ` | workers: ${workers}` +
     ` | maxJobsPerWorker: ${maxJobsPerWorker}`
@@ -89,8 +81,20 @@ agenda.on("start:recsUpdate", (job) => {
   console.log(`${PF} | AGENDA | JOB %s STARTING ...`, job.attrs.name);
 });
 
+agenda.on("start:test", (job) => {
+  console.log(`${PF} | AGENDA | JOB %s STARTING ...`, job.attrs.name);
+});
+
+agenda.on("complete:test", (job) => {
+  console.log(`${PF} | AGENDA | JOB %s FINISHED`, job.attrs.name);
+});
+
 agenda.on("complete:recsUpdate", (job) => {
   console.log(`${PF} | AGENDA | JOB %s FINISHED`, job.attrs.name);
+});
+
+agenda.on("fail", (err, job) => {
+  console.log(`${PF} | AGENDA | *** JOB FAIL: ${job.attrs.name} | ERR: ${err}`);
 });
 
 const NeuralNetworkTools = require("./lib/nnTools.js");
@@ -166,13 +170,19 @@ const initUpdateRecsQueue = async () => {
   const test = async (p) => {
     const params = p || {};
     console.log(
-      `${PF} | TEST | JOB: ${params.job.attrs._id} | HOST: ${params.job.attrs.data.host} | PID: ${params.job.attrs.data.pid}`
+      `${PF} | START TEST | JOB: ${params.job.attrs._id}` +
+        ` | HOST: ${params.job.attrs.data.host}` +
+        ` | PID: ${params.job.attrs.data.pid}` +
+        ` | PERIOD: ${params.job.attrs.data.period}`
     );
+    await nnt.delay({ period: params.job.attrs.data.duration });
   };
 
-  agenda.define("test", async (job) => {
+  agenda.define("test", {}, async (job) => {
+    console.log(
+      `${PF} | TEST | START JOB: ${job.attrs._id} | HOST: ${job.attrs.data.host} | PID: ${job.attrs.data.pid}`
+    );
     await test({ job });
-    return;
   });
 
   agenda.define("recsUpdate", { lockLifetime: ONE_HOUR }, async (job) => {
@@ -203,7 +213,7 @@ const initUpdateRecsQueue = async () => {
   return;
 };
 
-const recsUpdateJob = agenda.create("recsUpdate", { op: "REC_UPDATE" });
+// const recsUpdateJob = agenda.create("recsUpdate", { op: "REC_UPDATE" });
 
 setTimeout(async () => {
   await agenda.start();

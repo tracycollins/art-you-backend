@@ -50,6 +50,30 @@ agenda.on("complete", (job) => {
   );
 });
 
+const getTimeStamp = function (inputTime) {
+  let currentTimeStamp;
+
+  if (inputTime === null || inputTime === undefined) {
+    return "N/A";
+  }
+  if (inputTime === 0) {
+    currentTimeStamp = moment().format(defaultDateTimeFormat);
+    return currentTimeStamp;
+  }
+  if (moment.isMoment(inputTime)) {
+    currentTimeStamp = moment(inputTime).format(defaultDateTimeFormat);
+    return currentTimeStamp;
+  }
+  if (moment.isDate(new Date(inputTime))) {
+    currentTimeStamp = moment(new Date(inputTime)).format(
+      defaultDateTimeFormat
+    );
+    return currentTimeStamp;
+  }
+  currentTimeStamp = moment(parseInt(inputTime)).format(defaultDateTimeFormat);
+  return currentTimeStamp;
+};
+
 const {
   resetUserRatingCount,
   getAllUsersRatingCount,
@@ -113,7 +137,7 @@ const initUserRatingUpdateJobQueue = async () => {
     process.env.TRIGGER_RATINGS_UPDATE_NUMBER || 10;
   const allUsersRatingCount = getAllUsersRatingCount();
   const userIds = Object.keys(allUsersRatingCount);
-  const epochs = process.env.ART47_NN_FIT_EPOCHS || 1000;
+  const epochs = process.env.ART47_NN_FIT_EPOCHS || 100;
 
   try {
     console.log(
@@ -234,11 +258,84 @@ const initUserRatingUpdateJobQueue = async () => {
   }
 };
 
-const start = () => {
+const jobComplete = (job) => {
+  return (
+    job.lastFinishedAt !== undefined &&
+    job.lastRunAt !== undefined &&
+    !job.lockedAt &&
+    !job.nextRunAt
+  );
+};
+
+let jobChangeStream;
+
+async function initDbJobChangeStream() {
+  console.log(`${PF} | initDbJobChangeStream`);
+
+  const jobCollection = global.dbConnection.collection("agendaJobs");
+
+  const jobChangeFilter = {
+    $match: {
+      $or: [
+        { operationType: "insert" },
+        { operationType: "delete" },
+        { operationType: "update" },
+        { operationType: "replace" },
+      ],
+    },
+  };
+
+  const jobChangeOptions = { fullDocument: "updateLookup" };
+
+  jobChangeStream = jobCollection.watch([jobChangeFilter], jobChangeOptions);
+
+  jobChangeStream.on("change", function (change) {
+    const job = change.fullDocument;
+    if (job) {
+      // console.log({ change });
+
+      if (jobComplete(job) && job.ratingCount !== undefined) {
+        console.log(
+          `${PF} | AGENDA | JOB ${job.name} FINISHED | RATING COUNT: ${job.data.ratingCount}`
+        );
+        if (job.data.ratingCount && allUsersRatingCount[job.data.user_id]) {
+          if (allUsersRatingCount[job.data.user_id] >= job.data.ratingCount) {
+            allUsersRatingCount[job.data.user_id] -= job.data.ratingCount;
+          } else {
+            delete allUsersRatingCount[job.data.user_id];
+          }
+        }
+        console.log(
+          `${PF} | AGENDA | JOB ${
+            job.name
+          } FINISHED | RATING COUNT REMAINING: ${
+            allUsersRatingCount[job.data.user_id]
+          }`
+        );
+
+        console.log(
+          `${PF} | agendaJobs | ${change.operationType}` +
+            ` | ${job._id}` +
+            ` | ${job.name}` +
+            ` | ratingCount: ${job.ratingCount}` +
+            ` | lastModifiedBy: ${job.lastModifiedBy}` +
+            ` | nextRunAt: ${getTimeStamp(job.nextRunAt)}` +
+            ` | lockedAt: ${getTimeStamp(job.lockedAt)}` +
+            ` | lastRunAt: ${getTimeStamp(job.lastRunAt)}` +
+            ` | lastFinishedAt: ${getTimeStamp(job.lastFinishedAt)}`
+        );
+      }
+    }
+  });
+
+  return;
+}
+
+const start = async () => {
   console.log(`${PF} | ... WAIT | WATCHER | PID: ${process.pid} START`);
   console.log(`${PF} | +++ WATCHER | PID: ${process.pid} START`);
-
   console.log(`${PF} | initUserRatingUpdateJobQueue`);
+  await initDbJobChangeStream();
 };
 
 initUserRatingUpdateJobQueueInterval = setInterval(async () => {
@@ -248,7 +345,7 @@ initUserRatingUpdateJobQueueInterval = setInterval(async () => {
 (async () => {
   try {
     global.dbConnection = await global.art47db.connect();
-    start();
+    await start();
   } catch (err) {
     console.log(`${PF} | *** ERROR DB INIT | ERR:`, err);
   }
