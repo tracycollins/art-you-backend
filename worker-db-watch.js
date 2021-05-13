@@ -21,6 +21,10 @@ agenda.on("start", (job) => {
   console.log(`${PF} | AGENDA | JOB ${job.attrs.name} STARTING ...`);
 });
 
+agenda.on("fail", (err, job) => {
+  console.log(`${PF} | AGENDA | *** JOB FAIL: ${job.attrs.name} | ERR: ${err}`);
+});
+
 agenda.on("complete", (job) => {
   console.log(
     `${PF} | AGENDA | JOB ${job.attrs.name} FINISHED | RATING COUNT: ${job.attrs.data.ratingCount}`

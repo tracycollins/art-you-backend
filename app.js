@@ -66,16 +66,65 @@ global.dbConnection = false;
 
 agenda.on("ready", async (data) => {
   console.log(`${PF} | AGENDA | READY`);
-  let numRemoved = await agenda.cancel({ name: "test" });
+  let numRemoved = await agenda.cancel({ name: "recsUpdate" });
   console.log(`${PF} | AGENDA | CANCELLED ${numRemoved} TEST JOBS`);
+
+  const jobsInDb = await agenda.jobs(
+    {
+      name: "recsUpdate",
+    },
+    { lastFinishedAt: -1 },
+    1000,
+    0
+  );
+
+  console.log(`${PF} | recsUpdate JOBS IN DB: ${jobsInDb.length}`);
+
+  for (const job of jobsInDb) {
+    console.log(
+      `${PF} | JOB` +
+        ` | ID: ${job.attrs._id}` +
+        ` | lastModifiedBy: ${job.attrs.lastModifiedBy}` +
+        ` | nextRunAt: ${getTimeStamp(job.attrs.nextRunAt)}` +
+        ` | lockedAt: ${getTimeStamp(job.attrs.lockedAt)}` +
+        ` | lastRunAt: ${getTimeStamp(job.attrs.lastRunAt)}` +
+        ` | lastFinishedAt: ${getTimeStamp(job.attrs.lastFinishedAt)}` +
+        ` | oauthID: ${job.attrs.data.oauthID}`
+    );
+  }
 });
 
-agenda.on("start:recsUpdate", (job) => {
-  console.log(`${PF} | AGENDA | JOB %s STARTING ...`, job.attrs.name);
+agenda.on("start", (job) => {
+  console.log(`${PF} | AGENDA | +++ JOB ${job.attrs.name} STARTING ...`);
 });
 
-agenda.on("complete:recsUpdate", (job) => {
-  console.log(`${PF} | AGENDA | JOB %s FINISHED`, job.attrs.name);
+agenda.on("fail", (err, job) => {
+  console.log(`${PF} | AGENDA | *** JOB FAIL: ${job.attrs.name} | ERR: ${err}`);
+});
+
+agenda.on("complete", (job) => {
+  console.log(
+    `${PF} | AGENDA | ### JOB ${job.attrs.name} FINISHED | RATING COUNT: ${job.attrs.data.ratingCount}`
+  );
+  if (
+    job.attrs.data.ratingCount &&
+    allUsersRatingCount[job.attrs.data.user_id]
+  ) {
+    if (
+      allUsersRatingCount[job.attrs.data.user_id] >= job.attrs.data.ratingCount
+    ) {
+      allUsersRatingCount[job.attrs.data.user_id] -= job.attrs.data.ratingCount;
+    } else {
+      delete allUsersRatingCount[job.attrs.data.user_id];
+    }
+  }
+  console.log(
+    `${PF} | AGENDA | JOB ${
+      job.attrs.name
+    } FINISHED | RATING COUNT REMAINING: ${
+      allUsersRatingCount[job.attrs.data.user_id]
+    }`
+  );
 });
 
 (async () => {
@@ -139,6 +188,8 @@ nnt.on("connect", async (appName) => {
   // console.log(`NNT | >>> START NETWORK TEST`);
   // await nnt.runNetworkTest();
 });
+
+const getTimeStamp = nnt.getTimeStamp;
 
 //==================================================================================
 //==================================================================================
