@@ -297,6 +297,7 @@ async function initDbJobChangeStream() {
   jobChangeStream.on("change", function (change) {
     const job = change.fullDocument;
     if (job) {
+      console.log(job);
       if (jobComplete(job) && job.ratingCount !== undefined) {
         console.log(
           `${PF} | AGENDA | JOB ${job.name} FINISHED | RATING COUNT: ${job.data.ratingCount}`
