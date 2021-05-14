@@ -298,7 +298,7 @@ async function initDbJobChangeStream() {
     const job = change.fullDocument;
     if (job) {
       console.log(job);
-      if (jobComplete(job) && job.ratingCount !== undefined) {
+      if (jobComplete(job) && job.data.ratingCount !== undefined) {
         console.log(
           `${PF} | AGENDA | JOB ${job.name} FINISHED | RATING COUNT: ${job.data.ratingCount}`
         );
@@ -321,7 +321,7 @@ async function initDbJobChangeStream() {
           `${PF} | agendaJobs | ${change.operationType}` +
             ` | ${job._id}` +
             ` | ${job.name}` +
-            ` | ratingCount: ${job.ratingCount}` +
+            ` | ratingCount: ${job.data.ratingCount}` +
             ` | lastModifiedBy: ${job.lastModifiedBy}` +
             ` | nextRunAt: ${getTimeStamp(job.nextRunAt)}` +
             ` | lockedAt: ${getTimeStamp(job.lockedAt)}` +
