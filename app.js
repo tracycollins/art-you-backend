@@ -177,6 +177,7 @@ async function initDbJobChangeStream() {
           ` | ${job._id}` +
           ` | ${job.name}` +
           ` | lastModifiedBy: ${job.lastModifiedBy}` +
+          ` | ratingCount: ${job.data.ratingCount}` +
           ` | nextRunAt: ${getTimeStamp(job.nextRunAt)}` +
           ` | lockedAt: ${getTimeStamp(job.lockedAt)}` +
           ` | lastRunAt: ${getTimeStamp(job.lastRunAt)}` +
