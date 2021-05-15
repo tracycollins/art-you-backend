@@ -522,11 +522,11 @@ router.post(
     console.log(req.body);
     const { oauthID, title, file_name } = req.body;
 
-    const userObj = await global.art47db.User.findOne({
+    const userDoc = await global.art47db.User.findOne({
       oauthID,
-    }).lean();
+    }).populate("image");
 
-    if (!userObj) {
+    if (!userDoc) {
       res
         .status(400)
         .send(
@@ -544,11 +544,12 @@ router.post(
     if (!artistDoc) {
       console.log(
         `${PF} | POST` +
-          ` | UPLOAD FILE | User: ${userObj.oauthID}` +
-          `\n${PF} | ARTIST NOT FOUND ... CREATING FROM USER ${userObj.oauthID}`
+          ` | UPLOAD FILE | User: ${userDoc.oauthID}` +
+          `\n${PF} | ARTIST NOT FOUND ... CREATING FROM USER ${userDoc.oauthID}`
       );
 
-      const artistObj = omit(userObj, [
+      const artistObj = omit(userDoc.toObject(), [
+        "id",
         "_id",
         "ratings",
         "unrated",
@@ -557,19 +558,31 @@ router.post(
         "network",
         "tags",
       ]);
-      artistObj.artistId = userObj.oauthID;
+
+      artistObj.artistId = userDoc.oauthID;
 
       artistDoc = new global.art47db.Artist(artistObj);
+      artistDoc.image = userDoc.image;
+      await artistDoc.save();
+    } else {
+      console.log(
+        `${PF} | POST` +
+          ` | UPDATE FILE | User: ${userDoc.oauthID}` +
+          `\n${PF} | ARTIST  ${artistDoc.oauthID}`
+      );
+      artistDoc.artistId = userDoc.oauthID;
+      artistDoc.image = userDoc.image;
+      await artistDoc.save();
     }
 
-    console.log({ userObj });
+    console.log({ userDoc });
     console.log({ artistDoc });
 
     const imageFile = req.file.filename;
 
     console.log(
       `${PF} | POST` +
-        ` | UPLOAD FILE | User: ${userObj.oauthID}` +
+        ` | UPLOAD FILE | User: ${userDoc.oauthID}` +
         `\n${PF} | TITLE: ${title}` +
         `\n${PF} | FILE ORG NAME: ${req.file.originalname}` +
         `\n${PF} | FILE NAME: ${file_name}` +
@@ -580,7 +593,7 @@ router.post(
         `\n${PF} | FILE SIZE: ${req.file.size}`
     );
 
-    const keyName = `${userObj.oauthID}/images/${imageFile}`;
+    const keyName = `${userDoc.oauthID}/images/${imageFile}`;
     // const keyName = `${artistDoc.artistId}/images/${imageFile}`;
 
     const imagePath = req.file.path;
@@ -616,7 +629,7 @@ router.post(
     await artworkDoc.populate("artist").execPopulate();
 
     // NEED TO SET UP TRANSFER OF IMAGE TO S3 or GOOGLE, and modify user.image
-    res.json({ user: userObj, artwork: artworkDoc });
+    res.json({ user: userDoc, artwork: artworkDoc, artist: artistDoc });
   }
 );
 

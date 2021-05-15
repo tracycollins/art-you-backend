@@ -229,8 +229,6 @@ router.post(
     userDoc.image = await image.save();
     await userDoc.save();
 
-    const userJson = userDoc.toObject();
-
     // NEED TO SET UP TRANSFER OF IMAGE TO S3 or GOOGLE, and modify user.image
     res.json({ user: userDoc });
   }
