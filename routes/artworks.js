@@ -625,8 +625,10 @@ router.post(
 
     artworkDoc.image = await image.save();
     await artworkDoc.save();
-    artworkDoc.populate("artist");
     await artworkDoc.populate("artist").execPopulate();
+
+    artistDoc.artworks.addToSet(artworkDoc._id);
+    await artistDoc.save();
 
     // NEED TO SET UP TRANSFER OF IMAGE TO S3 or GOOGLE, and modify user.image
     res.json({ user: userDoc, artwork: artworkDoc, artist: artistDoc });
