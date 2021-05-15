@@ -42,8 +42,6 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
-const cTable = require("console.table");
-
 const configuration = {};
 configuration.verbose = false;
 
