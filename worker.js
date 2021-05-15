@@ -42,6 +42,8 @@ process.on("SIGINT", () => {
   process.exit(0);
 });
 
+const cTable = require("console.table");
+
 const configuration = {};
 configuration.verbose = false;
 
@@ -68,9 +70,27 @@ agenda.on("ready", async () => {
   const jobs = await agenda.jobs({});
 
   if (jobs.length > 0) {
+    console.log(
+      `${PF} | ================================================================================================`
+    );
+    console.log(`${PF} | AGENDA JOBS: ${jobs.length}`);
+    console.log(
+      `${PF} | ================================================================================================`
+    );
     for (const job of jobs) {
-      console.log(`${PF} | AGENDA | JOB | ID: ${job.attrs._id}`);
+      console.log(
+        `${PF} | ID: ${job.attrs._id}` +
+          ` | NAME: ${job.attrs.name}` +
+          ` | WORKER: ${job.attrs.lastModifiedBy}` +
+          ` | LOCKED: ${nnt.getTimeStamp(job.attrs.lockedAt)}` +
+          ` | RUN: ${nnt.getTimeStamp(job.attrs.lastRunAt)}` +
+          ` | FINISHED: ${nnt.getTimeStamp(job.attrs.lastFinishedAt)}` +
+          ` | NEXT: ${nnt.getTimeStamp(job.attrs.nextRunAt)}`
+      );
     }
+    console.log(
+      `${PF} | ================================================================================================`
+    );
   } else {
     console.log(`${PF} | AGENDA | NO JOBS`);
   }
@@ -137,11 +157,18 @@ const updateUserRecommendations = async (p) => {
   try {
     const params = p || {};
     console.log(
-      `${PF} | updateUserRecommendations | OP: ${params.op} | OP: ${params.op}`
+      `${PF} | >>> START updateUserRecommendations` +
+        ` | ${nnt.getTimeStamp(0)}` +
+        ` | OP: ${params.op}`
     );
     await waitFor(statsObj.nnt.ready);
     const results = await nnt.updateRecommendations(params);
-    console.log(`${PF} | END updateUserRecommendations`, results);
+    console.log(
+      `${PF} | +++ END updateUserRecommendations` +
+        ` | ${nnt.getTimeStamp(0)}` +
+        ` | OP: ${params.op}`
+    );
+    console.log(nnt.jsonPrint(results));
     return { results: results, timestamp: nnt.getTimeStamp(0) };
   } catch (err) {
     console.log(`${PF} | ERROR updateUserRecommendations`, err);
@@ -151,12 +178,21 @@ const updateUserRecommendations = async (p) => {
 
 const updateUserUnrated = async (p) => {
   try {
-    console.log(`${PF} | updateUserUnrated`, p.data);
-    await waitFor(statsObj.usr.ready);
-    const results = await usr.getUnratedArtworks(p.data);
+    const params = {} || p;
     console.log(
-      `${PF} | END updateUserUnrated | ${results.unrated.length} UNRATED`
+      `${PF} | >>> START updateUserUnrated` +
+        ` | ${nnt.getTimeStamp(0)}` +
+        ` | OP: ${params.op}`
     );
+    console.log(nnt.jsonPrint(params));
+    await waitFor(statsObj.usr.ready);
+    const results = await usr.getUnratedArtworks(params.data);
+    console.log(
+      `${PF} | +++ END updateUserUnrated` +
+        ` | ${nnt.getTimeStamp(0)}` +
+        `| ${results.unrated.length} UNRATED`
+    );
+    console.log(nnt.jsonPrint(results));
     return results;
   } catch (err) {
     console.log(`${PF} | ERROR updateUserUnrated`, err);
@@ -165,12 +201,13 @@ const updateUserUnrated = async (p) => {
 };
 
 const initUpdateRecsQueue = async () => {
-  console.log(`${PF} | initUpdateRecsQueue`);
+  console.log(`${PF} | +++ START initUpdateRecsQueue`);
 
   const test = async (p) => {
     const params = p || {};
     console.log(
       `${PF} | START TEST | JOB: ${params.job.attrs._id}` +
+        ` | ${nnt.getTimeStamp(0)}` +
         ` | HOST: ${params.job.attrs.data.host}` +
         ` | PID: ${params.job.attrs.data.pid}` +
         ` | PERIOD: ${params.job.attrs.data.period}`
@@ -180,7 +217,10 @@ const initUpdateRecsQueue = async () => {
 
   agenda.define("test", {}, async (job) => {
     console.log(
-      `${PF} | TEST | START JOB: ${job.attrs._id} | HOST: ${job.attrs.data.host} | PID: ${job.attrs.data.pid}`
+      `${PF} | TEST | START JOB: ${job.attrs._id}` +
+        ` | ${nnt.getTimeStamp(0)}` +
+        ` | HOST: ${job.attrs.data.host}` +
+        ` | PID: ${job.attrs.data.pid}`
     );
     await test({ job });
   });
@@ -188,6 +228,7 @@ const initUpdateRecsQueue = async () => {
   agenda.define("recsUpdate", { lockLifetime: ONE_HOUR }, async (job) => {
     console.log(
       `${PF} | ->- WORKER | JOB START | UPDATE RECS` +
+        ` | ${nnt.getTimeStamp(0)}` +
         ` | PID: ${process.pid}` +
         ` | JID: ${job.attrs._id}` +
         ` | OP: ${job.attrs.data.op}` +
@@ -201,6 +242,7 @@ const initUpdateRecsQueue = async () => {
     });
     console.log(
       `${PF} | +++ WORKER | JOB COMPLETE | UPDATE RECS` +
+        ` | ${nnt.getTimeStamp(0)}` +
         ` | PID: ${process.pid}` +
         ` | JID: ${job.attrs._id}` +
         ` | JOB NAME: ${job.attrs.name}`
@@ -212,8 +254,6 @@ const initUpdateRecsQueue = async () => {
 
   return;
 };
-
-// const recsUpdateJob = agenda.create("recsUpdate", { op: "REC_UPDATE" });
 
 setTimeout(async () => {
   await agenda.start();

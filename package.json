@@ -22,6 +22,7 @@
     "bull": "^3.22.4",
     "chalk": "^4.1.1",
     "color-namer": "^1.4.0",
+    "console.table": "^0.10.0",
     "cookie-parser": "~1.4.5",
     "cookie-session": "^1.4.0",
     "cors": "^2.8.5",
