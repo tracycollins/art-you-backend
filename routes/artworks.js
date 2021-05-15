@@ -1,11 +1,76 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable dot-notation */
+const fs = require("fs-extra");
+const omit = require("object.omit");
 const express = require("express");
-const ObjectID = require("mongodb").ObjectID;
 const escape = require("escape-html");
+const ObjectID = require("mongodb").ObjectID;
+const multer = require("multer");
+const upload = multer({ dest: "/tmp/art47/uploads/artwork/" });
+const S3Client = require("../lib/awsS3Client.js");
+const awsS3Client = new S3Client();
 const router = express.Router({
   strict: true,
 });
+
+const PF = "AWKS";
+const imageFile = `artwork_image.jpg`;
+const bucketName = "art47-artworks";
+
+const s3putImage = async (p) => {
+  try {
+    const params = p || {};
+
+    const fileContent = fs.readFileSync(params.path);
+
+    const objectParams = {
+      Bucket: params.bucketName,
+      Key: params.keyName,
+      Body: fileContent,
+    };
+
+    const results = await awsS3Client.putObject(objectParams);
+
+    return results;
+  } catch (err) {
+    console.log(`DB | SEED | *** s3putImage ERROR: ${err}`);
+    throw err;
+  }
+};
+
+const artistRegex = /artwork\/artists\/(.+?)\//;
+const artistNameReplaceRegex = /\W/g;
+
+const generateArtworkId = (params) => {
+  const title = params.title.replace(artistNameReplaceRegex, "");
+  const artworkId = `artist_id_${params.artistId}_title_${title}`
+    .trim()
+    .toLowerCase();
+  return artworkId;
+};
+
+// const generateArtistId = (artistObj) => {
+//   if (
+//     artistObj.instagramUsername !== undefined &&
+//     artistObj.instagramUsername.startsWith("@")
+//   ) {
+//     return artistObj.instagramUsername.toLowerCase();
+//   }
+
+//   if (
+//     artistObj.twitterUsername !== undefined &&
+//     artistObj.twitterUsername.startsWith("@")
+//   ) {
+//     return artistObj.twitterUsername.toLowerCase();
+//   }
+
+//   if (artistObj.name !== undefined) {
+//     return artistObj.name
+//       .trim()
+//       .toLowerCase()
+//       .replace(artistNameReplaceRegex, "");
+//   }
+// };
 
 router.get("/cursor/:cursor/", async (req, res) => {
   try {
@@ -449,6 +514,111 @@ router.get("/artist/:id", async (req, res) => {
       .send(`GET | Artwork | ID: ${escape(req.body.id)} | ERROR: ${err}`);
   }
 });
+
+router.post(
+  "/upload",
+  upload.single("artworkImage"),
+  async function (req, res, next) {
+    console.log(req.body);
+    const { oauthID, title, file_name } = req.body;
+
+    const userObj = await global.art47db.User.findOne({
+      oauthID,
+    }).lean();
+
+    if (!userObj) {
+      res
+        .status(400)
+        .send(
+          `POST | upload artwork | USER NOT FOUNDD: ${escape(
+            oauthID
+          )} | ERROR: ${err}`
+        );
+      return;
+    }
+
+    let artistDoc = await global.art47db.Artist.findOne({
+      oauthID,
+    });
+
+    if (!artistDoc) {
+      console.log(
+        `${PF} | POST` +
+          ` | UPLOAD FILE | User: ${userObj.oauthID}` +
+          `\n${PF} | ARTIST NOT FOUND ... CREATING FROM USER ${userObj.oauthID}`
+      );
+
+      const artistObj = omit(userObj, [
+        "_id",
+        "ratings",
+        "unrated",
+        "__v",
+        "rated",
+        "network",
+        "tags",
+      ]);
+      artistObj.artistId = userObj.oauthID;
+
+      artistDoc = new global.art47db.Artist(artistObj);
+    }
+
+    console.log({ userObj });
+    console.log({ artistDoc });
+
+    const imageFile = req.file.filename;
+
+    console.log(
+      `${PF} | POST` +
+        ` | UPLOAD FILE | User: ${userObj.oauthID}` +
+        `\n${PF} | TITLE: ${title}` +
+        `\n${PF} | FILE ORG NAME: ${req.file.originalname}` +
+        `\n${PF} | FILE NAME: ${file_name}` +
+        `\n${PF} | FILE PATH: ${req.file.path}` +
+        `\n${PF} | FILE DEST: ${req.file.destination}` +
+        `\n${PF} | FILE MIME TYPE: ${req.file.mimetype}` +
+        `\n${PF} | FILE ENC: ${req.file.encoding}` +
+        `\n${PF} | FILE SIZE: ${req.file.size}`
+    );
+
+    const keyName = `${userObj.oauthID}/images/${imageFile}`;
+    // const keyName = `${artistDoc.artistId}/images/${imageFile}`;
+
+    const imagePath = req.file.path;
+
+    await s3putImage({
+      bucketName: bucketName,
+      keyName: keyName,
+      path: imagePath,
+    });
+
+    const imageUrl = `https://${bucketName}.s3.amazonaws.com/${keyName}`;
+    const imageTitle = title ? title : "untitled";
+
+    const image = new global.art47db.Image({
+      title: imageTitle,
+      url: imageUrl,
+      fileName: imageFile,
+    });
+
+    const artworkId = generateArtworkId({
+      artistId: artistDoc.oauthID,
+      title: imageTitle,
+    });
+    const artworkDoc = new global.art47db.Artwork({
+      artworkId,
+      artist: artistDoc,
+      title: imageTitle,
+    });
+
+    artworkDoc.image = await image.save();
+    await artworkDoc.save();
+    artworkDoc.populate("artist");
+    await artworkDoc.populate("artist").execPopulate();
+
+    // NEED TO SET UP TRANSFER OF IMAGE TO S3 or GOOGLE, and modify user.image
+    res.json({ user: userObj, artwork: artworkDoc });
+  }
+);
 
 router.get("/", async (req, res) => {
   try {
