@@ -3,6 +3,7 @@
 const fs = require("fs-extra");
 const omit = require("object.omit");
 const express = require("express");
+const path = require("path");
 const escape = require("escape-html");
 const ObjectID = require("mongodb").ObjectID;
 const multer = require("multer");
@@ -11,6 +12,12 @@ const S3Client = require("../lib/awsS3Client.js");
 const awsS3Client = new S3Client();
 const router = express.Router({
   strict: true,
+});
+
+const ImageTools = require("../lib/imageTools.js");
+const imageTools = new ImageTools("SEED_IMT");
+imageTools.on("ready", async (appName) => {
+  console.log(`${PF} | READY | APP NAME: ${appName}`);
 });
 
 const PF = "AWKS";
@@ -537,6 +544,8 @@ router.post(
       return;
     }
 
+    console.log({ userDoc });
+
     let artistDoc = await global.art47db.Artist.findOne({
       oauthID,
     });
@@ -593,15 +602,41 @@ router.post(
         `\n${PF} | FILE SIZE: ${req.file.size}`
     );
 
+    const artworkImagePath = req.file.path;
+    const artworkImageSmallPath = `${artworkImagePath}-small`;
+
     const keyName = `${userDoc.oauthID}/images/${imageFile}`;
     // const keyName = `${artistDoc.artistId}/images/${imageFile}`;
 
-    const imagePath = req.file.path;
+    const transformImageResults = await imageTools.transformImage({
+      imageFilePath: artworkImagePath,
+      imageOutputFilePath: artworkImageSmallPath,
+    });
+
+    const imageFileSmall = imageFile.replace(
+      path.parse(imageFile).ext,
+      "-small" + path.parse(imageFile).ext
+    );
+
+    console.log(
+      `${PF} | UPLOAD FILE | transformImage` +
+        ` | ${transformImageResults.size} B / ${transformImageResults.width}w X ${transformImageResults.height}h` +
+        ` | ${artworkImageSmallPath}`
+    );
+    const keyNameSmall = `${artistDoc.artistId}/images/${imageFileSmall}`;
+
+    await s3putImage({
+      bucketName: bucketName,
+      keyName: keyNameSmall,
+      path: artworkImageSmallPath,
+    });
+
+    await fs.remove(artworkImageSmallPath);
 
     await s3putImage({
       bucketName: bucketName,
       keyName: keyName,
-      path: imagePath,
+      path: artworkImagePath,
     });
 
     const imageUrl = `https://${bucketName}.s3.amazonaws.com/${keyName}`;
@@ -617,6 +652,18 @@ router.post(
       artistId: artistDoc.oauthID,
       title: imageTitle,
     });
+
+    console.log(
+      `${PF} | POST` +
+        ` | UPLOAD FILE | User: ${userDoc.oauthID}` +
+        `\n${PF} | TITLE: ${title}` +
+        `\n${PF} | FILE ORG NAME: ${req.file.originalname}` +
+        `\n${PF} | artworkId: ${artworkId}` +
+        `\n${PF} | keyName: ${keyName}` +
+        `\n${PF} | imageUrl: ${imageUrl}` +
+        `\n${PF} | artworkImagePath: ${artworkImagePath}`
+    );
+
     const artworkDoc = new global.art47db.Artwork({
       artworkId,
       artist: artistDoc,
@@ -625,7 +672,7 @@ router.post(
 
     artworkDoc.image = await image.save();
     await artworkDoc.save();
-    await artworkDoc.populate("artist").execPopulate();
+    await artworkDoc.populate("image").populate("artist").execPopulate();
 
     artistDoc.artworks.addToSet(artworkDoc._id);
     await artistDoc.save();
